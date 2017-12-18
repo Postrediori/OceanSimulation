@@ -49,7 +49,7 @@ macro(make_executable)
             )
     endif()
     
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/../bundle/${PROJECT}")
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/bundle/${PROJECT}")
     install(
         TARGETS ${PROJECT}
         DESTINATION ${CMAKE_INSTALL_PREFIX})
