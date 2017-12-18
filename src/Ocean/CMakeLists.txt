@@ -1,5 +1,12 @@
 make_executable()
 
+target_link_libraries(${PROJECT}
+    MathLib
+    FftLib
+    GraphicsLib
+    OceanLib
+    )
+
 # Data files
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/data/ocean.cfg

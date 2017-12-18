@@ -8,4 +8,4 @@ include(cmake/3rdparty.cmake)
 include(cmake/config.cmake)
 
 # projects
-add_subdirectory(Ocean)
+add_subdirectory(src)

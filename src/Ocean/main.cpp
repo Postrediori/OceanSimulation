@@ -268,8 +268,11 @@ void SpecialKeys(int key, int x, int y) {
     switch (key) {
     case GLUT_KEY_F1:
         gFullscreen = !gFullscreen;
-        if (gFullscreen) glutFullScreen();
-        else glutReshapeWindow(Width, Height);
+        if (gFullscreen) {
+            glutFullScreen();
+        } else {
+            glutReshapeWindow(Width, Height);
+        }
         break;
 
     case GLUT_KEY_F2:

@@ -57,3 +57,23 @@ macro(make_executable)
         DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/data"
         DESTINATION ${CMAKE_INSTALL_PREFIX})
 endmacro()
+
+macro(make_library)
+    make_project_()
+    add_library(${PROJECT} STATIC ${HEADERS} ${SOURCES})
+    target_include_directories(${PROJECT} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
+    if (NOT SOURCES)
+        set_target_properties(${PROJECT} PROPERTIES LINKER_LANGUAGE CXX)
+    endif ()
+endmacro()
+
+function(add_all_subdirectories)
+    file(GLOB CHILDREN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*)
+
+    foreach(CHILD ${CHILDREN})
+        if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${CHILD})
+            add_subdirectory(${CHILD})
+        endif ()
+    endforeach ()
+endfunction()
