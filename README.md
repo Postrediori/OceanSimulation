@@ -1,35 +1,30 @@
-# Ocean Simulation With OpenGL
+## Introduction
 
-## Description
-
-Ocean simulation is based on the project by [Keith Lantz](keithlantz.net).
+Ocean simulation is based on the project by [Keith Lantz](https://keithlantz.net/).
 This program is a downport to older OpenGL 2.0 as well as GLSL 1.10 and GLSL 1.30,
 since the original is using modern GLSL >4.00. The model can be run on very old GPUs.
-For example, it is possible to run this model even on Intel m965 ;)
+For example, it is possible to run this model even on Mobile Intel 965 ;)
 
-Original project is described at:
-* [Ocean simulation part one: using the discrete Fourier transform](https://www.keithlantz.net/2011/10/ocean-simulation-part-one-using-the-discrete-fourier-transform/)
-* [Ocean simulation part two: using the fast Fourier transform](https://www.keithlantz.net/2011/11/ocean-simulation-part-two-using-the-fast-fourier-transform/)
+![Ocean Simulation screenshot](images/ocean.png)
 
-![Ocean Simulation screenshot](https://github.com/Postrediori/OceanSimulation/blob/master/images/ocean.png)
+## Prerequisites
 
-## Environment setup
+Compiling and running the sample project requires GCC, CMake, GNU Make
+as well as some graphics libraries installed.
 
-### Fedora Linux
+## Environment Setup
 
-```
-sudo dnf install -y \
-    freeglut-devel \
-    glew-devel \
-    glm-devel \
-    freetype-devel \
-    SOIL-devel
-```
+### Debian-based Systems
 
-### Ubuntu 16.04
+The following instructions are applied to these operating systems:
+
+* Ubuntu 16.04
+* Debian 9
 
 ```
-sudo apt install -y \
+sudo apt-get install -y \
+    build-essential \
+    cmake \
     freeglut3-dev \
     libglew-dev \
     libglm-dev \
@@ -37,11 +32,43 @@ sudo apt install -y \
     libsoil-dev
 ```
 
-## Building
+### RedHat-based Systems
+
+The following instructions are applied to these operating systems:
+
+* Fedora >=22
 
 ```
-cd klantz
+sudo dnf groupinstall -y "Development Tools"
+sudo dnf install -y \
+    cmake \
+    freeglut-devel \
+    glew-devel \
+    glm-devel \
+    freetype-devel \
+    SOIL-devel
+```
+
+## Building Project
+
+The program is built with the commands below. CMake requires the directory 
+with the main project's `CMakeLists.txt` file as an argument. Then the CMake 
+creates the build files for the GNU make which build an executable.
+
+```
+cd <PathToProject>
 mkdir build && cd build
 cmake ..
-make -j4
+make
 ```
+
+After the successful build the binary `Ocean` will end up in `build/Ocean/`.
+
+```
+./Ocean/MinimalQml
+```
+
+## Links
+
+* [Ocean simulation part one: using the discrete Fourier transform](https://www.keithlantz.net/2011/10/ocean-simulation-part-one-using-the-discrete-fourier-transform/)
+* [Ocean simulation part two: using the fast Fourier transform](https://www.keithlantz.net/2011/11/ocean-simulation-part-two-using-the-fast-fourier-transform/)
