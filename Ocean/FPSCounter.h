@@ -14,7 +14,9 @@ struct FPSCounter {
         frame++;
 
         int dt = t - timePrev;
-        if (dt<1000) return;
+        if (dt<1000) {
+            return;
+        }
 
         fps = frame * 1000.f / (float)dt;
         timePrev = t;

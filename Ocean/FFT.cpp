@@ -49,7 +49,9 @@ FFT::~FFT() {
         }
         delete[] W;
     }
-    if (reversed) delete[] reversed;
+    if (reversed) {
+        delete[] reversed;
+    }
 }
 
 unsigned int FFT::reverse(unsigned int i)	{

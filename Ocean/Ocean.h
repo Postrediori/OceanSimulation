@@ -2,14 +2,6 @@
 #ifndef OCEAN_H
 #define OCEAN_H
 
-//#include <GL/freeglut.h>
-
-//#include <glm/glm.hpp>
-
-//#include "Complex.h"
-//#include "Vector.h"
-//#include "FFT.h"
-
 class Complex;
 class Vector2;
 class Vector3;

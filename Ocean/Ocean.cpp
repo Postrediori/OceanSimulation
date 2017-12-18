@@ -25,11 +25,19 @@ static Complex gaussianRandomVariable() {
     return Complex(x1 * w, x2 * w);;
 }
 
-Ocean::Ocean() :
-    g(9.81f), vertices(0), indices_ln(0), indices_tr(0), vao(0),
-    h_tilde(0), h_tilde_slopex(0), h_tilde_slopez(0),
-    h_tilde_dx(0), h_tilde_dz(0), fft(0),
-    geometry_type(GEOMETRY_SOLID) {
+Ocean::Ocean()
+    : g(9.81f)
+    , vertices(0)
+    , indices_ln(0)
+    , indices_tr(0)
+    , vao(0)
+    , h_tilde(0)
+    , h_tilde_slopex(0)
+    , h_tilde_slopez(0)
+    , h_tilde_dx(0)
+    , h_tilde_dz(0)
+    , fft(0)
+    , geometry_type(GEOMETRY_SOLID) {
     //
 }
 
@@ -201,7 +209,9 @@ float Ocean::phillips(int n_prime, int m_prime) {
     Vector2 k(M_PI * (2 * n_prime - N) / length,
               M_PI * (2 * m_prime - N) / length);
     float k_length = k.length();
-    if (k_length<Epsilon) return 0.0;
+    if (k_length<Epsilon) {
+        return 0.0;
+    }
 
     float k_length2 = k_length  * k_length;
     float k_length4 = k_length2 * k_length2;
@@ -471,8 +481,11 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
     glUniformMatrix4fv(uProjection,  1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(uView,        1, GL_FALSE, glm::value_ptr(view));
 
-    if (vao) glBindVertexArray(vao);
-    else initAttributes();
+    if (vao) {
+        glBindVertexArray(vao);
+    } else {
+        initAttributes();
+    }
 
 	
     GLenum geometry            = (geometry_type==GEOMETRY_SOLID ? GL_TRIANGLES     : GL_LINES);

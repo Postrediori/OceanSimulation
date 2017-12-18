@@ -6,15 +6,20 @@ namespace Shader {
 
 int loadFile(const char *filename, std::string& data) {
     std::ifstream in(filename, std::ios::in);
-    if (!in) return 0;
+    if (!in) {
+        return 0;
+    }
 
     std::string line;
     std::ostringstream out;
-    while (std::getline(in, line))
+    while (std::getline(in, line)) {
         out<<line<<std::endl;
+    }
 
     data = out.str();
-    if (!data.length()) return 0;
+    if (!data.length()) {
+        return 0;
+    }
 
     return 1;
 }
@@ -46,7 +51,9 @@ void showShaderInfo(const GLuint glProgram, const GLuint glShaderV, const GLuint
         GLchar * vlog = new GLchar[vlength+1];
         glGetShaderInfoLog(glShaderV, vlength, NULL, vlog);
         std::cout<<"Vertex Shader    : "<<vlog;
-        if (vlog[vlength-1]!='\n') std::cout<<std::endl;
+        if (vlog[vlength-1]!='\n') {
+            std::cout<<std::endl;
+        }
         delete [] vlog;
     }
 
@@ -54,7 +61,9 @@ void showShaderInfo(const GLuint glProgram, const GLuint glShaderV, const GLuint
         GLchar * flog = new GLchar[flength+1];
         glGetShaderInfoLog(glShaderF, flength, NULL, flog);
         std::cout<<"Fragment Shader  : "<<flog;
-        if (flog[flength-1]!='\n') std::cout<<std::endl;
+        if (flog[flength-1]!='\n') {
+            std::cout<<std::endl;
+        }
         delete [] flog;
     }
 
@@ -62,7 +71,9 @@ void showShaderInfo(const GLuint glProgram, const GLuint glShaderV, const GLuint
         GLchar * plog = new GLchar[plength+1];
         glGetProgramInfoLog(glProgram, plength, NULL, plog);
         std::cout<<"Shader Program   : "<<plog;
-        if (plog[plength-1]!='\n') std::cout<<std::endl;
+        if (plog[plength-1]!='\n') {
+            std::cout<<std::endl;
+        }
         delete [] plog;
     }
 }
