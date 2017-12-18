@@ -65,7 +65,7 @@ make
 After the successful build the binary `Ocean` will end up in `build/Ocean/`.
 
 ```
-./Ocean/MinimalQml
+./Ocean/Ocean
 ```
 
 ## Links
