@@ -28,8 +28,7 @@ sudo apt-get install -y \
     freeglut3-dev \
     libglew-dev \
     libglm-dev \
-    libfreetype6-dev \
-    libsoil-dev
+    libfreetype6-dev
 ```
 
 ### RedHat-based Systems
@@ -45,8 +44,7 @@ sudo dnf install -y \
     freeglut-devel \
     glew-devel \
     glm-devel \
-    freetype-devel \
-    SOIL-devel
+    freetype-devel
 ```
 
 ## Building Project
