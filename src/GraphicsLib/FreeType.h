@@ -5,35 +5,71 @@
 /*****************************************************************************
  * FontAtlas
  ****************************************************************************/
-
+const int FirstDisplayedCharacter = 32;
 const int CharacterCount = 128;
 const int MaxWidth = 1024;
 
-typedef struct _CHARINFO_ {
+typedef int FontSize_t;
+
+struct CharInfo {
     float ax, ay; // advance x and y
     float bw, bh; // bitmap width and height
     float bl, bt; // bitmap left and top
     float tx, ty; // x and y offsets in texture coords
-} CHARINFO;
+};
 
-struct FontAtlas {
-    GLuint tex;
-    int w, h;
-    CHARINFO characters[CharacterCount];
-
-    FontAtlas(FT_Face face, const int height);
+class FontAtlas {
+public:
+    FontAtlas(FT_Face face, FontSize_t height);
     ~FontAtlas();
+
+public:
+    int w, h;
+    GLuint tex;
+    CharInfo characters[CharacterCount];
 };
 
 /*****************************************************************************
  * FontRenderer
  ****************************************************************************/
-typedef struct _COORD2D_ {
+struct Coord2d {
     GLfloat x, y;
     GLfloat s, t;
-} COORD2D;
+};
 
-struct FontRenderer {
+struct FontArea {
+    float textx, texty;
+    float sx, sy;
+};
+
+typedef unsigned int FontHandle_t;
+
+typedef std::unique_ptr<FontAtlas> FontAtlasGuard_t;
+typedef std::map<FontHandle_t, FontAtlasGuard_t> Fonts_t;
+
+class FontRenderer {
+public:
+    FontRenderer();
+
+    bool init();
+    bool init(const std::string& vertex_shader, const std::string& fragment_shader);
+    bool load(const std::string& filename);
+    FontHandle_t createAtlas(FontSize_t height);
+
+    void release();
+
+    void renderStart();
+    void renderEnd();
+    void renderColor(const GLfloat *c);
+    void renderText(FontHandle_t typeset,
+                    FontArea area,
+                    const std::string& text);
+
+private:
+    bool initObjects();
+    bool initShader();
+
+public:
     GLuint glProgram, glShaderV, glShaderF;
     GLint aCoord;
     GLint uTex, uColor;
@@ -43,20 +79,7 @@ struct FontRenderer {
     FT_Library ft;
     FT_Face face;
 
-    int init();
-    int init(const char * vertex_shader, const char * fragment_shader);
-    int load(const char * filename);
-    FontAtlas* createAtlas(const int height);
-
-    void release();
-
-    void renderStart();
-    void renderEnd();
-    void renderColor(const GLfloat *c);
-    void renderText(const FontAtlas *a,
-                    const float textx, const float texty,
-                    const float sx, const float sy,
-                    const char *fmt, ...);
+    Fonts_t fonts;
 };
 
 #endif

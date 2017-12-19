@@ -7,7 +7,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <iostream>
+#include <iomanip>
 #include <fstream>
+#include <sstream>
+#include <memory>
 #include <map>
 
 #include <ft2build.h>

@@ -6,6 +6,8 @@
 #include <sstream>
 #include <cstdarg>
 #include <vector>
+#include <memory>
+#include <map>
 
 #include <GL/glew.h>
 #include <GL/freeglut.h>
