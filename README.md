@@ -5,6 +5,9 @@ This program is a downport to older OpenGL 2.0 as well as GLSL 1.10 and GLSL 1.3
 since the original is using modern GLSL >4.00. The model can be run on very old GPUs.
 For example, it is possible to run this model even on Mobile Intel 965 ;)
 
+The numerical model is based on the paper by J. Tessendorf and utilizes
+Phillips spectrum and algorythm of inverse FFT.
+
 ![Ocean Simulation screenshot](images/ocean.png)
 
 ## Prerequisites
@@ -117,29 +120,30 @@ oceanRepeat = 5
 ```
 
 The following parameters are to be adjusted:
-* **waveAmplitude** -- Amplitude of the 
-* **windDirX**, **windDirZ** -- components of the wind vector. The vertical (Y) component is ignored in the model.
-* **oceanLen** -- discretization parameter.
-* **oceanRepeat** -- this model does use only a small patch of memory to model the whole Ocean.
+* `waveAmplitude` - amplitude of the surface disturbance.
+* `windDirX`, `windDirZ` - components of the wind vector. The vertical (Y) component is ignored in the model.
+* `oceanLen` - discretization parameter.
+* `oceanRepeat` - this model does use only a small patch of memory to model the whole Ocean.
 This parameter adjusts the size of the model in terms of one minimal patch. The value represents
 the number of ocean patches along X and Z dimensions. E.g. value 5 mean the simulated area will be 5x5
 the size of the initial patch.
-* **oceanSize**, **oceanLen** -- these are the parameters of the initial patch that will be used for
+* `oceanSize`, `oceanLen` - these are the parameters of the initial patch that will be used for
 simulation of the ocean. The first parameter is the grid size and the second value
 stands for the length of the patch.
 
 ## Controls
 
-* **F1** -- Toggle fullscreen mode.
-* **F2** -- Show/hide help on the screen.
-* **Mouse** -- Control the view.
-* **Arrow keys** -- Navigate the model.
-* **PgUp/PgDown** -- Adjust vertical position of the viewer point.
-* **1** -- Toggle wireframe mode.
-* **2** -- Toggle solid surface ("normal") mode.
+* `F1` - Toggle fullscreen mode.
+* `F2` - Show/hide help on the screen.
+* `Mouse` - Control the view.
+* `Arrow keys` - Navigate the model.
+* `PgUp/PgDown` - Adjust vertical position of the viewer point.
+* `1` - Toggle wireframe mode.
+* `2` - Toggle solid surface ("normal") mode.
 
 ## Links
 
+*  Tessendorf, Jerry. [Simulating Ocean Water](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.161.9102&rep=rep1&type=pdf). In SIGGRAPH 2002 Course Notes #9 (Simulating Nature: Realistic and Interactive Techniques), ACM Press.
 * [Ocean simulation part one: using the discrete Fourier transform](https://www.keithlantz.net/2011/10/ocean-simulation-part-one-using-the-discrete-fourier-transform/)
 * [Ocean simulation part two: using the fast Fourier transform](https://www.keithlantz.net/2011/11/ocean-simulation-part-two-using-the-fast-fourier-transform/)
 
