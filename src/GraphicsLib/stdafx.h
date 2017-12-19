@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <cstdarg>
+#include <vector>
 
 #include <GL/glew.h>
 #include <GL/freeglut.h>

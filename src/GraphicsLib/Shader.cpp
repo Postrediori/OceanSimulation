@@ -4,177 +4,197 @@
 
 namespace Shader {
 
-int loadFile(const char *filename, std::string& data) {
+std::string loadFile(const std::string& filename) {
     std::ifstream in(filename, std::ios::in);
     if (!in) {
-        return 0;
+        return "";
     }
 
     std::string line;
-    std::ostringstream out;
+    std::stringstream str;
     while (std::getline(in, line)) {
-        out<<line<<std::endl;
+        str << line << std::endl;
     }
 
-    data = out.str();
-    if (!data.length()) {
-        return 0;
-    }
-
-    return 1;
+    return str.str();
 }
 
-void showShaderError(const GLuint shader) {
-    GLint   blen = 0;
+std::string showShaderError(GLuint shader) {
+    GLint blen = 0;
     GLsizei slen = 0;
+    std::stringstream str;
 
-    // std::cerr<<"Shader error : ";
     glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &blen);
     if (blen>1) {
-        GLchar * compiler_log = new GLchar[blen];
-        glGetInfoLogARB(shader, blen, &slen, compiler_log);
-        std::cerr<<compiler_log;
-        delete [] compiler_log;
+        std::vector<char> compiler_log(blen + 1);
+
+        glGetInfoLogARB(shader, blen, &slen, compiler_log.data());
+
+        std::string s(compiler_log.begin(), compiler_log.end());
+        str << s;
+
     } else {
-        std::cerr<<"Unknown error";
+        str << "Unknown error";
     }
-    std::cerr<<std::endl;
+
+    return str.str();
 }
 
-void showShaderInfo(const GLuint glProgram, const GLuint glShaderV, const GLuint glShaderF) {
-    int vlength, flength, plength;
-    glGetObjectParameterivARB(glShaderV, GL_OBJECT_INFO_LOG_LENGTH_ARB, &vlength);
-    glGetObjectParameterivARB(glShaderF, GL_OBJECT_INFO_LOG_LENGTH_ARB, &flength);
-    glGetObjectParameterivARB(glProgram, GL_OBJECT_INFO_LOG_LENGTH_ARB, &plength);
+std::string showShaderInfo(GLuint shader) {
+    int length;
+    std::stringstream str;
 
-    if (vlength>1) {
-        GLchar * vlog = new GLchar[vlength+1];
-        glGetShaderInfoLog(glShaderV, vlength, NULL, vlog);
-        std::cout<<"Vertex Shader    : "<<vlog;
-        if (vlog[vlength-1]!='\n') {
-            std::cout<<std::endl;
-        }
-        delete [] vlog;
+    glGetObjectParameterivARB(shader, GL_OBJECT_INFO_LOG_LENGTH_ARB, &length);
+    if (length > 1) {
+        std::vector<char> log(length + 1);
+        glGetShaderInfoLog(shader, length, NULL, log.data());
+
+        std::string s(log.begin(), log.end());
+        str << s;
+    } else {
+        str << "No Shader Info";
     }
 
-    if (flength>1) {
-        GLchar * flog = new GLchar[flength+1];
-        glGetShaderInfoLog(glShaderF, flength, NULL, flog);
-        std::cout<<"Fragment Shader  : "<<flog;
-        if (flog[flength-1]!='\n') {
-            std::cout<<std::endl;
-        }
-        delete [] flog;
-    }
-
-    if (plength>1) {
-        GLchar * plog = new GLchar[plength+1];
-        glGetProgramInfoLog(glProgram, plength, NULL, plog);
-        std::cout<<"Shader Program   : "<<plog;
-        if (plog[plength-1]!='\n') {
-            std::cout<<std::endl;
-        }
-        delete [] plog;
-    }
+    return str.str();
 }
 
-void createProgram(GLuint& glProgram, GLuint& glShaderV, GLuint& glShaderF,
-                   const char * vertex_shader, const char * fragment_shader) {
-    std::cout<<std::endl<<"Shader Files: "<<vertex_shader<<" "<<fragment_shader<<std::endl;
+std::string showProgramInfo(GLuint program) {
+    int length;
+    std::stringstream str;
 
-    std::string strVert, strFrag;
-    if (!loadFile(vertex_shader,   strVert)) {
-        std::cerr<<"Vertex Shader Error : Unable to load file"<<std::endl;
-        return;
+    glGetObjectParameterivARB(program, GL_OBJECT_INFO_LOG_LENGTH_ARB, &length);
+    if (length > 1) {
+        std::vector<char> log(length + 1);
+        glGetProgramInfoLog(program, length, NULL, log.data());
+
+        std::string s(log.begin(), log.end());
+        str << s;
+    } else {
+        str << "No Program Info";
     }
 
-    if (!loadFile(fragment_shader, strFrag)) {
-        std::cerr<<"Fragment Shader Error : Unable to load file"<<std::endl;
-        return;
-    }
-
-    const GLchar * sourceVertex   = strVert.c_str();
-    const GLchar * sourceFragment = strFrag.c_str();
-
-    createProgramSource(glProgram, glShaderV, glShaderF, sourceVertex, sourceFragment);
+    return str.str();
 }
 
+std::string showShaderProgramInfo(GLuint program, GLuint vertex, GLuint fragment) {
+    std::stringstream str;
 
-void createProgramSource(GLuint& glProgram, GLuint& glShaderV, GLuint& glShaderF,
-                         const char * vertex_shader, const char * fragment_shader) {
-    GLuint program;
-    GLuint vShader, fShader;
+    str << "Vertex Shader    : " << showShaderInfo(vertex) << std::endl;
+    str << "Fragment Shader  : " << showShaderInfo(fragment) << std::endl;
+    str << "Shader Program   : " << showProgramInfo(program) << std::endl;
 
-    glProgram = 0;
-    glShaderV = 0;
-    glShaderF = 0;
+    return str.str();
+}
 
-    std::cout<<std::endl;
+bool createProgram(GLuint& program, GLuint& vertex, GLuint& fragment,
+                   const std::string& vertex_shader, const std::string& fragment_shader) {
+    std::cout << std::endl << "Shader Files: " << vertex_shader << " " << fragment_shader << std::endl;
 
-    vShader = glCreateShader(GL_VERTEX_SHADER);
-    fShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(vShader, 1, &vertex_shader, NULL);
-    glShaderSource(fShader, 1, &fragment_shader, NULL);
+    std::string strVert = loadFile(vertex_shader);
+    if (strVert.empty()) {
+        std::cerr << "Vertex Shader Error : Unable to load file" << std::endl;
+        return false;
+    }
 
+    std::string strFrag = loadFile(fragment_shader);
+    if (strFrag.empty()) {
+        std::cerr << "Fragment Shader Error : Unable to load file" << std::endl;
+        return false;
+    }
+
+    return createProgramSource(program, vertex, fragment, strVert, strFrag);
+}
+
+bool createProgramSource(GLuint& program, GLuint& vertex, GLuint& fragment,
+                             const std::string& vertex_shader, const std::string& fragment_shader) {
+    GLuint sProgram = 0;
+    GLuint vShader = 0;
+    GLuint fShader = 0;
     GLint result;
 
+    const GLchar* vertexSource = vertex_shader.c_str();
+    const GLchar* fragmentSource = fragment_shader.c_str();
+
+    vShader = glCreateShader(GL_VERTEX_SHADER);
+    if (!vShader) {
+        std::cerr << "Unable to Create Vertex Shader" << std::endl;
+        goto error;
+    }
+
+    fShader = glCreateShader(GL_FRAGMENT_SHADER);
+    if (!fShader) {
+        std::cerr << "Unable to Create Fragment Shader" << std::endl;
+        goto error;
+    }
+
+    glShaderSource(vShader, 1, &vertexSource, NULL);
     glCompileShader(vShader);
     glGetObjectParameterivARB(vShader, GL_COMPILE_STATUS, &result);
     if (!result) {
-        std::cerr<<"Vertex Shader Error : ";
-        showShaderError(vShader);
-        glDeleteShader(vShader);
-        return;
+        std::cerr << "Vertex Shader Error : " << showShaderError(vShader) << std::endl;
+        goto error;
     }
 
+    glShaderSource(fShader, 1, &fragmentSource, NULL);
     glCompileShader(fShader);
     glGetObjectParameterivARB(fShader, GL_COMPILE_STATUS, &result);
     if (!result) {
-        std::cerr<<"Fragment Shader Error : ";
-        showShaderError(fShader);
-        glDeleteShader(vShader);
-        glDeleteShader(fShader);
-        return;
+        std::cerr << "Fragment Shader Error : " << showShaderError(fShader) << std::endl;
+        goto error;
     }
 
-    program = glCreateProgram();
+    sProgram = glCreateProgram();
+    if (!sProgram) {
+        std::cerr << "Unable to Create Program" << std::endl;
+        goto error;
+    }
 
-    glAttachShader(program, vShader);
-    glAttachShader(program, fShader);
+    glAttachShader(sProgram, vShader);
+    glAttachShader(sProgram, fShader);
 
-    glLinkProgram(program);
+    glLinkProgram(sProgram);
 
-    glGetProgramiv(program, GL_LINK_STATUS, &result);
+    glGetProgramiv(sProgram, GL_LINK_STATUS, &result);
     if (!result) {
-        std::cerr<<"Linking Shader Error : ";
-        showShaderError(program);
-        showShaderInfo(program, vShader, fShader);
-        glDetachShader(program, vShader);
-        glDetachShader(program, fShader);
-        glDeleteShader(vShader);
-        glDeleteShader(fShader);
-        glDeleteProgram(program);
-        return;
+        std::cerr << "Linking Shader Error : " << showShaderError(sProgram) << std::endl;
+        std::cerr << "Shader Info : " << showShaderProgramInfo(sProgram, vShader, fShader) << std::endl;
+        goto error;
     }
 
     // show shader info
-    showShaderInfo(program, vShader, fShader);
+    std::cout << showShaderProgramInfo(sProgram, vShader, fShader) << std::endl;
 
-    glProgram = program;
-    glShaderV = vShader;
-    glShaderF = fShader;
+    program = sProgram;
+    vertex = vShader;
+    fragment = fShader;
+
+    return true;
+
+error:
+    releaseProgram(sProgram, vShader, fShader);
+
+    return false;
 }
 
-void releaseProgram(GLuint& glProgram, GLuint& glShaderV, GLuint& glShaderF) {
-    glDetachShader(glProgram, glShaderF);
-    glDetachShader(glProgram, glShaderV);
-    glDeleteShader(glShaderF);
-    glDeleteShader(glShaderV);
-    glDeleteProgram(glProgram);
+void releaseProgram(GLuint program, GLuint vertex, GLuint fragment) {
+    if (program) {
+        if (vertex) {
+            glDetachShader(program, vertex);
+        }
+        if (fragment) {
+            glDetachShader(program, fragment);
+        }
 
-    glProgram = 0;
-    glShaderV = 0;
-    glShaderF = 0;
+        glDeleteProgram(program);
+    }
+
+    if (vertex) {
+        glDeleteShader(vertex);
+    }
+
+    if (fragment) {
+        glDeleteShader(fragment);
+    }
 }
 
 } // namespace

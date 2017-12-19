@@ -3,14 +3,19 @@
 #define SHADER_H
 
 namespace Shader {
-int loadShader(const char *filename, std::string& data);
-void showShaderError(const GLuint shader);
-void showShaderInfo(const GLuint glProgram, const GLuint glShaderV, const GLuint glShaderF);
-void createProgram(GLuint& glProgram, GLuint& glShaderV, GLuint& glShaderF,
-                   const char * vertex_shader, const char * fragment_shader);
-void createProgramSource(GLuint& glProgram, GLuint& glShaderV, GLuint& glShaderF,
-                         const char * vertex_shader, const char * fragment_shader);
-void releaseProgram(GLuint& glProgram, GLuint& glShaderV, GLuint& glShaderF);
+    std::string loadShader(const std::string& filename);
+
+    std::string showShaderError(GLuint shader);
+    std::string showShaderInfo(GLuint shader);
+    std::string showShaderProgram(GLuint program);
+    std::string showShaderProgramInfo(GLuint program, GLuint vertex, GLuint fragment);
+
+    bool createProgram(GLuint& program, GLuint& vertex, GLuint& fragment,
+            const std::string& vertex_shader, const std::string& fragment_shader);
+    bool createProgramSource(GLuint& program, GLuint& vertex, GLuint& fragment,
+            const std::string& vertex_shader, const std::string& fragment_shader);
+
+    void releaseProgram(GLuint program, GLuint vertex, GLuint fragment);
 }
 
 #endif
