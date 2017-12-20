@@ -164,7 +164,7 @@ bool FontRenderer::init(const std::string& vertex_shader, const std::string& fra
         return false;
     }
 
-    if (!initShader()) {
+    if (!initShaderVariables()) {
         return false;
     }
 
@@ -176,23 +176,11 @@ bool FontRenderer::init() {
         return false;
     }
 
-    // Init shader
-    const char* vertex_src;
-    const char* fragment_src;
-    if (GLEW_VERSION_3_0) {
-        vertex_src = vertex_src_1_30;
-        fragment_src = fragment_src_1_30;
-    } else {
-        vertex_src = vertex_src_1_10;
-        fragment_src = fragment_src_1_10;
-    }
-
-    if (!Shader::createProgramSource(glProgram, glShaderV, glShaderF,
-                                     vertex_src, fragment_src)) {
+    if (!initShaderProgram()) {
         return false;
     }
 
-    if (!initShader()) {
+    if (!initShaderVariables()) {
         return false;
     }
 
@@ -215,7 +203,24 @@ bool FontRenderer::initObjects() {
     return true;
 }
 
-bool FontRenderer::initShader() {
+bool FontRenderer::initShaderProgram() {
+    if (Shader::createProgramSource(glProgram, glShaderV, glShaderF,
+                                     vertex_src_1_30, fragment_src_1_30)) {
+        std::cout << "Using GLSL 1.30 for Font Rendering" << std::endl;
+        return true;
+    }
+
+    // ok, try and use OpenGL 2.1 then
+    if (Shader::createProgramSource(glProgram, glShaderV, glShaderF,
+                                     vertex_src_1_10, fragment_src_1_10)) {
+        std::cout << "Using GLSL 1.10 for Font Rendering" << std::endl;
+        return true;
+    }
+
+    return false;
+}
+
+bool FontRenderer::initShaderVariables() {
     aCoord = glGetAttribLocation(glProgram, "coord");
     uTex   = glGetUniformLocation(glProgram, "tex");
     uColor = glGetUniformLocation(glProgram, "color");

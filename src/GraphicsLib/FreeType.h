@@ -67,7 +67,8 @@ public:
 
 private:
     bool initObjects();
-    bool initShader();
+    bool initShaderProgram();
+    bool initShaderVariables();
 
 public:
     GLuint glProgram, glShaderV, glShaderF;
