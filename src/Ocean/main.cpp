@@ -6,6 +6,7 @@
 #include "Vector.h"
 #include "FFT.h"
 #include "Ocean.h"
+#include "WorldPosition.h"
 #include "FPSCounter.h"
 
 static const unsigned int Width  = 640;
@@ -18,65 +19,6 @@ static const char FontFile[] = "data/font.ttf";
 static const FontSize_t FontSize = 24;
 
 const GLfloat White[4] = {1.f, 1.f, 1.f, 1.f};
-
-/*****************************************************************************
- * Utils
- ****************************************************************************/
-const float MotionVel   = 100.0;
-const float RotationVel = 0.005;
-
-struct Position {
-    glm::vec3 position;
-    glm::vec3 forward;
-    glm::vec3 right;
-    glm::vec3 up;
-    glm::vec3 lookat;
-    glm::vec3 angle;
-
-    void update();
-
-    void move_forward(float dt);
-    void move_back(float dt);
-    void move_left(float dt);
-    void move_right(float dt);
-    void move_up(float dt);
-    void move_down(float dt);
-};
-
-void Position::update() {
-    forward.x = sin(angle.x);
-    forward.y = 0.0;
-    forward.z = cos(angle.x);
-
-    right.x = -cos(angle.x);
-    right.y = 0.0;
-    right.z = sin(angle.x);
-
-    lookat.x = sin(angle.x) * cos(angle.y);
-    lookat.y = sin(angle.y);
-    lookat.z = cos(angle.x) * cos(angle.y);
-
-    up = glm::cross(right, lookat);
-}
-
-void Position::move_forward(float dt) {
-    position += forward * MotionVel * dt;
-}
-void Position::move_back(float dt)    {
-    position -= forward * MotionVel * dt;
-}
-void Position::move_left(float dt)    {
-    position -= right * MotionVel * dt;
-}
-void Position::move_right(float dt)   {
-    position += right * MotionVel * dt;
-}
-void Position::move_up(float dt)      {
-    position.y += MotionVel * dt;
-}
-void Position::move_down(float dt)    {
-    position.y -= MotionVel * dt;
-}
 
 /*****************************************************************************
  * Main variables
@@ -176,9 +118,9 @@ bool Init() {
     gView       = glm::mat4(1.0f);
     gModel      = glm::mat4(1.0f);
 
-    gPosition.position = glm::vec3(0.0f, 100.0f, 0.0f);
-    gPosition.angle = glm::vec3(2.4f, -0.3f, 0.0f);
-    gPosition.update();
+    gPosition.set_position(
+        glm::vec3(0.0f, 100.0f, 0.0f) // Position
+        , glm::vec3(2.4f, -0.3f, 0.0f)); // Look angle
 
     gLightPosition = glm::vec3(gPosition.position.x + 1000.0, 100.0, gPosition.position.z - 1000.0);
 
@@ -250,6 +192,8 @@ void Reshape(GLint w, GLint h) {
 
     glutWarpPointer(w/2, h/2);
     gProjection = glm::perspective(45.0f, (float)w / (float)h, 0.1f, 3000.0f);
+
+    gPosition.resize_screen(w, h);
 }
 
 void Keyboard(unsigned char key, int x, int y) {
@@ -314,15 +258,7 @@ void MouseMotion(int x, int y) {
     static bool wrap = false;
 
     if (!wrap) {
-        gPosition.angle.x -= (x - gWindowWidth / 2) * RotationVel;
-        gPosition.angle.y -= (y - gWindowHeight / 2) * RotationVel;
-
-        if (gPosition.angle.x<-M_PI)   gPosition.angle.x += M_PI * 2;
-        if (gPosition.angle.x>M_PI)    gPosition.angle.x -= M_PI * 2;
-        if (gPosition.angle.y<-M_PI/2) gPosition.angle.y = -M_PI / 2;
-        if (gPosition.angle.y>M_PI/2)  gPosition.angle.y = M_PI / 2;
-
-        gPosition.update();
+        gPosition.set_mouse_point(x, y);
 
         wrap = true;
         glutWarpPointer(gWindowWidth / 2, gWindowHeight / 2);
