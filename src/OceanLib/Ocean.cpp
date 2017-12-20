@@ -7,8 +7,10 @@
 #include "Ocean.h"
 
 static const float Epsilon = 1e-6f;
-static const char vertex_src_1_10[] = "data/ocean.vert";
-static const char fragment_src_1_10[] = "data/ocean.frag";
+static const char vertex_src_1_10[] = "data/ocean110.vert";
+static const char fragment_src_1_10[] = "data/ocean110.frag";
+static const char vertex_src_1_30[] = "data/ocean130.vert";
+static const char fragment_src_1_30[] = "data/ocean130.frag";
 
 static float uniformRandomVariable() {
     return (float)rand() / RAND_MAX;
@@ -143,16 +145,7 @@ int Ocean::init(const int N, const float A, const Vector2& w, const float length
                  indices_tr, GL_STATIC_DRAW);
 
 
-    // create shader
-    const char * vertex_src;
-    const char * fragment_src;
-    {
-        vertex_src = vertex_src_1_10;
-        fragment_src = fragment_src_1_10;
-    }
-    Shader::createProgram(glProgram, glShaderV, glShaderF,
-                          vertex_src, fragment_src);
-    if (!glProgram) {
+    if (!initShaderProgram()) {
         return 0;
     }
 
@@ -517,6 +510,22 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
 
 void Ocean::geometryType(GEOMETRY_TYPE t) {
     geometry_type = t;
+}
+
+int Ocean::initShaderProgram() {
+    if (Shader::createProgram(glProgram, glShaderV, glShaderF,
+                          vertex_src_1_30, fragment_src_1_30)) {
+        std::cout << "Using GLSL 1.30 for Ocean Rendering" << std::endl;
+        return 1;
+    }
+
+    if (Shader::createProgram(glProgram, glShaderV, glShaderF,
+                          vertex_src_1_10, fragment_src_1_10)) {
+        std::cout << "Using GLSL 1.10 for Ocean Rendering" << std::endl;
+        return 1;
+    }
+
+    return 0;
 }
 
 void Ocean::initAttributes() {

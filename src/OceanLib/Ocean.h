@@ -84,6 +84,7 @@ private:
     GLint aVertex, aNormal, aTexture;
     GLint uLightPos, uProjection, uView, uModel, uMVTranspInv;
 
+    int initShaderProgram();
     void initAttributes();
 
 public:
