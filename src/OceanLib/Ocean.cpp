@@ -32,6 +32,7 @@ Ocean::Ocean()
     , vertices(0)
     , indices_ln(0)
     , indices_tr(0)
+    , shaderVersion(0)
     , vao(0)
     , h_tilde(0)
     , h_tilde_slopex(0)
@@ -159,7 +160,7 @@ int Ocean::init(const int N, const float A, const Vector2& w, const float length
     uMVTranspInv = glGetUniformLocation(glProgram, "mv_transp_inv");
 
     // Create VAOs
-    if (GLEW_VERSION_3_0) {
+    if (shaderVersion >= 130) {
         glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
 
@@ -515,12 +516,14 @@ void Ocean::geometryType(GEOMETRY_TYPE t) {
 int Ocean::initShaderProgram() {
     if (Shader::createProgram(glProgram, glShaderV, glShaderF,
                           vertex_src_1_30, fragment_src_1_30)) {
+        shaderVersion = 130;
         std::cout << "Using GLSL 1.30 for Ocean Rendering" << std::endl;
         return 1;
     }
 
     if (Shader::createProgram(glProgram, glShaderV, glShaderF,
                           vertex_src_1_10, fragment_src_1_10)) {
+        shaderVersion = 110;
         std::cout << "Using GLSL 1.10 for Ocean Rendering" << std::endl;
         return 1;
     }

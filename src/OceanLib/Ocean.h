@@ -71,6 +71,9 @@ private:
     // number of indices to render
     unsigned int indices_ln_count, indices_tr_count;
 
+    // version of shader ar integer (i.e. 110 for 1.10)
+    int shaderVersion;
+
     // VAOs
     GLuint vao;
     
