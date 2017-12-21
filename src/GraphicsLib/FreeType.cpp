@@ -137,6 +137,7 @@ FontAtlas::FontAtlas(FT_Face face, FontSize_t height)
 FontAtlas::~FontAtlas() {
     if (tex) {
         glDeleteTextures(1, &tex);
+        tex = 0;
     }
 }
 
@@ -247,8 +248,17 @@ FontHandle_t FontRenderer::createAtlas(FontSize_t height) {
 }
 
 void FontRenderer::release() {
-    Shader::releaseProgram(glProgram, glShaderV, glShaderF);
-    glDeleteBuffers(1, &vbo);
+    fonts.clear();
+    if (vbo) {
+        glDeleteBuffers(1, &vbo);
+        vbo = 0;
+    }
+    if (glProgram) {
+        Shader::releaseProgram(glProgram, glShaderV, glShaderF);
+        glProgram = 0;
+        glShaderV = 0;
+        glShaderF = 0;
+    }
 }
 
 void FontRenderer::renderStart() {

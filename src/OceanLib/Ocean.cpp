@@ -173,23 +173,65 @@ int Ocean::init(const int N, const float A, const Vector2& w, const float length
 }
 
 void Ocean::release() {
-    if (h_tilde)        delete[] h_tilde;
-    if (h_tilde_slopex) delete[] h_tilde_slopex;
-    if (h_tilde_slopez) delete[] h_tilde_slopez;
-    if (h_tilde_dx)     delete[] h_tilde_dx;
-    if (h_tilde_dz)     delete[] h_tilde_dz;
-    if (fft)            delete fft;
-    if (vertices)       delete[] vertices;
-    if (indices_ln)     delete[] indices_ln;
-    if (indices_tr)     delete[] indices_tr;
+    if (h_tilde) {
+        delete[] h_tilde;
+        h_tilde = nullptr;
+    }
+    if (h_tilde_slopex) {
+        delete[] h_tilde_slopex;
+        h_tilde_slopex = nullptr;
+    }
+    if (h_tilde_slopez) {
+        delete[] h_tilde_slopez;
+        h_tilde_slopez = nullptr;
+    }
+    if (h_tilde_dx) {
+        delete[] h_tilde_dx;
+        h_tilde_dx = nullptr;
+    }
+    if (h_tilde_dz) {
+        delete[] h_tilde_dz;
+        h_tilde_dz = nullptr;
+    }
+    if (fft) {
+        delete fft;
+        fft = nullptr;
+    }
+    if (vertices) {
+        delete[] vertices;
+        vertices = nullptr;
+    }
+    if (indices_ln) {
+        delete[] indices_ln;
+        indices_ln = nullptr;
+    }
+    if (indices_tr) {
+        delete[] indices_tr;
+        indices_tr = nullptr;
+    }
 
-    glDeleteBuffers(1, &vertices_vbo);
-    glDeleteBuffers(1, &indices_ln_vbo);
-    glDeleteBuffers(1, &indices_tr_vbo);
+    if (vertices_vbo) {
+        glDeleteBuffers(1, &vertices_vbo);
+        vertices_vbo = 0;
+    }
+    if (indices_ln_vbo) {
+        glDeleteBuffers(1, &indices_ln_vbo);   
+        indices_ln_vbo = 0;
+    }
+    if (indices_tr_vbo) {
+        glDeleteBuffers(1, &indices_tr_vbo);
+        indices_tr_vbo = 0;
+    }
     if (vao) {
         glDeleteVertexArrays(1, &vao);
+        vao = 0;
     }
-    Shader::releaseProgram(glProgram, glShaderV, glShaderF);
+    if (glProgram) {
+        Shader::releaseProgram(glProgram, glShaderV, glShaderF);
+        glProgram = 0;
+        glShaderV = 0;
+        glShaderF = 0;
+    }
 }
 
 float Ocean::dispersion(int n_prime, int m_prime) {

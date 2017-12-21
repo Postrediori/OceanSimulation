@@ -137,6 +137,7 @@ bool Init() {
 
 void Deinit() {
     fr.release();
+    gOcean.release();
 }
 
 /*****************************************************************************
@@ -305,7 +306,6 @@ int main(int /*argc*/, char** /*argv*/) {
     glfwMakeContextCurrent(window);
     gladLoadGL();
 
-    atexit(Deinit);
     if (!Init()) {
         LOGE << "Initialization failed";
         status = EXIT_FAILURE;
@@ -322,6 +322,7 @@ int main(int /*argc*/, char** /*argv*/) {
     }
 
 finish:
+    Deinit();
     if (window) {
         glfwDestroyWindow(window);
     }
