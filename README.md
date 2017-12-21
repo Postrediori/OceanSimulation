@@ -13,7 +13,13 @@ Phillips spectrum and algorythm of inverse FFT.
 ## Prerequisites
 
 Compiling and running the sample project requires GCC, CMake, GNU Make
-as well as some graphics libraries installed.
+as well as FreeType library for text rendering. Most of the dependencies needed
+are bundled with the repository. This includes:
+
+* [glad](https://github.com/Dav1dde/glad) - OpenGL Function Loader.
+* [glfw](https://github.com/glfw/glfw) - Windowing and Input.
+* [glm](https://github.com/g-truc/glm) - OpenGL Mathematics.
+* [plog](https://github.com/SergiusTheBest/plog) - Logging library.
 
 ## Environment Setup
 
@@ -28,9 +34,6 @@ The following instructions are applied to these operating systems:
 sudo apt-get install -y \
     build-essential \
     cmake \
-    freeglut3-dev \
-    libglew-dev \
-    libglm-dev \
     libfreetype6-dev
 ```
 
@@ -41,16 +44,16 @@ The following instructions are applied to these operating systems:
 * Fedora >=22
 
 ```
-sudo dnf groupinstall -y "Development Tools"
+sudo dnf groupinstall -y "Development Tools" "Development Libraries"
 sudo dnf install -y \
     cmake \
-    freeglut-devel \
-    glew-devel \
-    glm-devel \
     freetype-devel
 ```
 
 ## Building Project
+
+Cloning the repository requires passing the `git clone --recursive` flag to load dependencies.
+The same can be done with `git clone` & `git submodule update --init`.
 
 The program is built with the commands below. CMake requires the directory 
 with the main project's `CMakeLists.txt` file as an argument. Then the CMake 
@@ -91,8 +94,10 @@ tree
     ├── data
     │   ├── font.ttf
     │   ├── ocean.cfg
-    │   ├── ocean.frag
-    │   └── ocean.vert
+    │   ├── ocean110.frag
+    │   └── ocean110.vert
+    │   ├── ocean130.frag
+    │   └── ocean130.vert
     └── Ocean
 
 2 directories, 5 files
@@ -131,15 +136,6 @@ the size of the initial patch.
 simulation of the ocean. The first parameter is the grid size and the second value
 stands for the length of the patch.
 
-## Controls
-
-* `F1` - Toggle fullscreen mode.
-* `F2` - Show/hide help on the screen.
-* `Mouse` - Control the view.
-* `Arrow keys` - Navigate the model.
-* `PgUp/PgDown` - Adjust vertical position of the viewer point.
-* `1` - Toggle wireframe mode.
-* `2` - Toggle solid surface ("normal") mode.
 
 ## Links
 
