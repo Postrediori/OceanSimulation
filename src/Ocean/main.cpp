@@ -101,8 +101,8 @@ bool Init() {
     // Other configurstions
     gFullscreen = false;
     gShowHelp = true;
-    gScaleX = 2.f / (float)gWindowWidth;
-    gScaleY = 2.f / (float)gWindowHeight;
+    gScaleX = 2.f / (float)Width;
+    gScaleY = 2.f / (float)Height;
 
     gElapsedTime = 0.0;
 
@@ -151,18 +151,18 @@ void Display() {
         fr.renderStart();
         fr.renderColor(White);
 
-        fr.renderText(a24, {-1+8*gScaleX, -1+225*gScaleY, gScaleX, gScaleY}, "1-2 ... Change rendering mode");
-        fr.renderText(a24, {-1+8*gScaleX, -1+200*gScaleY, gScaleX, gScaleY}, "Up/Down");
-        fr.renderText(a24, {-1+8*gScaleX, -1+175*gScaleY, gScaleX, gScaleY}, "Left/Right ... Move around");
-        fr.renderText(a24, {-1+8*gScaleX, -1+150*gScaleY, gScaleX, gScaleY}, "PgUp/PgDn");
+        //fr.renderText(a24, {-1+8*gScaleX, -1+225*gScaleY, gScaleX, gScaleY}, "1-2 ... Change rendering mode");
+        //fr.renderText(a24, {-1+8*gScaleX, -1+200*gScaleY, gScaleX, gScaleY}, "Up/Down");
+        //fr.renderText(a24, {-1+8*gScaleX, -1+175*gScaleY, gScaleX, gScaleY}, "Left/Right ... Move around");
+        //fr.renderText(a24, {-1+8*gScaleX, -1+150*gScaleY, gScaleX, gScaleY}, "PgUp/PgDn");
 
-        fr.renderText(a24, {-1+8*gScaleX, -1+125*gScaleY, gScaleX, gScaleY}, "Mouse ... Look around");
-        fr.renderText(a24, {-1+8*gScaleX, -1+100*gScaleY, gScaleX, gScaleY}, "F2 ... Show/hide help");
-        fr.renderText(a24, {-1+8*gScaleX, -1+75*gScaleY, gScaleX, gScaleY}, "F1 ... Toggle fullscreen on/off");
+        //fr.renderText(a24, {-1+8*gScaleX, -1+125*gScaleY, gScaleX, gScaleY}, "Mouse ... Look around");
+        //fr.renderText(a24, {-1+8*gScaleX, -1+100*gScaleY, gScaleX, gScaleY}, "F2 ... Show/hide help");
+        //fr.renderText(a24, {-1+8*gScaleX, -1+75*gScaleY, gScaleX, gScaleY}, "F1 ... Toggle fullscreen on/off");
 
         std::stringstream str;
-        str << "Mode : " << GeometryTypeNames[gGeometryType];
-        fr.renderText(a24, {-1+8*gScaleX, -1+50*gScaleY, gScaleX, gScaleY}, str.str());
+        //str << "Mode : " << GeometryTypeNames[gGeometryType];
+        //fr.renderText(a24, {-1+8*gScaleX, -1+50*gScaleY, gScaleX, gScaleY}, str.str());
 
         str.str(std::string());
         str << "FPS : " << std::setprecision(3) << gFPSCounter.fps;
@@ -182,7 +182,7 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
     }
 }
 
-void Idle() {
+void Update() {
     static double last_time = 0.0;
     double t = glfwGetTime();
     double dt = t - last_time;
@@ -234,7 +234,7 @@ int main(int /*argc*/, char** /*argv*/) {
 
         Display();
 
-        Idle();
+        Update();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
