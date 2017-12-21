@@ -8,7 +8,9 @@ macro(make_project_)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
     if(MSVC)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+        # Ignore 4055 for glad
+        # Ignore 4201 for glm
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /IGNORE:4055 /IGNORE:4201")
     else ()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -std=c++11")
     endif ()
@@ -16,9 +18,6 @@ macro(make_project_)
     if(MSVC)
         add_definitions(
             -D_USE_MATH_DEFINES
-            -DFREEGLUT_LIB_PRAGMAS=0
-            -DFREEGLUT_STATIC
-            -DGLEW_STATIC
             )
     endif()
     
@@ -38,22 +37,6 @@ macro(make_executable)
     make_project_()
     
     add_executable(${PROJECT} ${HEADERS} ${SOURCES} ${GLAD_SOURCES})
-    
-    include_directories(
-        ${PLOG_INCLUDE_DIR}
-        ${GLM_INCLUDE_DIR}
-        ${OPENGL_INCLUDE_DIR}
-        ${GLFW_INCLUDE_DIR}
-        ${GLAD_INCLUDE_DIR}
-        ${FREETYPE_INCLUDE_DIRS}
-        )
-        
-    target_link_libraries(${PROJECT}
-        ${OPENGL_LIBRARIES}
-        ${GLFW_LIBRARIES}
-        ${GLAD_LIBRARIES}
-        ${FREETYPE_LIBRARIES}
-        )
 
     add_definitions(${GLFW_DEFINITIONS})
     
