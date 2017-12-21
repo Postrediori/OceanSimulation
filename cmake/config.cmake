@@ -28,13 +28,13 @@ endmacro ()
 macro(make_executable)
     make_project_()
     
-    add_executable(${PROJECT} ${HEADERS} ${SOURCES})
+    add_executable(${PROJECT} ${HEADERS} ${SOURCES} ${GLAD_SOURCES})
     
     include_directories(
         ${PLOG_INCLUDE_DIR}
         ${OPENGL_INCLUDE_DIR}
-        ${FREEGLUT_INCLUDE_DIRS}
-        ${GLEW_INCLUDE_DIRS}
+        ${GLFW_INCLUDE_DIR}
+        ${GLAD_INCLUDE_DIR}
         ${GLM_INCLUDE_DIRS}
         ${FREETYPE_INCLUDE_DIRS}
         )
@@ -42,8 +42,8 @@ macro(make_executable)
     target_link_libraries(${PROJECT}
         ${PLOG_LIBRARY}
         ${OPENGL_LIBRARIES}
-        ${FREEGLUT_LIBRARIES}
-        ${GLEW_LIBRARIES}
+        ${GLFW_LIBRARIES}
+        ${GLAD_LIBRARIES}
         ${FREETYPE_LIBRARIES}
         )
     
@@ -55,6 +55,8 @@ macro(make_executable)
             -DGLEW_STATIC
             )
     endif()
+
+    add_definitions(${GLFW_DEFINITIONS})
     
     set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/bundle/${PROJECT}")
     install(
@@ -67,15 +69,13 @@ endmacro()
 
 macro(make_library)
     make_project_()
-    add_library(${PROJECT} STATIC ${HEADERS} ${SOURCES})
+    add_library(${PROJECT} STATIC ${HEADERS} ${SOURCES} ${GLAD_SOURCES})
     target_include_directories(${PROJECT} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
     include_directories(
         ${PLOG_INCLUDE_DIR}
-        )
-
-    target_link_libraries(${PROJECT}
-        ${PLOG_LIBRARY}
+        ${GLAD_INCLUDE_DIR}
+        ${GLFW_INCLUDE_DIR}
         )
 
     if (NOT SOURCES)
