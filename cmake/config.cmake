@@ -13,6 +13,15 @@ macro(make_project_)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -std=c++11")
     endif ()
 
+    if(MSVC)
+        add_definitions(
+            -D_USE_MATH_DEFINES
+            -DFREEGLUT_LIB_PRAGMAS=0
+            -DFREEGLUT_STATIC
+            -DGLEW_STATIC
+            )
+    endif()
+    
     if (NOT DEFINED HEADERS)
         file(GLOB HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
     endif ()
@@ -32,29 +41,19 @@ macro(make_executable)
     
     include_directories(
         ${PLOG_INCLUDE_DIR}
+        ${GLM_INCLUDE_DIR}
         ${OPENGL_INCLUDE_DIR}
         ${GLFW_INCLUDE_DIR}
         ${GLAD_INCLUDE_DIR}
-        ${GLM_INCLUDE_DIRS}
         ${FREETYPE_INCLUDE_DIRS}
         )
         
     target_link_libraries(${PROJECT}
-        ${PLOG_LIBRARY}
         ${OPENGL_LIBRARIES}
         ${GLFW_LIBRARIES}
         ${GLAD_LIBRARIES}
         ${FREETYPE_LIBRARIES}
         )
-    
-    if(MSVC)
-        add_definitions(
-            -D_USE_MATH_DEFINES
-            -DFREEGLUT_LIB_PRAGMAS=0
-            -DFREEGLUT_STATIC
-            -DGLEW_STATIC
-            )
-    endif()
 
     add_definitions(${GLFW_DEFINITIONS})
     
@@ -74,6 +73,7 @@ macro(make_library)
 
     include_directories(
         ${PLOG_INCLUDE_DIR}
+        ${GLM_INCLUDE_DIR}
         ${GLAD_INCLUDE_DIR}
         ${GLFW_INCLUDE_DIR}
         )
