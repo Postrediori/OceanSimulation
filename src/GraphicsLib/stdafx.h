@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -18,3 +17,5 @@
 #ifdef _MSC_VER
 # pragma warning(disable: 4786)
 #endif
+
+#include <plog/Log.h>

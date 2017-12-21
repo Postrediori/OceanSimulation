@@ -56,7 +56,7 @@ FontAtlas::FontAtlas(FT_Face face, FontSize_t height)
     // Find minimum size for a texture holding all visible ASCII characters
     for (int i=FirstDisplayedCharacter; i<CharacterCount; i++) {
         if (FT_Load_Char(face, i, FT_LOAD_RENDER)) {
-            std::cerr<<"Loading character "<<i<<" failed!"<<std::endl;
+            LOGE << "Loading character " << i << " failed!";
             continue;
         }
 
@@ -98,7 +98,7 @@ FontAtlas::FontAtlas(FT_Face face, FontSize_t height)
 
     for (int i=FirstDisplayedCharacter; i<CharacterCount; i++) {
         if (FT_Load_Char(face, i, FT_LOAD_RENDER)) {
-            std::cerr<<"Loading character "<<i<<" failed!"<<std::endl;
+            LOGE << "Loading character " << i << " failed!";
             continue;
         }
 
@@ -131,7 +131,7 @@ FontAtlas::FontAtlas(FT_Face face, FontSize_t height)
         ox += g->bitmap.width + 1;
     }
 
-    std::cout<<"Generated a "<<w<<"x"<<h<<" ("<<(w*h/1024)<<" kb) texture atlas"<<std::endl;
+    LOGD << "Generated a " << w << "x" << h << " (" << (w * h / 1024) << " kb) texture atlas";
 }
 
 FontAtlas::~FontAtlas() {
@@ -206,14 +206,14 @@ bool FontRenderer::initObjects() {
 bool FontRenderer::initShaderProgram() {
     if (Shader::createProgramSource(glProgram, glShaderV, glShaderF,
                                      vertex_src_1_30, fragment_src_1_30)) {
-        std::cout << "Using GLSL 1.30 for Font Rendering" << std::endl;
+        LOGI << "Using GLSL 1.30 for Font Rendering";
         return true;
     }
 
     // ok, try and use OpenGL 2.1 then
     if (Shader::createProgramSource(glProgram, glShaderV, glShaderF,
                                      vertex_src_1_10, fragment_src_1_10)) {
-        std::cout << "Using GLSL 1.10 for Font Rendering" << std::endl;
+        LOGI << "Using GLSL 1.10 for Font Rendering";
         return true;
     }
 

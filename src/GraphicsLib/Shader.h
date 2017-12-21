@@ -8,7 +8,6 @@ namespace Shader {
     std::string showShaderError(GLuint shader);
     std::string showShaderInfo(GLuint shader);
     std::string showShaderProgram(GLuint program);
-    std::string showShaderProgramInfo(GLuint program, GLuint vertex, GLuint fragment);
 
     bool createProgram(GLuint& program, GLuint& vertex, GLuint& fragment,
             const std::string& vertex_shader, const std::string& fragment_shader);

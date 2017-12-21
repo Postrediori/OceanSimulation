@@ -20,6 +20,8 @@ static const FontSize_t FontSize = 24;
 
 const GLfloat White[4] = {1.f, 1.f, 1.f, 1.f};
 
+static plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
+
 /*****************************************************************************
  * Main variables
  ****************************************************************************/
@@ -56,19 +58,19 @@ static const char * const GeometryTypeNames[] = {
 bool Init() {
     srand(time(0));
 
-    std::cout<<"OpenGL Renderer  : "<<glGetString(GL_RENDERER)<<std::endl;
-    std::cout<<"OpenGL Vendor    : "<<glGetString(GL_VENDOR)<<std::endl;
-    std::cout<<"OpenGL Version   : "<<glGetString(GL_VERSION)<<std::endl;
-    std::cout<<"GLSL Version     : "<<glGetString(GL_SHADING_LANGUAGE_VERSION)<<std::endl;
-    std::cout<<"GLEW Version     : "<<glewGetString(GLEW_VERSION)<<std::endl;
-    std::cout<<"FreeType Version : "<<FREETYPE_MAJOR<<"."<<FREETYPE_MINOR<<"."<<FREETYPE_PATCH<<std::endl;
+    LOGI << "OpenGL Renderer  : " << glGetString(GL_RENDERER);
+    LOGI << "OpenGL Vendor    : " << glGetString(GL_VENDOR);
+    LOGI << "OpenGL Version   : " << glGetString(GL_VERSION);
+    LOGI << "GLSL Version     : " << glGetString(GL_SHADING_LANGUAGE_VERSION);
+    LOGI << "GLEW Version     : " << glewGetString(GLEW_VERSION);
+    LOGI << "FreeType Version : " << FREETYPE_MAJOR << "." << FREETYPE_MINOR << "." << FREETYPE_PATCH;
 
     // Init GLEW
     glewExperimental = GL_TRUE;
 
     GLenum err = glewInit();
-    if (err!=GLEW_OK) {
-        std::cerr << "GL Loading Error: " << glewGetErrorString(err) << std::endl;
+    if (err != GLEW_OK) {
+        LOGE << "GL Loading Error: " << glewGetErrorString(err);
         return false;
     }
 
@@ -271,6 +273,8 @@ void MouseMotion(int x, int y) {
  * Main program
  ****************************************************************************/
 int main(int argc, char *argv[]) {
+    plog::init(plog::debug, &consoleAppender);
+
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DEPTH | GLUT_RGBA | GLUT_DOUBLE);
     glutInitWindowSize(Width, Height);
@@ -279,7 +283,7 @@ int main(int argc, char *argv[]) {
 
     atexit(Deinit);
     if (!Init()) {
-        std::cerr << "Initialization failed" << std::endl;
+        LOGE << "Initialization failed";
         return 1;
     }
 

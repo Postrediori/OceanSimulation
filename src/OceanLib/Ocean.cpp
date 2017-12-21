@@ -517,14 +517,14 @@ int Ocean::initShaderProgram() {
     if (Shader::createProgram(glProgram, glShaderV, glShaderF,
                           vertex_src_1_30, fragment_src_1_30)) {
         shaderVersion = 130;
-        std::cout << "Using GLSL 1.30 for Ocean Rendering" << std::endl;
+        LOGI << "Using GLSL 1.30 for Ocean Rendering";
         return 1;
     }
 
     if (Shader::createProgram(glProgram, glShaderV, glShaderF,
                           vertex_src_1_10, fragment_src_1_10)) {
         shaderVersion = 110;
-        std::cout << "Using GLSL 1.10 for Ocean Rendering" << std::endl;
+        LOGI << "Using GLSL 1.10 for Ocean Rendering";
         return 1;
     }
 

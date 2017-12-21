@@ -6,7 +6,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <iostream>
 #include <iomanip>
 #include <fstream>
 #include <sstream>
@@ -19,3 +18,6 @@
 #ifdef _MSC_VER
 # pragma warning(disable: 4786)
 #endif
+
+#include <plog/Log.h>
+#include <plog/Appenders/ConsoleAppender.h>
