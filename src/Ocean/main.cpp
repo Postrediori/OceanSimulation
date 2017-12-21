@@ -101,8 +101,12 @@ bool Init() {
     // Other configurstions
     gFullscreen = false;
     gShowHelp = true;
+
+    gWindowWidth = Width;
+    gWindowHeight = Height;
     gScaleX = 2.f / (float)Width;
     gScaleY = 2.f / (float)Height;
+    gPosition.resize_screen(Width, Height);
 
     gElapsedTime = 0.0;
 
@@ -111,8 +115,8 @@ bool Init() {
     gModel      = glm::mat4(1.0f);
 
     gPosition.set_position(
-        glm::vec3(0.0f, 100.0f, 0.0f) // Position
-        , glm::vec3(2.4f, -0.3f, 0.0f)); // Look angle
+        glm::vec3(0.0f, 100.0f, 0.0f), // Position
+        glm::vec3(2.4f, -0.3f, 0.0f)); // Look angle
 
     gLightPosition = glm::vec3(gPosition.position.x + 1000.0, 100.0, gPosition.position.z - 1000.0);
 
@@ -145,24 +149,25 @@ void Display() {
 
     gView = glm::lookAt(gPosition.position, gPosition.position + gPosition.lookat, gPosition.up);
 
+    gOcean.geometryType(gGeometryType);
     gOcean.render(gElapsedTime, gLightPosition, gProjection, gView, gModel, true);
 
     if (gShowHelp) {
         fr.renderStart();
         fr.renderColor(White);
 
-        //fr.renderText(a24, {-1+8*gScaleX, -1+225*gScaleY, gScaleX, gScaleY}, "1-2 ... Change rendering mode");
-        //fr.renderText(a24, {-1+8*gScaleX, -1+200*gScaleY, gScaleX, gScaleY}, "Up/Down");
-        //fr.renderText(a24, {-1+8*gScaleX, -1+175*gScaleY, gScaleX, gScaleY}, "Left/Right ... Move around");
-        //fr.renderText(a24, {-1+8*gScaleX, -1+150*gScaleY, gScaleX, gScaleY}, "PgUp/PgDn");
+        fr.renderText(a24, {-1+8*gScaleX, -1+225*gScaleY, gScaleX, gScaleY}, "1-2 ... Change rendering mode");
+        fr.renderText(a24, {-1+8*gScaleX, -1+200*gScaleY, gScaleX, gScaleY}, "Up/Down");
+        fr.renderText(a24, {-1+8*gScaleX, -1+175*gScaleY, gScaleX, gScaleY}, "Left/Right ... Move around");
+        fr.renderText(a24, {-1+8*gScaleX, -1+150*gScaleY, gScaleX, gScaleY}, "PgUp/PgDn");
 
-        //fr.renderText(a24, {-1+8*gScaleX, -1+125*gScaleY, gScaleX, gScaleY}, "Mouse ... Look around");
-        //fr.renderText(a24, {-1+8*gScaleX, -1+100*gScaleY, gScaleX, gScaleY}, "F2 ... Show/hide help");
-        //fr.renderText(a24, {-1+8*gScaleX, -1+75*gScaleY, gScaleX, gScaleY}, "F1 ... Toggle fullscreen on/off");
+        fr.renderText(a24, {-1+8*gScaleX, -1+125*gScaleY, gScaleX, gScaleY}, "Mouse ... Look around");
+        fr.renderText(a24, {-1+8*gScaleX, -1+100*gScaleY, gScaleX, gScaleY}, "F2 ... Show/hide help");
+        fr.renderText(a24, {-1+8*gScaleX, -1+75*gScaleY, gScaleX, gScaleY}, "F1 ... Toggle fullscreen on/off");
 
         std::stringstream str;
-        //str << "Mode : " << GeometryTypeNames[gGeometryType];
-        //fr.renderText(a24, {-1+8*gScaleX, -1+50*gScaleY, gScaleX, gScaleY}, str.str());
+        str << "Mode : " << GeometryTypeNames[gGeometryType];
+        fr.renderText(a24, {-1+8*gScaleX, -1+50*gScaleY, gScaleX, gScaleY}, str.str());
 
         str.str(std::string());
         str << "FPS : " << std::setprecision(3) << gFPSCounter.fps;
@@ -177,12 +182,63 @@ void Error(int /*error*/, const char* description) {
 }
 
 void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*mods*/) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
+    if (action == GLFW_PRESS) {
+        switch (key) {
+        case GLFW_KEY_ESCAPE:
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
+            break;
+
+        case GLFW_KEY_F1:
+            gFullscreen = !gFullscreen;
+            if (gFullscreen) {
+                GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+                const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+                glfwSetWindowMonitor(window, monitor, 0, 0,
+                    mode->width, mode->height, mode->refreshRate);
+            }
+            else {
+                glfwSetWindowMonitor(window, nullptr, 0, 0,
+                    Width, Height, GLFW_DONT_CARE);
+            }
+            break;
+
+        case GLFW_KEY_1:
+            gGeometryType = GEOMETRY_LINES;
+            break;
+
+        case GLFW_KEY_2:
+            gGeometryType = GEOMETRY_SOLID;
+            break;
+
+        case GLFW_KEY_F2:
+            gShowHelp = !gShowHelp;
+            break;
+        }
     }
 }
 
-void Update() {
+void Reshape(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
+    gWindowWidth = width;
+    gWindowHeight = height;
+    gScaleX = 2.f / (float)width;
+    gScaleY = 2.f / (float)height;
+    gPosition.resize_screen(width, height);
+}
+
+void MousePosition(GLFWwindow* window, double x, double y) {
+    static bool warp = false;
+
+    if (!warp) {
+        gPosition.set_mouse_point(x, y);
+        glfwSetCursorPos(window, gWindowWidth / 2, gWindowHeight / 2);
+        warp = true;
+    } else {
+        warp = false;
+    }
+}
+
+void Update(GLFWwindow* window) {
     static double last_time = 0.0;
     double t = glfwGetTime();
     double dt = t - last_time;
@@ -190,33 +246,61 @@ void Update() {
 
     gElapsedTime += dt * 0.5;
 
-    gLightPosition = glm::vec3(gPosition.position.x + 1000.0, 100.0, gPosition.position.z - 1000.0);
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        gPosition.move_forward(dt);
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        gPosition.move_back(dt);
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+        gPosition.move_left(dt);
+    }
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        gPosition.move_right(dt);
+    }
+    if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
+        gPosition.move_up(dt);
+    }
+    if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
+        gPosition.move_down(dt);
+    }
+
+    gLightPosition = glm::vec3(gPosition.position.x + 1000.0,
+        100.0, gPosition.position.z - 1000.0);
 }
 
 /*****************************************************************************
  * Main program
  ****************************************************************************/
 int main(int /*argc*/, char** /*argv*/) {
+    int status = EXIT_SUCCESS;
     plog::init(plog::debug, &consoleAppender);
 
     glfwSetErrorCallback(Error);
 
     if (!glfwInit()) {
         LOGE << "Failed to load GLFW";
-        return 1;
+        return EXIT_FAILURE;
     }
 
     LOGI << "Init window context with OpenGL 2.0";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     auto window = glfwCreateWindow(Width, Height, Title, nullptr, nullptr);
     if (!window) {
-        LOGE << "Created OpenGL 2.0 Context";
-        return 1;
+        LOGE << "Unable to Create OpenGL 2.0 Context";
+        status = EXIT_FAILURE;
+        goto finish;
     }
 
     glfwSetKeyCallback(window, Keyboard);
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
+
+    glfwSetCursorPosCallback(window, MousePosition);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
+    glfwSetWindowSizeCallback(window, Reshape);
 
     glfwMakeContextCurrent(window);
     gladLoadGL();
@@ -224,24 +308,24 @@ int main(int /*argc*/, char** /*argv*/) {
     atexit(Deinit);
     if (!Init()) {
         LOGE << "Initialization failed";
-        return 1;
+        status = EXIT_FAILURE;
+        goto finish;
     }
 
     while (!glfwWindowShouldClose(window)) {
-        int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
-        glViewport(0, 0, width, height);
-
         Display();
 
-        Update();
+        Update(window);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    glfwDestroyWindow(window);
+finish:
+    if (window) {
+        glfwDestroyWindow(window);
+    }
     glfwTerminate();
 
-    return 0;
+    return status;
 }

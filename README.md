@@ -93,14 +93,14 @@ tree
 └── Ocean
     ├── data
     │   ├── font.ttf
-    │   ├── ocean.cfg
     │   ├── ocean110.frag
-    │   └── ocean110.vert
+    │   ├── ocean110.vert
     │   ├── ocean130.frag
-    │   └── ocean130.vert
+    │   ├── ocean130.vert
+    │   └── ocean.cfg
     └── Ocean
 
-2 directories, 5 files
+2 directories, 7 files
 cd Ocean
 ./Ocean
 ```
@@ -136,6 +136,15 @@ the size of the initial patch.
 simulation of the ocean. The first parameter is the grid size and the second value
 stands for the length of the patch.
 
+## Controls
+
+* `F1` - Toggle fullscreen mode.
+* `F2` - Show/hide help on the screen.
+* `Mouse` - Control the view.
+* `Arrow keys` - Navigate the model.
+* `PgUp/PgDown` - Adjust vertical position of the viewer point.
+* `1` - Toggle wireframe mode.
+* `2` - Toggle solid surface ("normal") mode.
 
 ## Links
 

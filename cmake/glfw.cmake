@@ -6,3 +6,4 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/3rdparty/glfw)
 
 set(GLFW_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/3rdparty/glfw/include)
 set(GLFW_DEFINITIONS -DGLFW_INCLUDE_NONE)
+set(GLFW_LIBRARIES ${GLFW_LIBRARIES} glfw)
