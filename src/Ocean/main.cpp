@@ -183,7 +183,7 @@ void Display() {
     }
 }
 
-void Reshape(GLFWwindow* window, int width, int height) {
+void Reshape(GLFWwindow* /*window*/, int width, int height) {
     glViewport(0, 0, width, height);
     gWindowWidth = width;
     gWindowHeight = height;
