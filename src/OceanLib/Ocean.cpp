@@ -514,6 +514,11 @@ void Ocean::geometryType(GEOMETRY_TYPE t) {
 }
 
 int Ocean::initShaderProgram() {
+#ifdef __APPLE__
+    // Use OpenGL 2.1 shader
+    return Shader::createProgram(glProgram, glShaderV, glShaderF,
+                                 vertex_src_1_10, fragment_src_1_10);
+#else
     if (Shader::createProgram(glProgram, glShaderV, glShaderF,
                           vertex_src_1_30, fragment_src_1_30)) {
         shaderVersion = 130;
@@ -529,6 +534,7 @@ int Ocean::initShaderProgram() {
     }
 
     return 0;
+#endif
 }
 
 void Ocean::initAttributes() {
