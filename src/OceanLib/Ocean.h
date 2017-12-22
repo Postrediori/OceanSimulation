@@ -33,6 +33,35 @@ enum GEOMETRY_TYPE {
  * Ocean
  ****************************************************************************/
 class Ocean {
+public:
+    Ocean();
+    ~Ocean();
+
+    int init(const int N, const float A, const Vector2& w, const float length, const int ocean_repeat);
+    void release();
+
+    // deep water
+    float dispersion(int n_prime, int m_prime);
+
+    // Phillips spectrum
+    float phillips(int n_prime, int m_prime);
+
+    Complex hTilde_0(int n_prime, int m_prime);
+    Complex hTilde(float t, int n_prime, int m_prime);
+    complex_vector_norm h_D_and_n(Vector2 x, float t);
+    void evaluateWaves(float t);
+    void evaluateWavesFFT(float t);
+
+    void render(float t, const glm::vec3& light_pos,
+                const glm::mat4& proj, const glm::mat4& view, const glm::mat4& model,
+                bool use_fft);
+
+    void geometryType(GEOMETRY_TYPE t);
+
+private:
+    int initShaderProgram();
+    void initAttributes();
+
 private:
     GEOMETRY_TYPE geometry_type;
 
@@ -86,34 +115,6 @@ private:
     // attributes and uniforms
     GLint aVertex, aNormal, aTexture;
     GLint uLightPos, uProjection, uView, uModel, uMVTranspInv;
-
-    int initShaderProgram();
-    void initAttributes();
-
-public:
-    Ocean();
-    virtual ~Ocean();
-
-    int init(const int N, const float A, const Vector2& w, const float length, const int ocean_repeat);
-    void release();
-
-    // deep water
-    float dispersion(int n_prime, int m_prime);
-
-    // Phillips spectrum
-    float phillips(int n_prime, int m_prime);
-
-    Complex hTilde_0(int n_prime, int m_prime);
-    Complex hTilde(float t, int n_prime, int m_prime);
-    complex_vector_norm h_D_and_n(Vector2 x, float t);
-    void evaluateWaves(float t);
-    void evaluateWavesFFT(float t);
-
-    void render(float t, const glm::vec3& light_pos,
-                const glm::mat4& proj, const glm::mat4& view, const glm::mat4& model,
-                bool use_fft);
-
-    void geometryType(GEOMETRY_TYPE t);
 };
 
 #endif /* OCEAN_H */
