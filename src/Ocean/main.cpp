@@ -162,6 +162,10 @@ void Deinit() {
     gOcean.release();
 }
 
+void Error(int /*error*/, const char* description) {
+    LOGE << "Error: " << description;
+}
+
 /*****************************************************************************
  * GLUT Callback functions
  ****************************************************************************/
@@ -200,8 +204,13 @@ void Display() {
     }
 }
 
-void Error(int /*error*/, const char* description) {
-    LOGE << "Error: " << description;
+void Reshape(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
+    gWindowWidth = width;
+    gWindowHeight = height;
+    gScaleX = 2.f / (float)width;
+    gScaleY = 2.f / (float)height;
+    gPosition.resize_screen(width, height);
 }
 
 void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*mods*/) {
@@ -225,6 +234,10 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
             }
             break;
 
+        case GLFW_KEY_F2:
+            gShowHelp = !gShowHelp;
+            break;
+
         case GLFW_KEY_1:
             gGeometryType = GEOMETRY_LINES;
             break;
@@ -232,21 +245,8 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
         case GLFW_KEY_2:
             gGeometryType = GEOMETRY_SOLID;
             break;
-
-        case GLFW_KEY_F2:
-            gShowHelp = !gShowHelp;
-            break;
         }
     }
-}
-
-void Reshape(GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
-    gWindowWidth = width;
-    gWindowHeight = height;
-    gScaleX = 2.f / (float)width;
-    gScaleY = 2.f / (float)height;
-    gPosition.resize_screen(width, height);
 }
 
 void MousePosition(GLFWwindow* window, double x, double y) {
