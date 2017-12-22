@@ -34,6 +34,7 @@ The following instructions are applied to these operating systems:
 sudo apt-get install -y \
     build-essential \
     cmake \
+    xorg-dev \
     libfreetype6-dev
 ```
 
