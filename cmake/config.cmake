@@ -54,6 +54,8 @@ macro(make_library)
     add_library(${PROJECT} STATIC ${HEADERS} ${SOURCES} ${GLAD_SOURCES})
     target_include_directories(${PROJECT} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
+    set_target_properties(${PROJECT} PROPERTIES FOLDER Libraries)
+
     include_directories(
         ${PLOG_INCLUDE_DIR}
         ${GLM_INCLUDE_DIR}
