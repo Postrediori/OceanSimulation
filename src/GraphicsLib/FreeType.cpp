@@ -205,6 +205,11 @@ bool FontRenderer::initObjects() {
 }
 
 bool FontRenderer::initShaderProgram() {
+#ifdef __APPLE__
+    // Use OpenGL 2.1 shader
+    return Shader::createProgramSource(glProgram, glShaderV, glShaderF,
+                                       vertex_src_1_10, fragment_src_1_10);
+#else
     if (Shader::createProgramSource(glProgram, glShaderV, glShaderF,
                                      vertex_src_1_30, fragment_src_1_30)) {
         LOGI << "Using GLSL 1.30 for Font Rendering";
@@ -219,6 +224,7 @@ bool FontRenderer::initShaderProgram() {
     }
 
     return false;
+#endif
 }
 
 bool FontRenderer::initShaderVariables() {
