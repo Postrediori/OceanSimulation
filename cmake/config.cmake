@@ -37,7 +37,7 @@ endmacro ()
 macro(make_executable)
     make_project_()
     
-    add_executable(${PROJECT} ${HEADERS} ${SOURCES} ${GLAD_SOURCES})
+    add_executable(${PROJECT} ${HEADERS} ${SOURCES})
 
     add_definitions(${GLFW_DEFINITIONS})
     
@@ -52,7 +52,7 @@ endmacro()
 
 macro(make_library)
     make_project_()
-    add_library(${PROJECT} STATIC ${HEADERS} ${SOURCES} ${GLAD_SOURCES})
+    add_library(${PROJECT} STATIC ${HEADERS} ${SOURCES})
     target_include_directories(${PROJECT} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
     set_target_properties(${PROJECT} PROPERTIES FOLDER Libraries)
