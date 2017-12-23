@@ -45,7 +45,10 @@ The following instructions are applied to these operating systems:
 * Fedora >=22
 
 ```
-sudo dnf groupinstall -y "Development Tools" "Development Libraries"
+sudo dnf groupinstall -y \
+    "Development Tools" \
+    "Development Libraries" \
+    "X Software Development"
 sudo dnf install -y \
     cmake \
     freetype-devel

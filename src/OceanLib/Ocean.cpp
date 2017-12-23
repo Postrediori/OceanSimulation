@@ -28,24 +28,61 @@ static Complex gaussianRandomVariable() {
 }
 
 Ocean::Ocean()
-    : g(9.81f)
-    , vertices(0)
-    , indices_ln(0)
-    , indices_tr(0)
-    , shaderVersion(0)
-    , vao(0)
+    : geometry_type(GEOMETRY_SOLID)
+    , g(9.81f)
     , h_tilde(0)
     , h_tilde_slopex(0)
     , h_tilde_slopez(0)
     , h_tilde_dx(0)
     , h_tilde_dz(0)
-    , fft(0)
-    , geometry_type(GEOMETRY_SOLID) {
+    , fft(nullptr)
+    , vertices(nullptr)
+    , indices_ln(nullptr)
+    , indices_tr(nullptr)
+    , shaderVersion(0)
+    , vao(0) {
     //
 }
 
 Ocean::~Ocean() {
     release();
+
+    if (h_tilde) {
+        delete[] h_tilde;
+        h_tilde = nullptr;
+    }
+    if (h_tilde_slopex) {
+        delete[] h_tilde_slopex;
+        h_tilde_slopex = nullptr;
+    }
+    if (h_tilde_slopez) {
+        delete[] h_tilde_slopez;
+        h_tilde_slopez = nullptr;
+    }
+    if (h_tilde_dx) {
+        delete[] h_tilde_dx;
+        h_tilde_dx = nullptr;
+    }
+    if (h_tilde_dz) {
+        delete[] h_tilde_dz;
+        h_tilde_dz = nullptr;
+    }
+    if (fft) {
+        delete fft;
+        fft = nullptr;
+    }
+    if (vertices) {
+        delete[] vertices;
+        vertices = nullptr;
+    }
+    if (indices_ln) {
+        delete[] indices_ln;
+        indices_ln = nullptr;
+    }
+    if (indices_tr) {
+        delete[] indices_tr;
+        indices_tr = nullptr;
+    }
 }
 
 int Ocean::init(const int N, const float A, const Vector2& w, const float length, int ocean_repeat) {
@@ -173,43 +210,6 @@ int Ocean::init(const int N, const float A, const Vector2& w, const float length
 }
 
 void Ocean::release() {
-    if (h_tilde) {
-        delete[] h_tilde;
-        h_tilde = nullptr;
-    }
-    if (h_tilde_slopex) {
-        delete[] h_tilde_slopex;
-        h_tilde_slopex = nullptr;
-    }
-    if (h_tilde_slopez) {
-        delete[] h_tilde_slopez;
-        h_tilde_slopez = nullptr;
-    }
-    if (h_tilde_dx) {
-        delete[] h_tilde_dx;
-        h_tilde_dx = nullptr;
-    }
-    if (h_tilde_dz) {
-        delete[] h_tilde_dz;
-        h_tilde_dz = nullptr;
-    }
-    if (fft) {
-        delete fft;
-        fft = nullptr;
-    }
-    if (vertices) {
-        delete[] vertices;
-        vertices = nullptr;
-    }
-    if (indices_ln) {
-        delete[] indices_ln;
-        indices_ln = nullptr;
-    }
-    if (indices_tr) {
-        delete[] indices_tr;
-        indices_tr = nullptr;
-    }
-
     if (vertices_vbo) {
         glDeleteBuffers(1, &vertices_vbo);
         vertices_vbo = 0;

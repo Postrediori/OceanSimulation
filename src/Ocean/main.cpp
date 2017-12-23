@@ -8,6 +8,7 @@
 #include "Ocean.h"
 #include "WorldPosition.h"
 #include "FPSCounter.h"
+#include "GlFormatter.h"
 
 static const unsigned int Width  = 640;
 static const unsigned int Height = 480;
@@ -20,34 +21,12 @@ static const FontSize_t FontSize = 24;
 
 const GLfloat White[4] = {1.f, 1.f, 1.f, 1.f};
 
-/*****************************************************************************
- * Logger
- ****************************************************************************/
-namespace plog {
-    class GlFormatter {
-    public:
-        static util::nstring header() {
-            return util::nstring();
-        }
-        
-        static util::nstring format(const Record& record) {
-            util::nostringstream ss;
-            ss << severityToString(record.getSeverity()) << PLOG_NSTR(" ");
-            ss << PLOG_NSTR("[") << record.getTid() << PLOG_NSTR("] ");
-            ss << PLOG_NSTR("[") << record.getFunc() << PLOG_NSTR("@") << record.getLine() << PLOG_NSTR("] ");
-            ss << record.getMessage() << PLOG_NSTR("\n");
-
-            return ss.str();
-        }
-    };
-}
 
 static plog::ConsoleAppender<plog::GlFormatter> consoleAppender;
 
 /*****************************************************************************
  * Main variables
  ****************************************************************************/
-bool gKeys[255];
 bool gFullscreen;
 
 int gWindowWidth, gWindowHeight;
@@ -204,7 +183,7 @@ void Display() {
     }
 }
 
-void Reshape(GLFWwindow* window, int width, int height) {
+void Reshape(GLFWwindow* /*window*/, int width, int height) {
     glViewport(0, 0, width, height);
     gWindowWidth = width;
     gWindowHeight = height;

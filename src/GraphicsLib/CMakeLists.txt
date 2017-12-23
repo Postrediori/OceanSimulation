@@ -8,3 +8,11 @@ include_directories(
     ${GLAD_INCLUDE_DIR}
     ${FREETYPE_INCLUDE_DIRS}
     )
+
+target_link_libraries(${PROJECT}
+    ${OPENGL_LIBRARIES}
+    ${GLFW_LIBRARIES}
+    ${GLAD_LIBRARIES}
+    ${FREETYPE_LIBRARIES}
+    )
+    
