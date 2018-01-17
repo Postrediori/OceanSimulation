@@ -31,7 +31,7 @@ The following instructions are applied to these operating systems:
 * Debian 9
 
 ```
-sudo apt-get install -y \
+apt-get install \
     build-essential \
     cmake \
     xorg-dev \
@@ -46,35 +46,49 @@ The following instructions are applied to these operating systems:
 * Fedora >=22
 
 ```
-sudo dnf groupinstall -y \
+dnf groupinstall \
     "Development Tools" \
     "Development Libraries" \
     "X Software Development"
-sudo dnf install -y \
+dnf install \
     cmake \
     freetype-devel
 ```
 
-## Building Project
+## Cloning Repository
 
-Cloning the repository requires passing the `git clone --recursive` flag to load dependencies.
-The same can be done with `git clone` & `git submodule update --init`.
+Cloning the repository requires passing the `--recursive` flag to load dependencies
+
+```
+git clone --recursive https://github.com/Postrediori/OceanSimulation.git
+cd OceanSimulation
+```
+
+## Building Project
 
 The program is built with the commands below. CMake requires the directory 
 with the main project's `CMakeLists.txt` file as an argument. Then the CMake 
 creates the build files for the GNU make which build an executable.
 
 ```
-cd <PathToProject>
 mkdir build && cd build
 cmake ..
 make
 ```
 
+## Building Project in Release Mode
+
+```
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make
+```
+
+## Running Project
+
 After the successful build the binary `Ocean` will end up in `build/src/Ocean/` directory.
 
 ```
-cd <PathToProject>
 cd build/src/Ocean
 ./Ocean
 ```
