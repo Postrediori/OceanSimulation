@@ -179,6 +179,10 @@ bool FontRenderer::init() {
     // Init shader
     const char* vertex_src;
     const char* fragment_src;
+#ifdef __APPLE__
+    vertex_src = vertex_src_1_10;
+    fragment_src = fragment_src_1_10;
+#else
     if (GLEW_VERSION_3_0) {
         vertex_src = vertex_src_1_30;
         fragment_src = fragment_src_1_30;
@@ -186,6 +190,7 @@ bool FontRenderer::init() {
         vertex_src = vertex_src_1_10;
         fragment_src = fragment_src_1_10;
     }
+#endif
 
     if (!Shader::createProgramSource(glProgram, glShaderV, glShaderF,
                                      vertex_src, fragment_src)) {
