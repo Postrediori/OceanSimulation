@@ -6,7 +6,9 @@
 #include "Vector.h"
 #include "FFT.h"
 #include "Ocean.h"
+#include "WorldPosition.h"
 #include "FPSCounter.h"
+#include "GlFormatter.h"
 
 static const unsigned int Width  = 640;
 static const unsigned int Height = 480;
@@ -19,69 +21,12 @@ static const FontSize_t FontSize = 24;
 
 const GLfloat White[4] = {1.f, 1.f, 1.f, 1.f};
 
-/*****************************************************************************
- * Utils
- ****************************************************************************/
-const float MotionVel   = 100.0;
-const float RotationVel = 0.005;
 
-struct Position {
-    glm::vec3 position;
-    glm::vec3 forward;
-    glm::vec3 right;
-    glm::vec3 up;
-    glm::vec3 lookat;
-    glm::vec3 angle;
-
-    void update();
-
-    void move_forward(float dt);
-    void move_back(float dt);
-    void move_left(float dt);
-    void move_right(float dt);
-    void move_up(float dt);
-    void move_down(float dt);
-};
-
-void Position::update() {
-    forward.x = sin(angle.x);
-    forward.y = 0.0;
-    forward.z = cos(angle.x);
-
-    right.x = -cos(angle.x);
-    right.y = 0.0;
-    right.z = sin(angle.x);
-
-    lookat.x = sin(angle.x) * cos(angle.y);
-    lookat.y = sin(angle.y);
-    lookat.z = cos(angle.x) * cos(angle.y);
-
-    up = glm::cross(right, lookat);
-}
-
-void Position::move_forward(float dt) {
-    position += forward * MotionVel * dt;
-}
-void Position::move_back(float dt)    {
-    position -= forward * MotionVel * dt;
-}
-void Position::move_left(float dt)    {
-    position -= right * MotionVel * dt;
-}
-void Position::move_right(float dt)   {
-    position += right * MotionVel * dt;
-}
-void Position::move_up(float dt)      {
-    position.y += MotionVel * dt;
-}
-void Position::move_down(float dt)    {
-    position.y -= MotionVel * dt;
-}
+static plog::ConsoleAppender<plog::GlFormatter> consoleAppender;
 
 /*****************************************************************************
  * Main variables
  ****************************************************************************/
-bool gKeys[255];
 bool gFullscreen;
 
 int gWindowWidth, gWindowHeight;
@@ -114,21 +59,11 @@ static const char * const GeometryTypeNames[] = {
 bool Init() {
     srand(time(0));
 
-    std::cout<<"OpenGL Renderer  : "<<glGetString(GL_RENDERER)<<std::endl;
-    std::cout<<"OpenGL Vendor    : "<<glGetString(GL_VENDOR)<<std::endl;
-    std::cout<<"OpenGL Version   : "<<glGetString(GL_VERSION)<<std::endl;
-    std::cout<<"GLSL Version     : "<<glGetString(GL_SHADING_LANGUAGE_VERSION)<<std::endl;
-    std::cout<<"GLEW Version     : "<<glewGetString(GLEW_VERSION)<<std::endl;
-    std::cout<<"FreeType Version : "<<FREETYPE_MAJOR<<"."<<FREETYPE_MINOR<<"."<<FREETYPE_PATCH<<std::endl;
-
-    // Init GLEW
-    glewExperimental = GL_TRUE;
-
-    GLenum err = glewInit();
-    if (err!=GLEW_OK) {
-        std::cerr << "GL Loading Error: " << glewGetErrorString(err) << std::endl;
-        return false;
-    }
+    LOGI << "OpenGL Renderer  : " << glGetString(GL_RENDERER);
+    LOGI << "OpenGL Vendor    : " << glGetString(GL_VENDOR);
+    LOGI << "OpenGL Version   : " << glGetString(GL_VERSION);
+    LOGI << "GLSL Version     : " << glGetString(GL_SHADING_LANGUAGE_VERSION);
+    LOGI << "FreeType Version : " << FREETYPE_MAJOR << "." << FREETYPE_MINOR << "." << FREETYPE_PATCH;
 
     // Load config file
     Config config;
@@ -167,8 +102,12 @@ bool Init() {
     // Other configurstions
     gFullscreen = false;
     gShowHelp = true;
-    gScaleX = 2.f / (float)gWindowWidth;
-    gScaleY = 2.f / (float)gWindowHeight;
+
+    gWindowWidth = Width;
+    gWindowHeight = Height;
+    gScaleX = 2.f / (float)Width;
+    gScaleY = 2.f / (float)Height;
+    gPosition.resize_screen(Width, Height);
 
     gElapsedTime = 0.0;
 
@@ -176,9 +115,9 @@ bool Init() {
     gView       = glm::mat4(1.0f);
     gModel      = glm::mat4(1.0f);
 
-    gPosition.position = glm::vec3(0.0f, 100.0f, 0.0f);
-    gPosition.angle = glm::vec3(2.4f, -0.3f, 0.0f);
-    gPosition.update();
+    gPosition.set_position(
+        glm::vec3(0.0f, 100.0f, 0.0f), // Position
+        glm::vec3(2.4f, -0.3f, 0.0f)); // Look angle
 
     gLightPosition = glm::vec3(gPosition.position.x + 1000.0, 100.0, gPosition.position.z - 1000.0);
 
@@ -199,18 +138,24 @@ bool Init() {
 
 void Deinit() {
     fr.release();
+    gOcean.release();
+}
+
+void Error(int /*error*/, const char* description) {
+    LOGE << "Error: " << description;
 }
 
 /*****************************************************************************
  * GLUT Callback functions
  ****************************************************************************/
 void Display() {
-    gFPSCounter.update(glutGet(GLUT_ELAPSED_TIME));
+    gFPSCounter.update(glfwGetTime());
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     gView = glm::lookAt(gPosition.position, gPosition.position + gPosition.lookat, gPosition.up);
 
+    gOcean.geometryType(gGeometryType);
     gOcean.render(gElapsedTime, gLightPosition, gProjection, gView, gModel, true);
 
     if (gShowHelp) {
@@ -236,127 +181,153 @@ void Display() {
 
         fr.renderEnd();
     }
-
-    glutSwapBuffers();
 }
 
-void Reshape(GLint w, GLint h) {
-    glViewport(0, 0, w, h);
-    gWindowWidth  = w;
-    gWindowHeight = h;
-
-    gScaleX = 2.f / (float)gWindowWidth;
-    gScaleY = 2.f / (float)gWindowHeight;
-
-    glutWarpPointer(w/2, h/2);
-    gProjection = glm::perspective(45.0f, (float)w / (float)h, 0.1f, 3000.0f);
+void Reshape(GLFWwindow* /*window*/, int width, int height) {
+    glViewport(0, 0, width, height);
+    gWindowWidth = width;
+    gWindowHeight = height;
+    gScaleX = 2.f / (float)width;
+    gScaleY = 2.f / (float)height;
+    gPosition.resize_screen(width, height);
 }
 
-void Keyboard(unsigned char key, int x, int y) {
-    switch (key) {
-    case 27:
-        exit(0);
-        break;
+void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*mods*/) {
+    if (action == GLFW_PRESS) {
+        switch (key) {
+        case GLFW_KEY_ESCAPE:
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
+            break;
 
-    case '1':
-    case '2':
-        gGeometryType = GEOMETRY_TYPE((int)key - (int)'0' - 1);
-        gOcean.geometryType(gGeometryType);
-        break;
-    }
-}
+        case GLFW_KEY_F1:
+            gFullscreen = !gFullscreen;
+            if (gFullscreen) {
+                GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+                const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+                glfwSetWindowMonitor(window, monitor, 0, 0,
+                    mode->width, mode->height, mode->refreshRate);
+            }
+            else {
+                glfwSetWindowMonitor(window, nullptr, 0, 0,
+                    Width, Height, GLFW_DONT_CARE);
+            }
+            break;
 
-void SpecialKeys(int key, int x, int y) {
-    switch (key) {
-    case GLUT_KEY_F1:
-        gFullscreen = !gFullscreen;
-        if (gFullscreen) {
-            glutFullScreen();
-        } else {
-            glutReshapeWindow(Width, Height);
+        case GLFW_KEY_F2:
+            gShowHelp = !gShowHelp;
+            break;
+
+        case GLFW_KEY_1:
+            gGeometryType = GEOMETRY_LINES;
+            break;
+
+        case GLFW_KEY_2:
+            gGeometryType = GEOMETRY_SOLID;
+            break;
         }
-        break;
-
-    case GLUT_KEY_F2:
-        gShowHelp = !gShowHelp;
-        break;
-
-    default:
-        gKeys[key] = true;
     }
 }
 
-void SpecialKeysUp(int key, int x, int y) {
-    gKeys[key] = false;
+void MousePosition(GLFWwindow* window, double x, double y) {
+    static bool warp = false;
+
+    if (!warp) {
+        gPosition.set_mouse_point(x, y);
+        glfwSetCursorPos(window, gWindowWidth / 2, gWindowHeight / 2);
+        warp = true;
+    } else {
+        warp = false;
+    }
 }
 
-void Idle() {
-    static int last_time = 0;
-    int t = glutGet(GLUT_ELAPSED_TIME);
-    float dt = (t - last_time) * 1e-3f;
+void Update(GLFWwindow* window) {
+    static double last_time = 0.0;
+    double t = glfwGetTime();
+    double dt = t - last_time;
     last_time = t;
 
     gElapsedTime += dt * 0.5;
 
-    if (gKeys[GLUT_KEY_LEFT]) gPosition.move_left(dt);
-    if (gKeys[GLUT_KEY_RIGHT]) gPosition.move_right(dt);
-    if (gKeys[GLUT_KEY_UP]) gPosition.move_forward(dt);
-    if (gKeys[GLUT_KEY_DOWN]) gPosition.move_back(dt);
-    if (gKeys[GLUT_KEY_PAGE_UP]) gPosition.move_up(dt);
-    if (gKeys[GLUT_KEY_PAGE_DOWN]) gPosition.move_down(dt);
-
-    gLightPosition = glm::vec3(gPosition.position.x + 1000.0, 100.0, gPosition.position.z - 1000.0);
-
-    glutPostRedisplay();
-}
-
-void MouseMotion(int x, int y) {
-    static bool wrap = false;
-
-    if (!wrap) {
-        gPosition.angle.x -= (x - gWindowWidth / 2) * RotationVel;
-        gPosition.angle.y -= (y - gWindowHeight / 2) * RotationVel;
-
-        if (gPosition.angle.x<-M_PI)   gPosition.angle.x += M_PI * 2;
-        if (gPosition.angle.x>M_PI)    gPosition.angle.x -= M_PI * 2;
-        if (gPosition.angle.y<-M_PI/2) gPosition.angle.y = -M_PI / 2;
-        if (gPosition.angle.y>M_PI/2)  gPosition.angle.y = M_PI / 2;
-
-        gPosition.update();
-
-        wrap = true;
-        glutWarpPointer(gWindowWidth / 2, gWindowHeight / 2);
-    } else {
-        wrap = false;
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        gPosition.move_forward(dt);
     }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        gPosition.move_back(dt);
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+        gPosition.move_left(dt);
+    }
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        gPosition.move_right(dt);
+    }
+    if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
+        gPosition.move_up(dt);
+    }
+    if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
+        gPosition.move_down(dt);
+    }
+
+    gLightPosition = glm::vec3(gPosition.position.x + 1000.0,
+        100.0, gPosition.position.z - 1000.0);
 }
 
 /*****************************************************************************
  * Main program
  ****************************************************************************/
-int main(int argc, char *argv[]) {
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DEPTH | GLUT_RGBA | GLUT_DOUBLE);
-    glutInitWindowSize(Width, Height);
-    glutCreateWindow(Title);
-    glutSetCursor(GLUT_CURSOR_NONE);
+int main(int /*argc*/, char** /*argv*/) {
+    int status = EXIT_SUCCESS;
+    plog::init(plog::debug, &consoleAppender);
 
-    atexit(Deinit);
-    if (!Init()) {
-        std::cerr << "Initialization failed" << std::endl;
-        return 1;
+    glfwSetErrorCallback(Error);
+
+    if (!glfwInit()) {
+        LOGE << "Failed to load GLFW";
+        return EXIT_FAILURE;
     }
 
-    glutDisplayFunc(Display);
-    glutReshapeFunc(Reshape);
-    glutKeyboardFunc(Keyboard);
-    glutSpecialFunc(SpecialKeys);
-    glutSpecialUpFunc(SpecialKeysUp);
-    glutIdleFunc(Idle);
-    glutMotionFunc(MouseMotion);
-    glutPassiveMotionFunc(MouseMotion);
+    LOGI << "Init window context with OpenGL 2.0";
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    auto window = glfwCreateWindow(Width, Height, Title, nullptr, nullptr);
+    if (!window) {
+        LOGE << "Unable to Create OpenGL 2.0 Context";
+        status = EXIT_FAILURE;
+        goto finish;
+    }
 
-    glutMainLoop();
+    glfwSetKeyCallback(window, Keyboard);
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
-    return 0;
+    glfwSetCursorPosCallback(window, MousePosition);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
+    glfwSetWindowSizeCallback(window, Reshape);
+
+    glfwMakeContextCurrent(window);
+    gladLoadGL();
+
+    if (!Init()) {
+        LOGE << "Initialization failed";
+        status = EXIT_FAILURE;
+        goto finish;
+    }
+
+    while (!glfwWindowShouldClose(window)) {
+        Display();
+
+        Update(window);
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+finish:
+    Deinit();
+    if (window) {
+        glfwDestroyWindow(window);
+    }
+    glfwTerminate();
+
+    return status;
 }

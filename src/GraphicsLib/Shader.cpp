@@ -76,29 +76,19 @@ std::string showProgramInfo(GLuint program) {
     return str.str();
 }
 
-std::string showShaderProgramInfo(GLuint program, GLuint vertex, GLuint fragment) {
-    std::stringstream str;
-
-    str << "Vertex Shader    : " << showShaderInfo(vertex) << std::endl;
-    str << "Fragment Shader  : " << showShaderInfo(fragment) << std::endl;
-    str << "Shader Program   : " << showProgramInfo(program) << std::endl;
-
-    return str.str();
-}
-
 bool createProgram(GLuint& program, GLuint& vertex, GLuint& fragment,
                    const std::string& vertex_shader, const std::string& fragment_shader) {
-    std::cout << std::endl << "Shader Files: " << vertex_shader << " " << fragment_shader << std::endl;
+    LOGI << "Shader Files: " << vertex_shader << " " << fragment_shader;
 
     std::string strVert = loadFile(vertex_shader);
     if (strVert.empty()) {
-        std::cerr << "Vertex Shader Error : Unable to load file" << std::endl;
+        LOGE << "Vertex Shader Error : Unable to load file";
         return false;
     }
 
     std::string strFrag = loadFile(fragment_shader);
     if (strFrag.empty()) {
-        std::cerr << "Fragment Shader Error : Unable to load file" << std::endl;
+        LOGE << "Fragment Shader Error : Unable to load file";
         return false;
     }
 
@@ -107,6 +97,9 @@ bool createProgram(GLuint& program, GLuint& vertex, GLuint& fragment,
 
 bool createProgramSource(GLuint& program, GLuint& vertex, GLuint& fragment,
                              const std::string& vertex_shader, const std::string& fragment_shader) {
+    LOGD << "Vertex Shader    : " << vertex_shader.length() << " symbols";
+    LOGD << "Fragment Shader  : " << fragment_shader.length() << " symbols";
+
     GLuint sProgram = 0;
     GLuint vShader = 0;
     GLuint fShader = 0;
@@ -117,13 +110,13 @@ bool createProgramSource(GLuint& program, GLuint& vertex, GLuint& fragment,
 
     vShader = glCreateShader(GL_VERTEX_SHADER);
     if (!vShader) {
-        std::cerr << "Unable to Create Vertex Shader" << std::endl;
+        LOGE << "Unable to Create Vertex Shader";
         goto error;
     }
 
     fShader = glCreateShader(GL_FRAGMENT_SHADER);
     if (!fShader) {
-        std::cerr << "Unable to Create Fragment Shader" << std::endl;
+        LOGE << "Unable to Create Fragment Shader";
         goto error;
     }
 
@@ -131,7 +124,7 @@ bool createProgramSource(GLuint& program, GLuint& vertex, GLuint& fragment,
     glCompileShader(vShader);
     glGetObjectParameterivARB(vShader, GL_COMPILE_STATUS, &result);
     if (!result) {
-        std::cerr << "Vertex Shader Error : " << showShaderError(vShader) << std::endl;
+        LOGE << "Vertex Shader Error : " << showShaderError(vShader);
         goto error;
     }
 
@@ -139,13 +132,13 @@ bool createProgramSource(GLuint& program, GLuint& vertex, GLuint& fragment,
     glCompileShader(fShader);
     glGetObjectParameterivARB(fShader, GL_COMPILE_STATUS, &result);
     if (!result) {
-        std::cerr << "Fragment Shader Error : " << showShaderError(fShader) << std::endl;
+        LOGE << "Fragment Shader Error : " << showShaderError(fShader);
         goto error;
     }
 
     sProgram = glCreateProgram();
     if (!sProgram) {
-        std::cerr << "Unable to Create Program" << std::endl;
+        LOGE << "Unable to Create Program";
         goto error;
     }
 
@@ -156,13 +149,14 @@ bool createProgramSource(GLuint& program, GLuint& vertex, GLuint& fragment,
 
     glGetProgramiv(sProgram, GL_LINK_STATUS, &result);
     if (!result) {
-        std::cerr << "Linking Shader Error : " << showShaderError(sProgram) << std::endl;
-        std::cerr << "Shader Info : " << showShaderProgramInfo(sProgram, vShader, fShader) << std::endl;
+        LOGE << "Linking Shader Error : " << showShaderError(sProgram);
         goto error;
     }
 
     // show shader info
-    std::cout << showShaderProgramInfo(sProgram, vShader, fShader) << std::endl;
+    LOGD << "Vertex Shader    : " << showShaderInfo(vShader);
+    LOGD << "Fragment Shader  : " << showShaderInfo(fShader);
+    LOGD << "Shader Program   : " << showProgramInfo(sProgram);
 
     program = sProgram;
     vertex = vShader;

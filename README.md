@@ -13,7 +13,13 @@ Phillips spectrum and algorythm of inverse FFT.
 ## Prerequisites
 
 Compiling and running the sample project requires GCC, CMake, GNU Make
-as well as some graphics libraries installed.
+as well as FreeType library for text rendering. Most of the dependencies needed
+are bundled with the repository. This includes:
+
+* [glad](https://github.com/Dav1dde/glad) - OpenGL Function Loader.
+* [glfw](https://github.com/glfw/glfw) - Windowing and Input.
+* [glm](https://github.com/g-truc/glm) - OpenGL Mathematics.
+* [plog](https://github.com/SergiusTheBest/plog) - Logging library.
 
 ## Environment Setup
 
@@ -25,12 +31,11 @@ The following instructions are applied to these operating systems:
 * Debian 9
 
 ```
-sudo apt-get install -y \
+apt-get install \
     build-essential \
     cmake \
-    freeglut3-dev \
-    libglew-dev \
-    libglm-dev \
+    xorg-dev \
+    libgl1-mesa-dev \
     libfreetype6-dev
 ```
 
@@ -41,13 +46,22 @@ The following instructions are applied to these operating systems:
 * Fedora >=22
 
 ```
-sudo dnf groupinstall -y "Development Tools"
-sudo dnf install -y \
+dnf groupinstall \
+    "Development Tools" \
+    "Development Libraries" \
+    "X Software Development"
+dnf install \
     cmake \
-    freeglut-devel \
-    glew-devel \
-    glm-devel \
     freetype-devel
+```
+
+## Cloning Repository
+
+Cloning the repository requires passing the `--recursive` flag to load dependencies
+
+```
+git clone --recursive https://github.com/Postrediori/OceanSimulation.git
+cd OceanSimulation
 ```
 
 ## Building Project
@@ -57,16 +71,24 @@ with the main project's `CMakeLists.txt` file as an argument. Then the CMake
 creates the build files for the GNU make which build an executable.
 
 ```
-cd <PathToProject>
 mkdir build && cd build
 cmake ..
 make
 ```
 
+## Building Project in Release Mode
+
+```
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make
+```
+
+## Running Project
+
 After the successful build the binary `Ocean` will end up in `build/src/Ocean/` directory.
 
 ```
-cd <PathToProject>
 cd build/src/Ocean
 ./Ocean
 ```
@@ -90,12 +112,14 @@ tree
 └── Ocean
     ├── data
     │   ├── font.ttf
-    │   ├── ocean.cfg
-    │   ├── ocean.frag
-    │   └── ocean.vert
+    │   ├── ocean110.frag
+    │   ├── ocean110.vert
+    │   ├── ocean130.frag
+    │   ├── ocean130.vert
+    │   └── ocean.cfg
     └── Ocean
 
-2 directories, 5 files
+2 directories, 7 files
 cd Ocean
 ./Ocean
 ```

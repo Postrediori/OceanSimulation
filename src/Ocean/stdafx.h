@@ -1,12 +1,11 @@
 #pragma once
 
-#include <GL/glew.h>
-#include <GL/freeglut.h>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <iostream>
 #include <iomanip>
 #include <fstream>
 #include <sstream>
@@ -19,3 +18,6 @@
 #ifdef _MSC_VER
 # pragma warning(disable: 4786)
 #endif
+
+#include <plog/Log.h>
+#include <plog/Appenders/ConsoleAppender.h>

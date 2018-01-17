@@ -1,10 +1,12 @@
-#version 110
+#version 130
 
-varying vec3 normal_vector;
-varying vec3 light_vector;
-varying vec3 halfway_vector;
-// varying vec2 tex_coord;
-varying float fog_factor;
+in vec3 normal_vector;
+in vec3 light_vector;
+in vec3 halfway_vector;
+// in vec2 tex_coord;
+in float fog_factor;
+
+out vec4 frag_col;
 
 // uniform sampler2D water_tex;
 
@@ -34,18 +36,17 @@ void main(void) {
     vec4 diff_light = diffuse_color  * diffuse_contribution  * c *
         max(d, 0.);
 
-	vec4 specular_light;
-	if (d>0.) {
-		specular_light = specular_color * specular_contribution * c *
-			max(pow(dot(normal1, halfway_vector1), 120.), 0.);
-	} else {
-		specular_light = vec4(0.);
-	}
+    vec4 specular_light;
+    if (d>0.) {
+        specular_light = specular_color * specular_contribution * c *
+            max(pow(dot(normal1, halfway_vector1), 120.), 0.);
+    } else {
+        specular_light = vec4(0.);
+    }
 
-	vec4 frag_col = emissive_light + ambient_light +
+    frag_col = emissive_light + ambient_light +
         diff_light + specular_light;
     frag_col = mix(frag_col, fog_color, fog_factor);
-	frag_col.a = 1.;
-	gl_FragColor = frag_col;
+    frag_col.a = 1.;
 }
 

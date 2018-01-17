@@ -5,10 +5,10 @@
 
 FFT::FFT(unsigned int N)
     : N(N)
+    , pi2(2.0 * M_PI)
     , reversed(0)
-    , W(0)
-    , pi2(2.0 * M_PI) {
-    c[0] = c[1] = 0;
+    , W(nullptr) {
+    c[0] = c[1] = nullptr;
 
     log_2_N = (unsigned int)(log((double)N) / log((double)2));
 

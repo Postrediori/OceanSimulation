@@ -56,7 +56,7 @@ FontAtlas::FontAtlas(FT_Face face, FontSize_t height)
     // Find minimum size for a texture holding all visible ASCII characters
     for (int i=FirstDisplayedCharacter; i<CharacterCount; i++) {
         if (FT_Load_Char(face, i, FT_LOAD_RENDER)) {
-            std::cerr<<"Loading character "<<i<<" failed!"<<std::endl;
+            LOGE << "Loading character " << i << " failed!";
             continue;
         }
 
@@ -98,7 +98,7 @@ FontAtlas::FontAtlas(FT_Face face, FontSize_t height)
 
     for (int i=FirstDisplayedCharacter; i<CharacterCount; i++) {
         if (FT_Load_Char(face, i, FT_LOAD_RENDER)) {
-            std::cerr<<"Loading character "<<i<<" failed!"<<std::endl;
+            LOGE << "Loading character " << i << " failed!";
             continue;
         }
 
@@ -131,12 +131,13 @@ FontAtlas::FontAtlas(FT_Face face, FontSize_t height)
         ox += g->bitmap.width + 1;
     }
 
-    std::cout<<"Generated a "<<w<<"x"<<h<<" ("<<(w*h/1024)<<" kb) texture atlas"<<std::endl;
+    LOGD << "Generated a " << w << "x" << h << " (" << (w * h / 1024) << " kb) texture atlas";
 }
 
 FontAtlas::~FontAtlas() {
     if (tex) {
         glDeleteTextures(1, &tex);
+        tex = 0;
     }
 }
 
@@ -164,7 +165,7 @@ bool FontRenderer::init(const std::string& vertex_shader, const std::string& fra
         return false;
     }
 
-    if (!initShader()) {
+    if (!initShaderVariables()) {
         return false;
     }
 
@@ -176,28 +177,11 @@ bool FontRenderer::init() {
         return false;
     }
 
-    // Init shader
-    const char* vertex_src;
-    const char* fragment_src;
-#ifdef __APPLE__
-    vertex_src = vertex_src_1_10;
-    fragment_src = fragment_src_1_10;
-#else
-    if (GLEW_VERSION_3_0) {
-        vertex_src = vertex_src_1_30;
-        fragment_src = fragment_src_1_30;
-    } else {
-        vertex_src = vertex_src_1_10;
-        fragment_src = fragment_src_1_10;
-    }
-#endif
-
-    if (!Shader::createProgramSource(glProgram, glShaderV, glShaderF,
-                                     vertex_src, fragment_src)) {
+    if (!initShaderProgram()) {
         return false;
     }
 
-    if (!initShader()) {
+    if (!initShaderVariables()) {
         return false;
     }
 
@@ -220,7 +204,30 @@ bool FontRenderer::initObjects() {
     return true;
 }
 
-bool FontRenderer::initShader() {
+bool FontRenderer::initShaderProgram() {
+#ifdef __APPLE__
+    // Use OpenGL 2.1 shader
+    return Shader::createProgramSource(glProgram, glShaderV, glShaderF,
+                                       vertex_src_1_10, fragment_src_1_10);
+#else
+    if (Shader::createProgramSource(glProgram, glShaderV, glShaderF,
+                                     vertex_src_1_30, fragment_src_1_30)) {
+        LOGI << "Using GLSL 1.30 for Font Rendering";
+        return true;
+    }
+
+    // ok, try and use OpenGL 2.1 then
+    if (Shader::createProgramSource(glProgram, glShaderV, glShaderF,
+                                     vertex_src_1_10, fragment_src_1_10)) {
+        LOGI << "Using GLSL 1.10 for Font Rendering";
+        return true;
+    }
+
+    return false;
+#endif
+}
+
+bool FontRenderer::initShaderVariables() {
     aCoord = glGetAttribLocation(glProgram, "coord");
     uTex   = glGetUniformLocation(glProgram, "tex");
     uColor = glGetUniformLocation(glProgram, "color");
@@ -247,8 +254,17 @@ FontHandle_t FontRenderer::createAtlas(FontSize_t height) {
 }
 
 void FontRenderer::release() {
-    Shader::releaseProgram(glProgram, glShaderV, glShaderF);
-    glDeleteBuffers(1, &vbo);
+    fonts.clear();
+    if (vbo) {
+        glDeleteBuffers(1, &vbo);
+        vbo = 0;
+    }
+    if (glProgram) {
+        Shader::releaseProgram(glProgram, glShaderV, glShaderF);
+        glProgram = 0;
+        glShaderV = 0;
+        glShaderF = 0;
+    }
 }
 
 void FontRenderer::renderStart() {
