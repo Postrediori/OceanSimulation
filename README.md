@@ -55,6 +55,18 @@ dnf install \
     freetype-devel
 ```
 
+* CentOS 7
+
+```
+yum groupinstall \
+    "Development Tools" \
+    "Development Libraries" \
+    "X Software Development"
+yum install \
+    cmake \
+    freetype-devel
+```
+
 ## Cloning Repository
 
 Cloning the repository requires passing the `--recursive` flag to load dependencies
