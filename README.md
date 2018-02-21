@@ -6,7 +6,7 @@ since the original is using modern GLSL >4.00. The model can be run on very old 
 For example, it is possible to run this model even on Mobile Intel 965 ;)
 
 The numerical model is based on the paper by J. Tessendorf and utilizes
-Phillips spectrum and algorythm of inverse FFT.
+Phillips spectrum and algorithm of inverse FFT.
 
 ![Ocean Simulation screenshot](images/ocean.png)
 
