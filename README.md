@@ -46,29 +46,29 @@ The following instructions apply to:
 * Fedora 22 and higher
 
 ```
-dnf groupinstall \
-    "Development Tools" \
-    "Development Libraries" \
-    "C Development Tools and Libraries" \
-    "X Software Development"
 dnf install \
     cmake \
-    freetype-devel \
-    libXinerama-devel
+    gcc-c++ \
+    mesa-libGL-devel \
+    libXrandr-devel \
+    libXinerama-devel \
+    libXcursor-devel \
+    libXi-devel \
+    freetype-devel
 ```
 
 * CentOS 7
 
 ```
-yum groupinstall \
-    "Development Tools" \
-    "Development Libraries" \
-    "C Development Tools and Libraries" \
-    "X Software Development"
 yum install \
     cmake \
-    freetype-devel \
-    libXinerama-devel
+    gcc-c++ \
+    mesa-libGL-devel \
+    libXrandr-devel \
+    libXinerama-devel \
+    libXcursor-devel \
+    libXi-devel \
+    freetype-devel
 ```
 
 ## Cloning Repository
