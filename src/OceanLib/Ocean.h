@@ -1,6 +1,5 @@
 // Ocean.h
-#ifndef OCEAN_H
-#define OCEAN_H
+#pragma once
 
 class Complex;
 class Vector2;
@@ -17,7 +16,7 @@ struct ocean_vertex {
 
 // structure used with discrete Fourier transform
 struct complex_vector_norm {
-    Complex   h; // wave height
+    Complex h; // wave height
     Vector2 D; // displacement
     Vector3 n; // normal
 };
@@ -34,7 +33,7 @@ enum GEOMETRY_TYPE {
  ****************************************************************************/
 class Ocean {
 public:
-    Ocean();
+    explicit Ocean();
     ~Ocean();
 
     int init(const int N, const float A, const Vector2& w, const float length, const int ocean_repeat);
@@ -84,21 +83,21 @@ private:
     int ocean_repeat;
 
     // fast Fourier transform parameters
-    Complex *h_tilde,
-            *h_tilde_slopex, *h_tilde_slopez,
-            *h_tilde_dx, *h_tilde_dz;
+    std::vector<Complex> h_tilde;
+    std::vector<Complex> h_tilde_slopex;
+    std::vector<Complex> h_tilde_slopez;
+    std::vector<Complex> h_tilde_dx;
+    std::vector<Complex> h_tilde_dz;
 
     // fast Fourier transform
-    FFT *fft;
+    std::unique_ptr<FFT> fft;
 
     // vertices for VBO
-    ocean_vertex *vertices;
+    std::vector<ocean_vertex> vertices;
 
     // indices for VBO
-    unsigned int *indices_ln, *indices_tr;
-
-    // number of indices to render
-    unsigned int indices_ln_count, indices_tr_count;
+    std::vector<GLuint> indices_ln;
+    std::vector<GLuint> indices_tr;
 
     // version of shader ar integer (i.e. 110 for 1.10)
     int shaderVersion;
@@ -116,5 +115,3 @@ private:
     GLint aVertex, aNormal, aTexture;
     GLint uLightPos, uProjection, uView, uModel, uMVTranspInv;
 };
-
-#endif /* OCEAN_H */

@@ -22,7 +22,7 @@ static Complex gaussianRandomVariable() {
         x1 = 2.0 * uniformRandomVariable() - 1.0;
         x2 = 2.0 * uniformRandomVariable() - 1.0;
         w = x1 * x1 + x2 * x2;
-    } while (w>=1.0);
+    } while (w >= 1.0);
     w = sqrt((-2.0 * log(w)) / w);
     return Complex(x1 * w, x2 * w);;
 }
@@ -30,15 +30,6 @@ static Complex gaussianRandomVariable() {
 Ocean::Ocean()
     : geometry_type(GEOMETRY_SOLID)
     , g(9.81f)
-    , h_tilde(0)
-    , h_tilde_slopex(0)
-    , h_tilde_slopez(0)
-    , h_tilde_dx(0)
-    , h_tilde_dz(0)
-    , fft(nullptr)
-    , vertices(nullptr)
-    , indices_ln(nullptr)
-    , indices_tr(nullptr)
     , shaderVersion(0)
     , vao(0) {
     //
@@ -46,43 +37,6 @@ Ocean::Ocean()
 
 Ocean::~Ocean() {
     release();
-
-    if (h_tilde) {
-        delete[] h_tilde;
-        h_tilde = nullptr;
-    }
-    if (h_tilde_slopex) {
-        delete[] h_tilde_slopex;
-        h_tilde_slopex = nullptr;
-    }
-    if (h_tilde_slopez) {
-        delete[] h_tilde_slopez;
-        h_tilde_slopez = nullptr;
-    }
-    if (h_tilde_dx) {
-        delete[] h_tilde_dx;
-        h_tilde_dx = nullptr;
-    }
-    if (h_tilde_dz) {
-        delete[] h_tilde_dz;
-        h_tilde_dz = nullptr;
-    }
-    if (fft) {
-        delete fft;
-        fft = nullptr;
-    }
-    if (vertices) {
-        delete[] vertices;
-        vertices = nullptr;
-    }
-    if (indices_ln) {
-        delete[] indices_ln;
-        indices_ln = nullptr;
-    }
-    if (indices_tr) {
-        delete[] indices_tr;
-        indices_tr = nullptr;
-    }
 }
 
 int Ocean::init(const int N, const float A, const Vector2& w, const float length, int ocean_repeat) {
@@ -93,22 +47,20 @@ int Ocean::init(const int N, const float A, const Vector2& w, const float length
     this->length = length;
     this->ocean_repeat = ocean_repeat;
 
-    h_tilde        = new Complex[N*N];
-    h_tilde_slopex = new Complex[N*N];
-    h_tilde_slopez = new Complex[N*N];
-    h_tilde_dx     = new Complex[N*N];
-    h_tilde_dz     = new Complex[N*N];
-    fft            = new FFT(N);
-    vertices       = new ocean_vertex[Nplus1*Nplus1];
-    indices_ln     = new unsigned int[Nplus1*Nplus1*10];
-    indices_tr     = new unsigned int[Nplus1*Nplus1*10];
-
-    int i;
+    h_tilde.resize(N * N);
+    h_tilde_slopex.resize(N * N);
+    h_tilde_slopez.resize(N * N);
+    h_tilde_dx.resize(N * N);
+    h_tilde_dz.resize(N * N);
+    fft.reset(new FFT(N));
+    vertices.resize(Nplus1 * Nplus1);
+    indices_ln.resize(Nplus1 * Nplus1 * 10);
+    indices_tr.resize(Nplus1 * Nplus1 * 10);
 
     Complex htilde0, htilde0mk_conj;
-    for (int m_prime=0; m_prime<Nplus1; m_prime++) {
-        for (int n_prime=0; n_prime<Nplus1; n_prime++) {
-            i = m_prime * Nplus1 + n_prime;
+    for (int m_prime = 0; m_prime < Nplus1; m_prime++) {
+        for (int n_prime = 0; n_prime < Nplus1; n_prime++) {
+            int i = m_prime * Nplus1 + n_prime;
 
             htilde0        = hTilde_0( n_prime,  m_prime);
             htilde0mk_conj = hTilde_0(-n_prime, -m_prime).conj();
@@ -129,10 +81,10 @@ int Ocean::init(const int N, const float A, const Vector2& w, const float length
     }
 
     // lines
-    indices_ln_count = 0;
-    for (int m_prime=0; m_prime<N; m_prime++) {
-        for (int n_prime=0; n_prime<N; n_prime++) {
-            i = m_prime * Nplus1 + n_prime;
+    size_t indices_ln_count = 0;
+    for (int m_prime = 0; m_prime < N; m_prime++) {
+        for (int n_prime = 0; n_prime < N; n_prime++) {
+            int i = m_prime * Nplus1 + n_prime;
 
             indices_ln[indices_ln_count++] = i;
             indices_ln[indices_ln_count++] = i + 1;
@@ -140,11 +92,11 @@ int Ocean::init(const int N, const float A, const Vector2& w, const float length
             indices_ln[indices_ln_count++] = i + Nplus1;
             indices_ln[indices_ln_count++] = i;
             indices_ln[indices_ln_count++] = i + Nplus1 + 1;
-            if (n_prime==N-1) {
+            if (n_prime == N - 1) {
                 indices_ln[indices_ln_count++] = i + 1;
                 indices_ln[indices_ln_count++] = i + Nplus1 + 1;
             }
-            if (m_prime==N-1) {
+            if (m_prime == N - 1) {
                 indices_ln[indices_ln_count++] = i + Nplus1;
                 indices_ln[indices_ln_count++] = i + Nplus1 + 1;
             }
@@ -152,10 +104,10 @@ int Ocean::init(const int N, const float A, const Vector2& w, const float length
     }
 
     // triangles
-    indices_tr_count = 0;
-    for (int m_prime=0; m_prime<N; m_prime++) {
-        for (int n_prime=0; n_prime<N; n_prime++) {
-            i = m_prime * Nplus1 + n_prime;
+    size_t indices_tr_count = 0;
+    for (int m_prime = 0; m_prime < N; m_prime++) {
+        for (int n_prime = 0; n_prime < N; n_prime++) {
+            int i = m_prime * Nplus1 + n_prime;
 
             indices_tr[indices_tr_count++] = i;
             indices_tr[indices_tr_count++] = i + Nplus1;
@@ -169,18 +121,18 @@ int Ocean::init(const int N, const float A, const Vector2& w, const float length
     // create VBOs
     glGenBuffers(1, &vertices_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(ocean_vertex)*Nplus1*Nplus1,
-                 vertices, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(ocean_vertex) * vertices.size(),
+                 vertices.data(), GL_DYNAMIC_DRAW);
 
     glGenBuffers(1, &indices_ln_vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_ln_vbo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_ln_count*sizeof(GLuint),
-                 indices_ln, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * indices_ln.size(),
+                 indices_ln.data(), GL_STATIC_DRAW);
 
     glGenBuffers(1, &indices_tr_vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_tr_vbo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_tr_count*sizeof(GLuint),
-                 indices_tr, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * indices_ln.size(),
+                 indices_tr.data(), GL_STATIC_DRAW);
 
 
     if (!initShaderProgram()) {
@@ -245,7 +197,7 @@ float Ocean::phillips(int n_prime, int m_prime) {
     Vector2 k(M_PI * (2 * n_prime - N) / length,
               M_PI * (2 * m_prime - N) / length);
     float k_length = k.length();
-    if (k_length<Epsilon) {
+    if (k_length < Epsilon) {
         return 0.0;
     }
 
@@ -292,13 +244,13 @@ complex_vector_norm Ocean::h_D_and_n(Vector2 x, float t) {
     Vector2 D(0.0, 0.0);
     Vector3 n(0.0, 0.0, 0.0);
 
-    Complex c, res, htilde_c;
+    Complex c, htilde_c;
     Vector2 k;
     float kx, kz, k_length, k_dot_x;
 
-    for (int m_prime=0; m_prime<N; m_prime++) {
+    for (int m_prime = 0; m_prime < N; m_prime++) {
         kz = 2.0 * M_PI * (m_prime - N / 2.0) / length;
-        for (int n_prime=0; n_prime<N; n_prime++) {
+        for (int n_prime = 0; n_prime < N; n_prime++) {
             kx = 2.0 * M_PI * (n_prime - N / 2.0) / length;
             k = Vector2(kx, kz);
 
@@ -312,7 +264,9 @@ complex_vector_norm Ocean::h_D_and_n(Vector2 x, float t) {
 
             n = n + Vector3(-kx * htilde_c.b, 0.0, -kz * htilde_c.b);
 
-            if (k_length<Epsilon) continue;
+            if (k_length < Epsilon) {
+                continue;
+            }
             D = D + Vector2(kx / k_length * htilde_c.b, kz / k_length * htilde_c.b);
         }
     }
@@ -333,8 +287,8 @@ void Ocean::evaluateWaves(float t) {
     Vector2 d;
     complex_vector_norm h_d_and_n;
 
-    for (int m_prime=0; m_prime<N; m_prime++) {
-        for (int n_prime=0; n_prime<N; n_prime++) {
+    for (int m_prime = 0; m_prime < N; m_prime++) {
+        for (int n_prime = 0; n_prime < N; n_prime++) {
             i = m_prime * Nplus1 + n_prime;
 
             x = Vector2(vertices[i].x, vertices[i].z);
@@ -350,7 +304,7 @@ void Ocean::evaluateWaves(float t) {
             vertices[i].ny = h_d_and_n.n.y;
             vertices[i].nz = h_d_and_n.n.z;
 
-            if (n_prime==0 && m_prime==0) {
+            if (n_prime == 0 && m_prime == 0) {
                 vertices[i+N+Nplus1*N].y = h_d_and_n.h.a;
 
                 vertices[i+N+Nplus1*N].x = vertices[i+N+Nplus1*N].ox + lambda*h_d_and_n.D.x;
@@ -361,7 +315,7 @@ void Ocean::evaluateWaves(float t) {
                 vertices[i+N+Nplus1*N].nz = h_d_and_n.n.z;
             }
 
-            if (n_prime==0) {
+            if (n_prime == 0) {
                 vertices[i+N].y = h_d_and_n.h.a;
 
                 vertices[i+N].x = vertices[i+N].ox + lambda*h_d_and_n.D.x;
@@ -372,7 +326,7 @@ void Ocean::evaluateWaves(float t) {
                 vertices[i+N].nz = h_d_and_n.n.z;
             }
 
-            if (m_prime==0) {
+            if (m_prime == 0) {
                 vertices[i+Nplus1*N].y = h_d_and_n.h.a;
 
                 vertices[i+Nplus1*N].x = vertices[i+Nplus1*N].ox + lambda*h_d_and_n.D.x;
@@ -391,9 +345,9 @@ void Ocean::evaluateWavesFFT(float t) {
     float kx, kz, len;
     int i, i1;
 
-    for (int m_prime=0; m_prime<N; m_prime++) {
+    for (int m_prime = 0; m_prime < N; m_prime++) {
         kz = M_PI * (2 * m_prime - N) / length;
-        for (int n_prime=0; n_prime<N; n_prime++) {
+        for (int n_prime = 0; n_prime < N; n_prime++) {
             kx = M_PI * (2 * n_prime - N) / length;
             len = sqrt(kx * kx + kz * kz);
             i = m_prime * N + n_prime;
@@ -402,7 +356,7 @@ void Ocean::evaluateWavesFFT(float t) {
             h_tilde_slopex[i] = h_tilde[i] * Complex(0.0, kx);
             h_tilde_slopez[i] = h_tilde[i] * Complex(0.0, kz);
 
-            if (len<Epsilon) {
+            if (len < Epsilon) {
                 h_tilde_dx[i] = Complex(0.0, 0.0);
                 h_tilde_dz[i] = Complex(0.0, 0.0);
             } else {
@@ -412,26 +366,26 @@ void Ocean::evaluateWavesFFT(float t) {
         }
     }
 
-    for (int m_prime=0; m_prime<N; m_prime++) {
-        fft->fft(h_tilde,        h_tilde,        1, m_prime * N);
-        fft->fft(h_tilde_slopex, h_tilde_slopex, 1, m_prime * N);
-        fft->fft(h_tilde_slopez, h_tilde_slopez, 1, m_prime * N);
-        fft->fft(h_tilde_dx,     h_tilde_dx,     1, m_prime * N);
-        fft->fft(h_tilde_dz,     h_tilde_dz,     1, m_prime * N);
+    for (int m_prime = 0; m_prime < N; m_prime++) {
+        fft->fft(h_tilde.data(),        h_tilde.data(),        1, m_prime * N);
+        fft->fft(h_tilde_slopex.data(), h_tilde_slopex.data(), 1, m_prime * N);
+        fft->fft(h_tilde_slopez.data(), h_tilde_slopez.data(), 1, m_prime * N);
+        fft->fft(h_tilde_dx.data(),     h_tilde_dx.data(),     1, m_prime * N);
+        fft->fft(h_tilde_dz.data(),     h_tilde_dz.data(),     1, m_prime * N);
     }
-    for (int n_prime=0; n_prime<N; n_prime++) {
-        fft->fft(h_tilde,        h_tilde,        N, n_prime);
-        fft->fft(h_tilde_slopex, h_tilde_slopex, N, n_prime);
-        fft->fft(h_tilde_slopez, h_tilde_slopez, N, n_prime);
-        fft->fft(h_tilde_dx,     h_tilde_dx,     N, n_prime);
-        fft->fft(h_tilde_dz,     h_tilde_dz,     N, n_prime);
+    for (int n_prime = 0; n_prime < N; n_prime++) {
+        fft->fft(h_tilde.data(),        h_tilde.data(),        N, n_prime);
+        fft->fft(h_tilde_slopex.data(), h_tilde_slopex.data(), N, n_prime);
+        fft->fft(h_tilde_slopez.data(), h_tilde_slopez.data(), N, n_prime);
+        fft->fft(h_tilde_dx.data(),     h_tilde_dx.data(),     N, n_prime);
+        fft->fft(h_tilde_dz.data(),     h_tilde_dz.data(),     N, n_prime);
     }
 
     int sign;
     float signs[] = {1.0, -1.0};
     Vector3 n;
-    for (int m_prime=0; m_prime<N; m_prime++) {
-        for (int n_prime=0; n_prime<N; n_prime++) {
+    for (int m_prime = 0; m_prime < N; m_prime++) {
+        for (int n_prime = 0; n_prime < N; n_prime++) {
             // index into h_tilde
             i  = m_prime * N      + n_prime;
 
@@ -460,7 +414,7 @@ void Ocean::evaluateWavesFFT(float t) {
             vertices[i1].nz = n.z;
 
             // tiling
-            if (n_prime==0 && m_prime==0) {
+            if (n_prime == 0 && m_prime == 0) {
                 vertices[i1+N+Nplus1*N].y = h_tilde[i].a;
 
                 vertices[i1+N+Nplus1*N].x = vertices[i1+N+Nplus1*N].ox + lambda*h_tilde_dx[i].a;
@@ -471,7 +425,7 @@ void Ocean::evaluateWavesFFT(float t) {
                 vertices[i1+N+Nplus1*N].nz = n.z;
             }
 
-            if (n_prime==0) {
+            if (n_prime == 0) {
                 vertices[i1+N].y = h_tilde[i].a;
 
                 vertices[i1+N].x = vertices[i1+N].ox + lambda*h_tilde_dx[i].a;
@@ -482,7 +436,7 @@ void Ocean::evaluateWavesFFT(float t) {
                 vertices[i1+N].nz = n.z;
             }
 
-            if (m_prime==0) {
+            if (m_prime == 0) {
                 vertices[i1+Nplus1*N].y = h_tilde[i].a;
 
                 vertices[i1+Nplus1*N].x = vertices[i1+Nplus1*N].ox + lambda*h_tilde_dx[i].a;
@@ -507,7 +461,7 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(ocean_vertex)*Nplus1*Nplus1, vertices);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(ocean_vertex) * vertices.size(), vertices.data());
 
     glm::mat4 m, mv_transp_inv;
 
@@ -523,16 +477,15 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
         initAttributes();
     }
 
-	
-    GLenum geometry            = (geometry_type==GEOMETRY_SOLID ? GL_TRIANGLES     : GL_LINES);
-    GLuint indices_vbo         = (geometry_type==GEOMETRY_SOLID ? indices_tr_vbo   : indices_ln_vbo);
-    unsigned int indices_count = (geometry_type==GEOMETRY_SOLID ? indices_tr_count : indices_ln_count);
+    GLenum geometry = (geometry_type==GEOMETRY_SOLID ? GL_TRIANGLES : GL_LINES);
+    GLuint indices_vbo = (geometry_type==GEOMETRY_SOLID ? indices_tr_vbo : indices_ln_vbo);
+    size_t indices_count = (geometry_type==GEOMETRY_SOLID ? indices_tr.size() : indices_ln.size());
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_vbo);
 
     static const float ocean_scale = 1.f;
-    for (int i=0; i<ocean_repeat; i++) {
-        for (int j=0; j<ocean_repeat; j++) {
+    for (int i = 0; i < ocean_repeat; i++) {
+        for (int j = 0; j < ocean_repeat; j++) {
             m = glm::scale(model, glm::vec3(ocean_scale));
             m = glm::translate(m, glm::vec3(length * (-ocean_repeat/2 + i + 0.5), 0.0,
                                             length * ( ocean_repeat/2 - j - 0.5)));
