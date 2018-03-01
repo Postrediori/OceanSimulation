@@ -1,7 +1,8 @@
 // Ocean.cpp
 #include "stdafx.h"
 #include "Shader.h"
-#include "Vector.h"
+#include "Vector2.h"
+#include "Vector3.h"
 #include "Complex.h"
 #include "FFT.h"
 #include "Ocean.h"

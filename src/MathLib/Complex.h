@@ -1,6 +1,5 @@
 // Complex.h
-#ifndef COMPLEX_H
-#define COMPLEX_H
+#pragma once
 
 class Complex {
 public:
@@ -20,5 +19,3 @@ public:
 
     static void resetCounters();
 };
-
-#endif
