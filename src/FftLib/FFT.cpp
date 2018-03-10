@@ -14,14 +14,14 @@ FFT::FFT(unsigned int N)
 
     // prepare bit reversals
     reversed = new unsigned int[N];
-    for (int i = 0; i < N; i++) {
+    for (unsigned int i = 0; i < N; i++) {
         reversed[i] = reverse(i);
     }
 
     // prepare W
     int pow2 = 1;
     W = new Complex*[log_2_N];
-    for (int i=0; i<log_2_N; i++) {
+    for (unsigned int i=0; i < log_2_N; i++) {
         W[i] = new Complex[pow2];
         for (int j = 0; j < pow2; j++) {
             W[i][j] = w(j, pow2 * 2);
@@ -42,7 +42,7 @@ FFT::~FFT() {
         delete[] c[1];
     }
     if (W) {
-        for (int i = 0; i < log_2_N; i++) {
+        for (unsigned int i = 0; i < log_2_N; i++) {
             if (W[i]) {
                 delete[] W[i];
             }
@@ -54,9 +54,9 @@ FFT::~FFT() {
     }
 }
 
-unsigned int FFT::reverse(unsigned int i)	{
+unsigned int FFT::reverse(unsigned int i) {
     unsigned int res = 0;
-    for (int j=0; j<log_2_N; j++) {
+    for (unsigned int j=0; j < log_2_N; j++) {
         res = (res<<1) + (i & 1);
         i >>= 1;
     }
@@ -69,7 +69,7 @@ Complex FFT::w(unsigned int x, unsigned int N) {
 
 void FFT::fft(Complex *input, Complex *output,
     int stride, int offset) {
-    for (int i = 0; i < N; i++) {
+    for (unsigned int i = 0; i < N; i++) {
         c[which][i] = input[reversed[i] * stride + offset];
     }
 
@@ -78,7 +78,7 @@ void FFT::fft(Complex *input, Complex *output,
     int size_over_2 = 1;
     int w_ = 0;
 
-    for (int i = 1; i <= log_2_N; i++) {
+    for (unsigned int i = 1; i <= log_2_N; i++) {
         which ^= 1;
         for (int j = 0; j < loops; j++) {
             for (int k = 0; k < size_over_2; k++) {
@@ -97,7 +97,7 @@ void FFT::fft(Complex *input, Complex *output,
         w_++;
     }
 
-    for (int i = 0; i < N; i++) {
+    for (unsigned int i = 0; i < N; i++) {
         output[i*stride + offset] = c[which][i];
     }
 }

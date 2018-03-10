@@ -5,9 +5,9 @@
 /*****************************************************************************
  * FontAtlas
  ****************************************************************************/
-const int FirstDisplayedCharacter = 32;
-const int CharacterCount = 128;
-const int MaxWidth = 1024;
+const int g_FirstDisplayedCharacter = 32;
+const int g_CharacterCount = 128;
+const int g_MaxWidth = 1024;
 
 typedef int FontSize_t;
 
@@ -24,9 +24,9 @@ public:
     ~FontAtlas();
 
 public:
-    int w, h;
+    unsigned int w, h;
     GLuint tex;
-    CharInfo characters[CharacterCount];
+    CharInfo characters[g_CharacterCount];
 };
 
 /*****************************************************************************

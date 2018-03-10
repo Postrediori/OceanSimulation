@@ -51,16 +51,16 @@ FontAtlas::FontAtlas(FT_Face face, FontSize_t height)
 
     memset(characters, 0, sizeof(characters));
 
-    int roww = 0, rowh = 0;
+    unsigned int roww = 0, rowh = 0;
 
     // Find minimum size for a texture holding all visible ASCII characters
-    for (int i=FirstDisplayedCharacter; i<CharacterCount; i++) {
+    for (int i = g_FirstDisplayedCharacter; i < g_CharacterCount; i++) {
         if (FT_Load_Char(face, i, FT_LOAD_RENDER)) {
             LOGE << "Loading character " << i << " failed!";
             continue;
         }
 
-        if (roww+g->bitmap.width+1>=MaxWidth) {
+        if ((roww + g->bitmap.width + 1) >= g_MaxWidth) {
             w = max(w, roww);
             h += rowh;
             roww = 0;
@@ -96,13 +96,13 @@ FontAtlas::FontAtlas(FT_Face face, FontSize_t height)
 
     rowh = 0;
 
-    for (int i=FirstDisplayedCharacter; i<CharacterCount; i++) {
+    for (int i = g_FirstDisplayedCharacter; i < g_CharacterCount; i++) {
         if (FT_Load_Char(face, i, FT_LOAD_RENDER)) {
             LOGE << "Loading character " << i << " failed!";
             continue;
         }
 
-        if ((ox+g->bitmap.width+1)>=MaxWidth) {
+        if ((ox + g->bitmap.width + 1) >= g_MaxWidth) {
             oy += rowh;
             rowh = 0;
             ox = 0;
@@ -313,7 +313,7 @@ void FontRenderer::renderText(FontHandle_t typeset,
 
     // Loop through all characters
     for (const char c : text) {
-        CharInfo inf = a->characters[c];
+        CharInfo inf = a->characters[size_t(c)];
 
         // Calculate vertex and texture coordinates
         x2 = x + inf.bl * area.sx;
@@ -342,7 +342,7 @@ void FontRenderer::renderText(FontHandle_t typeset,
         coords.push_back({x2+w, -y2, inf.tx+tdx, inf.ty});
     }
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Coord2d)*coords.size(), coords.data(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Coord2d) * coords.size(), coords.data(), GL_DYNAMIC_DRAW);
 
     glDrawArrays(GL_TRIANGLES, 0, coords.size());
 }
