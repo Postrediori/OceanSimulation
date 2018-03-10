@@ -368,18 +368,18 @@ void Ocean::evaluateWavesFFT(float t) {
     }
 
     for (int m_prime = 0; m_prime < N; m_prime++) {
-        fft->fft(h_tilde.data(),        h_tilde.data(),        1, m_prime * N);
-        fft->fft(h_tilde_slopex.data(), h_tilde_slopex.data(), 1, m_prime * N);
-        fft->fft(h_tilde_slopez.data(), h_tilde_slopez.data(), 1, m_prime * N);
-        fft->fft(h_tilde_dx.data(),     h_tilde_dx.data(),     1, m_prime * N);
-        fft->fft(h_tilde_dz.data(),     h_tilde_dz.data(),     1, m_prime * N);
+        fft->fft(h_tilde,        h_tilde,        1, m_prime * N);
+        fft->fft(h_tilde_slopex, h_tilde_slopex, 1, m_prime * N);
+        fft->fft(h_tilde_slopez, h_tilde_slopez, 1, m_prime * N);
+        fft->fft(h_tilde_dx,     h_tilde_dx,     1, m_prime * N);
+        fft->fft(h_tilde_dz,     h_tilde_dz,     1, m_prime * N);
     }
     for (int n_prime = 0; n_prime < N; n_prime++) {
-        fft->fft(h_tilde.data(),        h_tilde.data(),        N, n_prime);
-        fft->fft(h_tilde_slopex.data(), h_tilde_slopex.data(), N, n_prime);
-        fft->fft(h_tilde_slopez.data(), h_tilde_slopez.data(), N, n_prime);
-        fft->fft(h_tilde_dx.data(),     h_tilde_dx.data(),     N, n_prime);
-        fft->fft(h_tilde_dz.data(),     h_tilde_dz.data(),     N, n_prime);
+        fft->fft(h_tilde,        h_tilde,        N, n_prime);
+        fft->fft(h_tilde_slopex, h_tilde_slopex, N, n_prime);
+        fft->fft(h_tilde_slopez, h_tilde_slopez, N, n_prime);
+        fft->fft(h_tilde_dx,     h_tilde_dx,     N, n_prime);
+        fft->fft(h_tilde_dz,     h_tilde_dz,     N, n_prime);
     }
 
     int sign;

@@ -19,3 +19,5 @@ public:
 
     static void resetCounters();
 };
+
+typedef std::vector<Complex> Complex_vt;

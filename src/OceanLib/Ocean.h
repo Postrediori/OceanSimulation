@@ -28,6 +28,10 @@ enum GEOMETRY_TYPE {
     GEOMETRY_TYPES
 };
 
+typedef std::unique_ptr<FFT> FftGuard_t;
+typedef std::vector<ocean_vertex> OceanVertex_vt;
+typedef std::vector<GLuint> GLuint_vt;
+
 /*****************************************************************************
  * Ocean
  ****************************************************************************/
@@ -83,21 +87,21 @@ private:
     int ocean_repeat;
 
     // fast Fourier transform parameters
-    std::vector<Complex> h_tilde;
-    std::vector<Complex> h_tilde_slopex;
-    std::vector<Complex> h_tilde_slopez;
-    std::vector<Complex> h_tilde_dx;
-    std::vector<Complex> h_tilde_dz;
+    Complex_vt h_tilde;
+    Complex_vt h_tilde_slopex;
+    Complex_vt h_tilde_slopez;
+    Complex_vt h_tilde_dx;
+    Complex_vt h_tilde_dz;
 
     // fast Fourier transform
-    std::unique_ptr<FFT> fft;
+    FftGuard_t fft;
 
     // vertices for VBO
-    std::vector<ocean_vertex> vertices;
+    OceanVertex_vt vertices;
 
     // indices for VBO
-    std::vector<GLuint> indices_ln;
-    std::vector<GLuint> indices_tr;
+    GLuint_vt indices_ln;
+    GLuint_vt indices_tr;
 
     // version of shader ar integer (i.e. 110 for 1.10)
     int shaderVersion;
