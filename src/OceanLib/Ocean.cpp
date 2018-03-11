@@ -11,6 +11,8 @@ static const char vertex_src_1_10[] = "data/ocean110.vert";
 static const char fragment_src_1_10[] = "data/ocean110.frag";
 static const char vertex_src_1_30[] = "data/ocean130.vert";
 static const char fragment_src_1_30[] = "data/ocean130.frag";
+static const char vertex_src_3_30[] = "data/ocean330.vert";
+static const char fragment_src_3_30[] = "data/ocean330.frag";
 
 static float uniformRandomVariable() {
     return (float)rand() / RAND_MAX;
@@ -187,14 +189,26 @@ int Ocean::init(const int N, const float A, const Vector2& w, const float length
         return 0;
     }
 
-    aVertex      = glGetAttribLocation(glProgram, "vertex");
-    aNormal      = glGetAttribLocation(glProgram, "normal");
-    aTexture     = glGetAttribLocation(glProgram, "texture");
-    uLightPos    = glGetUniformLocation(glProgram, "light_pos");
-    uProjection  = glGetUniformLocation(glProgram, "projection");
-    uView        = glGetUniformLocation(glProgram, "view");
-    uModel       = glGetUniformLocation(glProgram, "model");
-    uMVTranspInv = glGetUniformLocation(glProgram, "mv_transp_inv");
+    if (shaderVersion >= 330) {
+        aVertex      = 0;
+        aNormal      = 1;
+        aTexture     = 2;
+        uLightPos    = 3;
+        uProjection  = 0;
+        uView        = 1;
+        uModel       = 2;
+        uMVTranspInv = -1;
+    }
+    else {
+        aVertex      = glGetAttribLocation(glProgram, "vertex");
+        aNormal      = glGetAttribLocation(glProgram, "normal");
+        aTexture     = glGetAttribLocation(glProgram, "texture");
+        uLightPos    = glGetUniformLocation(glProgram, "light_pos");
+        uProjection  = glGetUniformLocation(glProgram, "projection");
+        uView        = glGetUniformLocation(glProgram, "view");
+        uModel       = glGetUniformLocation(glProgram, "model");
+        uMVTranspInv = glGetUniformLocation(glProgram, "mv_transp_inv");
+    }
 
     // Create VAOs
     if (shaderVersion >= 130) {
@@ -536,10 +550,13 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
             m = glm::scale(model, glm::vec3(ocean_scale));
             m = glm::translate(m, glm::vec3(length * (-ocean_repeat/2 + i + 0.5), 0.0,
                                             length * ( ocean_repeat/2 - j - 0.5)));
-            mv_transp_inv =  glm::inverse(glm::transpose(view * m));
 
             glUniformMatrix4fv(uModel,       1, GL_FALSE, glm::value_ptr(m));
-            glUniformMatrix4fv(uMVTranspInv, 1, GL_FALSE, glm::value_ptr(mv_transp_inv));
+
+            if (uMVTranspInv != -1) {
+                mv_transp_inv =  glm::inverse(glm::transpose(view * m));
+                glUniformMatrix4fv(uMVTranspInv, 1, GL_FALSE, glm::value_ptr(mv_transp_inv));
+            }
 
             glDrawElements(geometry, indices_count, GL_UNSIGNED_INT, 0);
         }
@@ -561,6 +578,13 @@ int Ocean::initShaderProgram() {
     return Shader::createProgram(glProgram, glShaderV, glShaderF,
                                  vertex_src_1_10, fragment_src_1_10);
 #else
+    if (Shader::createProgram(glProgram, glShaderV, glShaderF,
+                          vertex_src_3_30, fragment_src_3_30)) {
+        shaderVersion = 330;
+        LOGI << "Using GLSL 3.30 for Ocean Rendering";
+        return 1;
+    }
+
     if (Shader::createProgram(glProgram, glShaderV, glShaderF,
                           vertex_src_1_30, fragment_src_1_30)) {
         shaderVersion = 130;
