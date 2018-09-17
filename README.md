@@ -27,6 +27,7 @@ are bundled with the repository. This includes:
 
 The following instructions apply to:
 
+* Ubuntu 18.04
 * Ubuntu 16.04
 * Debian 9
 
