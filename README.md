@@ -190,3 +190,4 @@ stands for the length of the patch.
 ## TODO
 * Add the detection of the latest supported GLSL version as well as shaders adjusted for newer versions.
 * Add build instructions for Windows.
+* Add Vulkan renderer.
