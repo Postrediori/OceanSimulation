@@ -32,7 +32,7 @@ The following instructions apply to:
 * Debian 9
 
 ```
-apt-get install \
+sudo apt-get install -y \
     build-essential \
     cmake \
     xorg-dev \
@@ -47,9 +47,9 @@ The following instructions apply to:
 * Fedora 22 and higher
 
 ```
-dnf install \
+sudo dnf install -y \
+    gcc gcc-c++ make \
     cmake \
-    gcc-c++ \
     mesa-libGL-devel \
     libXrandr-devel \
     libXinerama-devel \
@@ -61,9 +61,9 @@ dnf install \
 * CentOS 7
 
 ```
-yum install \
+sudo yum install -y \
+    gcc gcc-c++ make \
     cmake \
-    gcc-c++ \
     mesa-libGL-devel \
     libXrandr-devel \
     libXinerama-devel \
