@@ -185,8 +185,8 @@ stands for the length of the patch.
 ## Links
 
 *  Tessendorf, Jerry. [Simulating Ocean Water](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.161.9102&rep=rep1&type=pdf). In SIGGRAPH 2002 Course Notes #9 (Simulating Nature: Realistic and Interactive Techniques), ACM Press.
-* [Ocean simulation part one: using the discrete Fourier transform](https://www.keithlantz.net/2011/10/ocean-simulation-part-one-using-the-discrete-fourier-transform/)
-* [Ocean simulation part two: using the fast Fourier transform](https://www.keithlantz.net/2011/11/ocean-simulation-part-two-using-the-fast-fourier-transform/)
+* [Ocean simulation part one: using the discrete Fourier transform](https://web.archive.org/web/20170606012252/https://www.keithlantz.net/2011/10/ocean-simulation-part-one-using-the-discrete-fourier-transform/), archived from [the original](https://www.keithlantz.net/2011/10/ocean-simulation-part-one-using-the-discrete-fourier-transform/) that seems to be down as of December, 2018
+* [Ocean simulation part two: using the fast Fourier transform](https://web.archive.org/web/20170606194432/https://www.keithlantz.net/2011/11/ocean-simulation-part-two-using-the-fast-fourier-transform/), archived from [the original](https://www.keithlantz.net/2011/11/ocean-simulation-part-two-using-the-fast-fourier-transform/)
 
 ## TODO
 * Add the detection of the latest supported GLSL version as well as shaders adjusted for newer versions.
