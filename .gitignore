@@ -1,2 +1,4 @@
-build
-bundle
+[Bb]uild
+[Bb]undle
+
+CMakeLists.txt.user

@@ -14,6 +14,7 @@ target_link_libraries(${PROJECT}
     ${GLFW_LIBRARIES}
     ${GLAD_LIBRARIES}
     ${FREETYPE_LIBRARIES}
+    Utils
     MathLib
     FftLib
     GraphicsLib

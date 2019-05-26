@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "FsUtils.h"
 #include "Config.h"
 #include "Shader.h"
 #include "FreeType.h"
@@ -15,8 +16,8 @@ static const unsigned int Height = 480;
 
 static const char Title[] = "Ocean Simulation";
 
-static const char ConfigFile[] = "data/ocean.cfg";
-static const char FontFile[] = "data/font.ttf";
+static const char ConfigFile[] = "./data/ocean.cfg";
+static const char FontFile[] = "./data/font.ttf";
 static const FontSize_t FontSize = 24;
 
 const GLfloat White[4] = {1.f, 1.f, 1.f, 1.f};
@@ -56,8 +57,10 @@ static const char * const GeometryTypeNames[] = {
 /*****************************************************************************
  * Graphics functions
  ****************************************************************************/
-bool Init() {
+bool Init(const std::string& moduleDir) {
     srand(time(0));
+
+    LOGD << "Module Directory : " << moduleDir;
 
     LOGI << "OpenGL Renderer  : " << glGetString(GL_RENDERER);
     LOGI << "OpenGL Vendor    : " << glGetString(GL_VENDOR);
@@ -66,8 +69,11 @@ bool Init() {
     LOGI << "FreeType Version : " << FREETYPE_MAJOR << "." << FREETYPE_MINOR << "." << FREETYPE_PATCH;
 
     // Load config file
+    std::string configFilePath = FsUtils::PathJoin(moduleDir, ConfigFile);
+
     Config config;
-    config.Load(ConfigFile);
+    config.Load(configFilePath);
+    LOGD << "Loaded Configuration File : " << configFilePath;
 
     float windAmp;
     if (!config.Get("waveAmplitude", windAmp)) windAmp = 5e-4f;
@@ -84,20 +90,22 @@ bool Init() {
 
     // Ocean setup
     gGeometryType = GEOMETRY_SOLID;
-    if (gOcean.init(oceanSize, windAmp, Vector2(windDirX, windDirZ),
-        oceanLen, oceanRepeat) <= 0) {
+    if (gOcean.init(moduleDir, oceanSize, windAmp, Vector2(windDirX, windDirZ),
+            oceanLen, oceanRepeat) <= 0) {
         return false;
     }
     gOcean.geometryType(gGeometryType);
 
     // Init FreeType
+    std::string fontFilePath = FsUtils::PathJoin(moduleDir, FontFile);
     if (!fr.init()) {
         return false;
     }
-    if (!fr.load(FontFile)) {
+    if (!fr.load(fontFilePath)) {
         return false;
     }
     a24 = fr.createAtlas(FontSize);
+    LOGD << "Loaded Font File : " << fontFilePath;
 
     // Other configurstions
     gFullscreen = false;
@@ -274,9 +282,12 @@ void Update(GLFWwindow* window) {
 /*****************************************************************************
  * Main program
  ****************************************************************************/
-int main(int /*argc*/, char** /*argv*/) {
+int main(int /*argc*/, char* argv[]) {
     int status = EXIT_SUCCESS;
     plog::init(plog::debug, &consoleAppender);
+
+    std::string modulePath(argv[0]);
+    std::string moduleDir = FsUtils::GetModuleDirectory(modulePath);
 
     glfwSetErrorCallback(Error);
 
@@ -307,7 +318,7 @@ int main(int /*argc*/, char** /*argv*/) {
     glfwMakeContextCurrent(window);
     gladLoadGL();
 
-    if (!Init()) {
+    if (!Init(moduleDir)) {
         LOGE << "Initialization failed";
         status = EXIT_FAILURE;
         goto finish;

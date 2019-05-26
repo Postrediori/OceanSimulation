@@ -10,6 +10,7 @@ include_directories(
     )
 
 target_link_libraries(${PROJECT}
+    Utils
     MathLib
     FftLib
     GraphicsLib
