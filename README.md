@@ -106,8 +106,8 @@ make
 After the successful build the binary `Ocean` will end up in `build/src/Ocean/` directory.
 
 ```
-cd build/src/Ocean
-./Ocean
+cd build
+./src/Ocean/Ocean
 ```
 
 ## Installation
@@ -137,8 +137,8 @@ tree
     └── Ocean
 
 2 directories, 7 files
-cd Ocean
-./Ocean
+cd bundle
+./Ocean/Ocean
 ```
 
 ## Configuration
