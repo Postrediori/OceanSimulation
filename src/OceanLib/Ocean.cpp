@@ -1,6 +1,5 @@
 // Ocean.cpp
 #include "stdafx.h"
-#include "FsUtils.h"
 #include "Shader.h"
 #include "Vector.h"
 #include "Complex.h"
@@ -88,8 +87,7 @@ Ocean::~Ocean() {
     }
 }
 
-int Ocean::init(const std::string& moduleDir, const int N, const float A, const Vector2& w, const float length, int ocean_repeat) {
-    module_dir = moduleDir;
+int Ocean::init(const int N, const float A, const Vector2& w, const float length, int ocean_repeat) {
     this->N = N;
     Nplus1 = N+1;
     this->A = A;
@@ -231,7 +229,7 @@ void Ocean::release() {
         vertices_vbo = 0;
     }
     if (indices_ln_vbo) {
-        glDeleteBuffers(1, &indices_ln_vbo);   
+        glDeleteBuffers(1, &indices_ln_vbo);
         indices_ln_vbo = 0;
     }
     if (indices_tr_vbo) {
@@ -575,36 +573,27 @@ void Ocean::geometryType(GEOMETRY_TYPE t) {
 }
 
 int Ocean::initShaderProgram() {
-    std::string vertex_src, fragment_src;
 #ifdef __APPLE__
     // Use OpenGL 2.1 shader
-    vertex_src = FsUtils::PathJoin(module_dir, vertex_src_1_10);
-    fragment_src = FsUtils::PathJoin(module_dir, fragment_src_1_10);
     return Shader::createProgram(glProgram, glShaderV, glShaderF,
-                                 vertex_src, fragment_src);
+                                 vertex_src_1_10, fragment_src_1_10);
 #else
-    vertex_src = FsUtils::PathJoin(module_dir, vertex_src_3_30);
-    fragment_src = FsUtils::PathJoin(module_dir, fragment_src_3_30);
     if (Shader::createProgram(glProgram, glShaderV, glShaderF,
-                          vertex_src, fragment_src)) {
+                          vertex_src_3_30, fragment_src_3_30)) {
         shaderVersion = 330;
         LOGI << "Using GLSL 3.30 for Ocean Rendering";
         return 1;
     }
 
-    vertex_src = FsUtils::PathJoin(module_dir, vertex_src_1_30);
-    fragment_src = FsUtils::PathJoin(module_dir, fragment_src_1_30);
     if (Shader::createProgram(glProgram, glShaderV, glShaderF,
-                          vertex_src, fragment_src)) {
+                          vertex_src_1_30, fragment_src_1_30)) {
         shaderVersion = 130;
         LOGI << "Using GLSL 1.30 for Ocean Rendering";
         return 1;
     }
 
-    vertex_src = FsUtils::PathJoin(module_dir, vertex_src_1_10);
-    fragment_src = FsUtils::PathJoin(module_dir, fragment_src_1_10);
     if (Shader::createProgram(glProgram, glShaderV, glShaderF,
-                          vertex_src, fragment_src)) {
+                          vertex_src_1_10, fragment_src_1_10)) {
         shaderVersion = 110;
         LOGI << "Using GLSL 1.10 for Ocean Rendering";
         return 1;

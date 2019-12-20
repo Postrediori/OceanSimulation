@@ -37,7 +37,7 @@ public:
     Ocean();
     ~Ocean();
 
-    int init(const std::string& moduleDir, const int N, const float A, const Vector2& w, const float length, const int ocean_repeat);
+    int init(const int N, const float A, const Vector2& w, const float length, const int ocean_repeat);
     void release();
 
     // deep water
@@ -63,7 +63,6 @@ private:
     void initAttributes();
 
 private:
-    std::string module_dir;
     GEOMETRY_TYPE geometry_type;
 
     // gravity constant
