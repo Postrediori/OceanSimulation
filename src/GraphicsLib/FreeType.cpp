@@ -42,6 +42,44 @@ static const char fragment_src_1_30[] =
     "    frag_color=vec4(1.,1.,1.,a)*color;"
     "}";
 
+static const char vertex_src_3_30[] =
+    "#version 330\n"
+    "layout (location = 0) in vec4 coord;"
+    "out vec2 tex_coord;"
+    "void main(){"
+    "    gl_Position=vec4(coord.xy,0.,1.);"
+    "    tex_coord=coord.zw;"
+    "}";
+static const char fragment_src_3_30[] =
+    "#version 330\n"
+    "in vec2 tex_coord;"
+    "out vec4 frag_color;"
+    "uniform vec4 color;"
+    "uniform sampler2D tex;"
+    "void main(){"
+    "    float a=texture(tex,tex_coord).r;"
+    "    frag_color=vec4(1.,1.,1.,a)*color;"
+    "}";
+
+static const char vertex_src_4_30[] =
+    "#version 430\n"
+    "layout (location = 0) in vec4 coord;"
+    "out vec2 tex_coord;"
+    "void main(){"
+    "    gl_Position=vec4(coord.xy,0.,1.);"
+    "    tex_coord=coord.zw;"
+    "}";
+static const char fragment_src_4_30[] =
+    "#version 430\n"
+    "in vec2 tex_coord;"
+    "out vec4 frag_color;"
+    "layout (location = 0) uniform vec4 color;"
+    "layout (location = 1) uniform sampler2D tex;"
+    "void main(){"
+    "    float a=texture(tex,tex_coord).r;"
+    "    frag_color=vec4(1.,1.,1.,a)*color;"
+    "}";
+
 FontAtlas::FontAtlas(FT_Face face, FontSize_t height)
     : w(0)
     , h(0)
@@ -145,7 +183,8 @@ FontAtlas::~FontAtlas() {
  * FontRenderer
  ****************************************************************************/
 FontRenderer::FontRenderer()
-    : glProgram(0)
+    : shaderVersion(0)
+    , glProgram(0)
     , glShaderV(0)
     , glShaderF(0)
     , aCoord(0)
@@ -205,37 +244,66 @@ bool FontRenderer::initObjects() {
 }
 
 bool FontRenderer::initShaderProgram() {
-#ifdef __APPLE__
-    // Use OpenGL 2.1 shader
-    return Shader::createProgramSource(glProgram, glShaderV, glShaderF,
-                                       vertex_src_1_10, fragment_src_1_10);
-#else
+#ifndef __APPLE__
+    if (Shader::createProgramSource(glProgram, glShaderV, glShaderF,
+                                     vertex_src_4_30, fragment_src_4_30)) {
+        shaderVersion = 430;
+        LOGI << "Using GLSL 4.30 for Font Rendering";
+        return true;
+    }
+
+    if (Shader::createProgramSource(glProgram, glShaderV, glShaderF,
+                                     vertex_src_3_30, fragment_src_3_30)) {
+        shaderVersion = 330;
+        LOGI << "Using GLSL 3.30 for Font Rendering";
+        return true;
+    }
+
     if (Shader::createProgramSource(glProgram, glShaderV, glShaderF,
                                      vertex_src_1_30, fragment_src_1_30)) {
+        shaderVersion = 130;
         LOGI << "Using GLSL 1.30 for Font Rendering";
         return true;
     }
+#endif
 
     // ok, try and use OpenGL 2.1 then
     if (Shader::createProgramSource(glProgram, glShaderV, glShaderF,
                                      vertex_src_1_10, fragment_src_1_10)) {
+        shaderVersion = 110;
         LOGI << "Using GLSL 1.10 for Font Rendering";
         return true;
     }
 
     return false;
-#endif
 }
 
 bool FontRenderer::initShaderVariables() {
-    aCoord = glGetAttribLocation(glProgram, "coord");
-    uTex   = glGetUniformLocation(glProgram, "tex");
-    uColor = glGetUniformLocation(glProgram, "color");
+    if (shaderVersion >= 330) {
+        aCoord = 0;
+    }
+    else {
+        aCoord = glGetAttribLocation(glProgram, "coord");
+    }
+
+    if (shaderVersion >= 430) {
+        uTex = 1;
+        uColor = 0;
+    }
+    else {
+        uTex = glGetUniformLocation(glProgram, "tex");
+        uColor = glGetUniformLocation(glProgram, "color");
+    }
 
     if (aCoord==-1 || uTex==-1 || uColor==-1) {
         return false;
     }
     return true;
+}
+
+void FontRenderer::initAttributes() {
+    glEnableVertexAttribArray(aCoord);
+    glVertexAttribPointer(aCoord, 4, GL_FLOAT, GL_FALSE, 0, 0);
 }
 
 bool FontRenderer::load(const std::string& filename) {
@@ -300,8 +368,8 @@ void FontRenderer::renderText(FontHandle_t typeset,
     glBindTexture(GL_TEXTURE_2D, a->tex);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glEnableVertexAttribArray(aCoord);
-    glVertexAttribPointer(aCoord, 4, GL_FLOAT, GL_FALSE, 0, 0);
+
+    initAttributes();
 
     size_t len = text.length();
     std::vector<Coord2d> coords(6 * len);

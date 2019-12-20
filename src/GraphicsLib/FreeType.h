@@ -69,8 +69,10 @@ private:
     bool initObjects();
     bool initShaderProgram();
     bool initShaderVariables();
+    void initAttributes();
 
 public:
+    int shaderVersion;
     GLuint glProgram, glShaderV, glShaderF;
     GLint aCoord;
     GLint uTex, uColor;
