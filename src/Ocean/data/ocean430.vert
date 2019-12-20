@@ -1,4 +1,4 @@
-#version 330
+#version 430
 
 layout (location = 0) in vec3 vertex;
 layout (location = 1) in vec3 normal;
@@ -10,11 +10,11 @@ out vec3 halfway_vector;
 // out vec2 tex_coord;
 out float fog_factor;
 
-uniform mat4 projection;
-uniform mat4 view;
-uniform mat4 model;
+layout (location = 0) uniform mat4 projection;
+layout (location = 1) uniform mat4 view;
+layout (location = 2) uniform mat4 model;
 //uniform mat4 mv_transp_inv;
-uniform vec3 light_pos;
+layout (location = 3) uniform vec3 light_pos;
 
 const float fog_distance = 1000.;
 

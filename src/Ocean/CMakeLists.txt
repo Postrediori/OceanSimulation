@@ -43,5 +43,11 @@ configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/data/ocean330.frag
     ${CMAKE_CURRENT_BINARY_DIR}/data/ocean330.frag COPYONLY)
 configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/ocean430.vert
+    ${CMAKE_CURRENT_BINARY_DIR}/data/ocean430.vert COPYONLY)
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/ocean430.frag
+    ${CMAKE_CURRENT_BINARY_DIR}/data/ocean430.frag COPYONLY)
+configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/data/font.ttf
     ${CMAKE_CURRENT_BINARY_DIR}/data/font.ttf COPYONLY)

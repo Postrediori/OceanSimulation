@@ -13,6 +13,8 @@ static const char vertex_src_1_30[] = "./data/ocean130.vert";
 static const char fragment_src_1_30[] = "./data/ocean130.frag";
 static const char vertex_src_3_30[] = "./data/ocean330.vert";
 static const char fragment_src_3_30[] = "./data/ocean330.frag";
+static const char vertex_src_4_30[] = "./data/ocean430.vert";
+static const char fragment_src_4_30[] = "./data/ocean430.frag";
 
 static float uniformRandomVariable() {
     return (float)rand() / RAND_MAX;
@@ -189,35 +191,44 @@ int Ocean::init(const int N, const float A, const Vector2& w, const float length
         return 0;
     }
 
+    // GL_ARB_explicit_attrib_location is since OpenGL 3.3 & GLSL 3.30
     if (shaderVersion >= 330) {
         aVertex      = 0;
         aNormal      = 1;
         aTexture     = 2;
-        uLightPos    = 3;
-        uProjection  = 0;
-        uView        = 1;
-        uModel       = 2;
-        uMVTranspInv = -1;
     }
     else {
         aVertex      = glGetAttribLocation(glProgram, "vertex");
         aNormal      = glGetAttribLocation(glProgram, "normal");
         aTexture     = glGetAttribLocation(glProgram, "texture");
-        uLightPos    = glGetUniformLocation(glProgram, "light_pos");
-        uProjection  = glGetUniformLocation(glProgram, "projection");
-        uView        = glGetUniformLocation(glProgram, "view");
-        uModel       = glGetUniformLocation(glProgram, "model");
+    }
+
+    // GL_ARB_explicit_uniform_location is since OpenGL 4.3 & GLSL 4.30
+    if (shaderVersion >= 430) {
+        uLightPos = 3;
+        uProjection = 0;
+        uView = 1;
+        uModel = 2;
+        uMVTranspInv = -1;
+    }
+    else {
+        uLightPos = glGetUniformLocation(glProgram, "light_pos");
+        uProjection = glGetUniformLocation(glProgram, "projection");
+        uView = glGetUniformLocation(glProgram, "view");
+        uModel = glGetUniformLocation(glProgram, "model");
         uMVTranspInv = glGetUniformLocation(glProgram, "mv_transp_inv");
     }
 
     // Create VAOs
     if (shaderVersion >= 130) {
         glGenVertexArrays(1, &vao);
-        glBindVertexArray(vao);
+        if (vao) {
+            glBindVertexArray(vao);
 
-        initAttributes();
+            initAttributes();
 
-        glBindVertexArray(0);
+            glBindVertexArray(0);
+        }
     }
 
     return 1;
@@ -573,11 +584,14 @@ void Ocean::geometryType(GEOMETRY_TYPE t) {
 }
 
 int Ocean::initShaderProgram() {
-#ifdef __APPLE__
-    // Use OpenGL 2.1 shader
-    return Shader::createProgram(glProgram, glShaderV, glShaderF,
-                                 vertex_src_1_10, fragment_src_1_10);
-#else
+#ifndef __APPLE__
+    if (Shader::createProgram(glProgram, glShaderV, glShaderF,
+                          vertex_src_4_30, fragment_src_4_30)) {
+        shaderVersion = 430;
+        LOGI << "Using GLSL 4.30 for Ocean Rendering";
+        return 1;
+    }
+
     if (Shader::createProgram(glProgram, glShaderV, glShaderF,
                           vertex_src_3_30, fragment_src_3_30)) {
         shaderVersion = 330;
@@ -591,7 +605,9 @@ int Ocean::initShaderProgram() {
         LOGI << "Using GLSL 1.30 for Ocean Rendering";
         return 1;
     }
+#endif
 
+    // On Apple platforms try to use only OpenGL 2.0 shader
     if (Shader::createProgram(glProgram, glShaderV, glShaderF,
                           vertex_src_1_10, fragment_src_1_10)) {
         shaderVersion = 110;
@@ -600,7 +616,6 @@ int Ocean::initShaderProgram() {
     }
 
     return 0;
-#endif
 }
 
 void Ocean::initAttributes() {
