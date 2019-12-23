@@ -10,7 +10,7 @@ macro(make_project_)
     if(MSVC)
         # Ignore 4055 for glad
         # Ignore 4201 for glm
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /IGNORE:4055 /IGNORE:4201")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Wall /IGNORE:4055 /IGNORE:4201")
     else ()
         # Ignore missing-field-initializers for glm
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -std=c++11 -Wno-missing-field-initializers")
