@@ -36,12 +36,10 @@ void main(void) {
     vec4 diff_light = diffuse_color  * diffuse_contribution  * c *
         max(d, 0.);
 
-    vec4 specular_light;
+    vec4 specular_light = vec4(0.);
     if (d>0.) {
         specular_light = specular_color * specular_contribution * c *
             max(pow(dot(normal1, halfway_vector1), 120.), 0.);
-    } else {
-        specular_light = vec4(0.);
     }
 
     frag_col = emissive_light + ambient_light +
