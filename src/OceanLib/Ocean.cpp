@@ -312,7 +312,7 @@ Complex Ocean::hTilde(float t, int n_prime, int m_prime) {
     return htilde0 * c0 + htilde0mkconj * c1;
 }
 
-complex_vector_norm Ocean::h_D_and_n(Vector2 x, float t) {
+complex_vector_norm Ocean::h_D_and_n(const Vector2& x, float t) {
     Complex h(0.0, 0.0);
     Vector2 D(0.0, 0.0);
     Vector3 n(0.0, 0.0, 0.0);

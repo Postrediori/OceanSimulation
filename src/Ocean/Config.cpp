@@ -20,7 +20,7 @@ bool Config::Load(const std::string& file) {
  
         // filter out comments
         if (!line.empty()) {
-            int pos = line.find('#');
+            auto pos = line.find('#');
  
             if (pos != std::string::npos) {
                 line = line.substr(0, pos);
@@ -29,11 +29,11 @@ bool Config::Load(const std::string& file) {
  
         // split line into key and value
         if (!line.empty()) {
-            int pos = line.find('=');
+            auto pos = line.find('=');
  
             if (pos != std::string::npos) {
-                std::string key     = Trim(line.substr(0, pos));
-                std::string value   = Trim(line.substr(pos + 1));
+                std::string key = Trim(line.substr(0, pos));
+                std::string value = Trim(line.substr(pos + 1));
  
                 if (!key.empty() && !value.empty()) {
                     data[key] = value;
@@ -50,7 +50,7 @@ bool Config::Contains(const std::string& key) const {
 }
  
 bool Config::Get(const std::string& key, std::string& value) const {
-    std::map<std::string, std::string>::const_iterator iter = data.find(key);
+    auto iter = data.find(key);
  
     if (iter != data.end()) {
         value = iter->second;
@@ -105,10 +105,10 @@ bool Config::Get(const std::string& key, bool& value) const {
 }
  
 std::string Config::Trim(const std::string& str) {
-    int first = str.find_first_not_of(" \t");
+    auto first = str.find_first_not_of(" \t");
  
     if (first != std::string::npos) {
-        int last = str.find_last_not_of(" \t");
+        auto last = str.find_last_not_of(" \t");
  
         return str.substr(first, last - first + 1);
     } else {

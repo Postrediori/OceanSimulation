@@ -48,7 +48,7 @@ public:
 
     Complex hTilde_0(int n_prime, int m_prime);
     Complex hTilde(float t, int n_prime, int m_prime);
-    complex_vector_norm h_D_and_n(Vector2 x, float t);
+    complex_vector_norm h_D_and_n(const Vector2& x, float t);
     void evaluateWaves(float t);
     void evaluateWavesFFT(float t);
 

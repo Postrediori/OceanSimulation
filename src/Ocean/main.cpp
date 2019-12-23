@@ -276,7 +276,7 @@ void Update(GLFWwindow* window) {
 /*****************************************************************************
  * Main program
  ****************************************************************************/
-int main(int /*argc*/, char* argv[]) {
+int main(int /*argc*/, char** /*argv*/) {
     int status = EXIT_SUCCESS;
     plog::init(plog::debug, &consoleAppender);
 

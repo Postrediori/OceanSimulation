@@ -15,10 +15,10 @@ public:
  
     // get value associated with given key
     bool Get(const std::string& key, std::string& value) const;
-    bool Get(const std::string& key, int&    value) const;
-    bool Get(const std::string& key, long&   value) const;
+    bool Get(const std::string& key, int& value) const;
+    bool Get(const std::string& key, long& value) const;
     bool Get(const std::string& key, float& value) const;
-    bool Get(const std::string& key, bool&   value) const;
+    bool Get(const std::string& key, bool& value) const;
  
 private:
     // the container
