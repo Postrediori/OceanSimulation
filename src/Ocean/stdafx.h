@@ -12,12 +12,5 @@
 #include <memory>
 #include <map>
 
-#include <ft2build.h>
-#include FT_FREETYPE_H
-
-#ifdef _MSC_VER
-# pragma warning(disable: 4786)
-#endif
-
 #include <plog/Log.h>
 #include <plog/Appenders/ConsoleAppender.h>

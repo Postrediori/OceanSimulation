@@ -59,10 +59,6 @@ public:
     void geometryType(GEOMETRY_TYPE t);
 
 private:
-    int initShaderProgram();
-    void initAttributes();
-
-private:
     GEOMETRY_TYPE geometry_type;
 
     // gravity constant
@@ -100,9 +96,6 @@ private:
     // number of indices to render
     unsigned int indices_ln_count, indices_tr_count;
 
-    // version of shader ar integer (i.e. 110 for 1.10)
-    int shaderVersion;
-
     // VAOs
     GLuint vao;
     
@@ -110,11 +103,10 @@ private:
     GLuint vertices_vbo, indices_ln_vbo, indices_tr_vbo;
 
     // shaders
-    GLuint glProgram, glShaderV, glShaderF;
+    GLuint glProgram;
 
     // attributes and uniforms
-    GLint aVertex, aNormal, aTexture;
-    GLint uLightPos, uProjection, uView, uModel, uMVTranspInv;
+    GLint uLightPos, uProjection, uView, uModel;
 };
 
 #endif /* OCEAN_H */

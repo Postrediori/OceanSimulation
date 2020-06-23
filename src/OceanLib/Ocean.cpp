@@ -7,12 +7,8 @@
 #include "Ocean.h"
 
 static const float Epsilon = 1e-6f;
-static const char vertex_src_1_10[] = "./data/ocean110.vert";
-static const char fragment_src_1_10[] = "./data/ocean110.frag";
-static const char vertex_src_1_30[] = "./data/ocean130.vert";
-static const char fragment_src_1_30[] = "./data/ocean130.frag";
-static const char vertex_src_3_30[] = "./data/ocean330.vert";
-static const char fragment_src_3_30[] = "./data/ocean330.frag";
+static const char vertex_src[] = "./data/ocean.vert";
+static const char fragment_src[] = "./data/ocean.frag";
 
 static float uniformRandomVariable() {
     return (float)rand() / RAND_MAX;
@@ -41,7 +37,6 @@ Ocean::Ocean()
     , vertices(nullptr)
     , indices_ln(nullptr)
     , indices_tr(nullptr)
-    , shaderVersion(0)
     , vao(0) {
     //
 }
@@ -184,42 +179,41 @@ int Ocean::init(const int N, const float A, const Vector2& w, const float length
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_tr_count*sizeof(GLuint),
                  indices_tr, GL_STATIC_DRAW);
 
-
-    if (!initShaderProgram()) {
+    // Init shader program
+    GLuint glShaderV(0), glShaderF(0);
+    if (!Shader::createProgram(glProgram, glShaderV, glShaderF,
+                               vertex_src, fragment_src)) {
+        LOGE << "Failed to init ocean shader program";
         return 0;
     }
+    glDeleteShader(glShaderV);
+    glDeleteShader(glShaderF);
+    
+    uLightPos    = glGetUniformLocation(glProgram, "light_pos");
+    uProjection  = glGetUniformLocation(glProgram, "projection");
+    uView        = glGetUniformLocation(glProgram, "view");
+    uModel       = glGetUniformLocation(glProgram, "model");
 
-    if (shaderVersion >= 330) {
-        aVertex      = 0;
-        aNormal      = 1;
-        aTexture     = 2;
-        uLightPos    = 3;
-        uProjection  = 0;
-        uView        = 1;
-        uModel       = 2;
-        uMVTranspInv = -1;
-    }
-    else {
-        aVertex      = glGetAttribLocation(glProgram, "vertex");
-        aNormal      = glGetAttribLocation(glProgram, "normal");
-        aTexture     = glGetAttribLocation(glProgram, "texture");
-        uLightPos    = glGetUniformLocation(glProgram, "light_pos");
-        uProjection  = glGetUniformLocation(glProgram, "projection");
-        uView        = glGetUniformLocation(glProgram, "view");
-        uModel       = glGetUniformLocation(glProgram, "model");
-        uMVTranspInv = glGetUniformLocation(glProgram, "mv_transp_inv");
-    }
-
-    // Create VAOs
-    if (shaderVersion >= 130) {
-        glGenVertexArrays(1, &vao);
-        glBindVertexArray(vao);
-
-        initAttributes();
-
-        glBindVertexArray(0);
-    }
-
+    // Init vertex arrays
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo);
+    
+    GLint aVertex, aNormal, aTexture;
+    aVertex      = glGetAttribLocation(glProgram, "vertex");
+    aNormal      = glGetAttribLocation(glProgram, "normal");
+    aTexture     = glGetAttribLocation(glProgram, "texture");
+    
+    glEnableVertexAttribArray(aVertex);
+    glVertexAttribPointer(aVertex, 3, GL_FLOAT, GL_FALSE, sizeof(ocean_vertex), 0);
+    
+    glEnableVertexAttribArray(aNormal);
+    glVertexAttribPointer(aNormal, 3, GL_FLOAT, GL_FALSE, sizeof(ocean_vertex),
+                          (void *)(sizeof(GLfloat)*3));
+    
+    glBindVertexArray(0);
+    
     return 1;
 }
 
@@ -241,10 +235,8 @@ void Ocean::release() {
         vao = 0;
     }
     if (glProgram) {
-        Shader::releaseProgram(glProgram, glShaderV, glShaderF);
+        glDeleteProgram(glProgram);
         glProgram = 0;
-        glShaderV = 0;
-        glShaderF = 0;
     }
 }
 
@@ -523,19 +515,13 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
     glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(ocean_vertex)*Nplus1*Nplus1, vertices);
 
-    glm::mat4 m, mv_transp_inv;
-
     glUseProgram(glProgram);
 
     glUniform3f(uLightPos, light_pos.x, light_pos.y, light_pos.z);
     glUniformMatrix4fv(uProjection,  1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(uView,        1, GL_FALSE, glm::value_ptr(view));
 
-    if (vao) {
-        glBindVertexArray(vao);
-    } else {
-        initAttributes();
-    }
+    glBindVertexArray(vao);
 
 	
     GLenum geometry            = (geometry_type==GEOMETRY_SOLID ? GL_TRIANGLES     : GL_LINES);
@@ -545,6 +531,7 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_vbo);
 
     static const float ocean_scale = 1.f;
+    glm::mat4 m;
     for (int i=0; i<ocean_repeat; i++) {
         for (int j=0; j<ocean_repeat; j++) {
             m = glm::scale(model, glm::vec3(ocean_scale));
@@ -553,61 +540,14 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
 
             glUniformMatrix4fv(uModel,       1, GL_FALSE, glm::value_ptr(m));
 
-            if (uMVTranspInv != -1) {
-                mv_transp_inv =  glm::inverse(glm::transpose(view * m));
-                glUniformMatrix4fv(uMVTranspInv, 1, GL_FALSE, glm::value_ptr(mv_transp_inv));
-            }
-
             glDrawElements(geometry, indices_count, GL_UNSIGNED_INT, 0);
         }
     }
 
-    if (vao) {
-        glBindVertexArray(0);
-    }
+    glBindVertexArray(0);
     glUseProgram(0);
 }
 
 void Ocean::geometryType(GEOMETRY_TYPE t) {
     geometry_type = t;
-}
-
-int Ocean::initShaderProgram() {
-#ifdef __APPLE__
-    // Use OpenGL 2.1 shader
-    return Shader::createProgram(glProgram, glShaderV, glShaderF,
-                                 vertex_src_1_10, fragment_src_1_10);
-#else
-    if (Shader::createProgram(glProgram, glShaderV, glShaderF,
-                          vertex_src_3_30, fragment_src_3_30)) {
-        shaderVersion = 330;
-        LOGI << "Using GLSL 3.30 for Ocean Rendering";
-        return 1;
-    }
-
-    if (Shader::createProgram(glProgram, glShaderV, glShaderF,
-                          vertex_src_1_30, fragment_src_1_30)) {
-        shaderVersion = 130;
-        LOGI << "Using GLSL 1.30 for Ocean Rendering";
-        return 1;
-    }
-
-    if (Shader::createProgram(glProgram, glShaderV, glShaderF,
-                          vertex_src_1_10, fragment_src_1_10)) {
-        shaderVersion = 110;
-        LOGI << "Using GLSL 1.10 for Ocean Rendering";
-        return 1;
-    }
-
-    return 0;
-#endif
-}
-
-void Ocean::initAttributes() {
-    glEnableVertexAttribArray(aVertex);
-    glVertexAttribPointer(aVertex, 3, GL_FLOAT, GL_FALSE, sizeof(ocean_vertex), 0);
-
-    glEnableVertexAttribArray(aNormal);
-    glVertexAttribPointer(aNormal, 3, GL_FLOAT, GL_FALSE, sizeof(ocean_vertex),
-                          (void *)(sizeof(GLfloat)*3));
 }

@@ -1,4 +1,4 @@
-#version 330
+#version 330 core
 
 in vec3 normal_vector;
 in vec3 light_vector;

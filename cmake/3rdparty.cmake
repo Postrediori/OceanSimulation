@@ -1,5 +1,4 @@
 find_package(OpenGL REQUIRED)
-find_package(Freetype REQUIRED)
 
 if (CMAKE_SYSTEM_NAME STREQUAL Linux)
   find_package(X11 REQUIRED)

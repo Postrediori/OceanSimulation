@@ -1,19 +1,19 @@
-#version 110
+#version 330 core
 
-attribute vec3 vertex;
-attribute vec3 normal;
-// attribute vec3 texture;
+layout (location = 0) in vec3 vertex;
+layout (location = 1) in vec3 normal;
+// in vec3 texture;
 
-varying vec3 light_vector;
-varying vec3 normal_vector;
-varying vec3 halfway_vector;
-// varying vec2 tex_coord;
-varying float fog_factor;
+out vec3 light_vector;
+out vec3 normal_vector;
+out vec3 halfway_vector;
+// out vec2 tex_coord;
+out float fog_factor;
 
 uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
-uniform mat4 mv_transp_inv;
+//uniform mat4 mv_transp_inv;
 uniform vec3 light_pos;
 
 const float fog_distance = 1000.;
@@ -27,6 +27,7 @@ void main(void) {
     vec3 normal1 = normalize(normal);
 
     light_vector = normalize((view * vec4(light_pos, 1.)).xyz - v.xyz);
+    mat4 mv_transp_inv = inverse(transpose(view * model));
     normal_vector = (mv_transp_inv * vec4(normal1, 0.)).xyz;
     halfway_vector = light_vector + normalize(-v.xyz);
     // tex_coord = texture.xy;
