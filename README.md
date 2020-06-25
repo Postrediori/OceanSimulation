@@ -1,25 +1,28 @@
 ## Introduction
 
 Ocean simulation is based on the project by [Keith Lantz](https://keithlantz.net/).
-This program is a downport to older OpenGL 2.0 as well as GLSL 1.10 and GLSL 1.30,
-since the original is using modern GLSL >4.00. The model can be run on very old GPUs.
-For example, it is possible to run this model even on Mobile Intel 965 ;)
+This program uses OpenGL 3.3 for rendering.
+The version that uses OpenGL 2.0 and can be run on older hardware can be checked in a separate branch: [OceanSimulation/opengl2_0]( https://github.com/Postrediori/OceanSimulation/tree/opengl2_0).
 
 The numerical model is based on the paper by J. Tessendorf and utilizes
 Phillips spectrum and algorithm of inverse FFT.
 
 ![Ocean Simulation screenshot](images/ocean.png)
 
+![Ocean Simulation with UI](images/ocean_ui.png)
+
+
 ## Prerequisites
 
-Compiling and running the sample project requires GCC, CMake, GNU Make
-as well as FreeType library for text rendering. Most of the dependencies needed
-are bundled with the repository. This includes:
+Compiling and running the sample project requires GCC, CMake, GNU Make.
+Most of the dependencies needed for build are bundled with the repository as submodules.
+This includes:
 
 * [glad](https://github.com/Dav1dde/glad) - OpenGL Function Loader.
 * [glfw](https://github.com/glfw/glfw) - Windowing and Input.
 * [glm](https://github.com/g-truc/glm) - OpenGL Mathematics.
 * [plog](https://github.com/SergiusTheBest/plog) - Logging library.
+* [imgui](https://github.com/ocornut/imgui) - UI library.
 
 ## Environment Setup
 
@@ -27,9 +30,8 @@ are bundled with the repository. This includes:
 
 The following instructions apply to:
 
-* Ubuntu 18.04
-* Ubuntu 16.04
-* Debian 9
+* Ubuntu 20.04, 18.04, 16.04
+* Debian 9 and higher
 
 ```
 sudo apt-get install -y \
@@ -58,7 +60,7 @@ sudo dnf install -y \
     freetype-devel
 ```
 
-* CentOS 7
+* CentOS 7 and higher
 
 ```
 sudo yum install -y \
@@ -128,17 +130,14 @@ tree
 .
 └── Ocean
     ├── data
-    │   ├── font.ttf
-    │   ├── ocean110.frag
-    │   ├── ocean110.vert
-    │   ├── ocean130.frag
-    │   ├── ocean130.vert
+    │   ├── ocean.frag
+    │   ├── ocean.vert
     │   └── ocean.cfg
     └── Ocean
 
 2 directories, 7 files
-cd bundle
-./Ocean/Ocean
+cd bundle/Ocean
+./Ocean
 ```
 
 ## Configuration
@@ -175,8 +174,7 @@ stands for the length of the patch.
 ## Controls
 
 * `F1` - Toggle fullscreen mode.
-* `F2` - Show/hide help on the screen.
-* `Mouse` - Control the view.
+* `F2` - Show/hide UI on the screen.
 * `Arrow keys` - Navigate the model.
 * `PgUp/PgDown` - Adjust vertical position of the viewer point.
 * `1` - Toggle wireframe mode.
@@ -185,10 +183,12 @@ stands for the length of the patch.
 ## Links
 
 *  Tessendorf, Jerry. [Simulating Ocean Water](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.161.9102&rep=rep1&type=pdf). In SIGGRAPH 2002 Course Notes #9 (Simulating Nature: Realistic and Interactive Techniques), ACM Press.
-* [Ocean simulation part one: using the discrete Fourier transform](https://www.keithlantz.net/2011/10/ocean-simulation-part-one-using-the-discrete-fourier-transform/), in case the original is down try [the archived version](https://web.archive.org/web/20170606012252/https://www.keithlantz.net/2011/10/ocean-simulation-part-one-using-the-discrete-fourier-transform/)
-* [Ocean simulation part two: using the fast Fourier transform](https://www.keithlantz.net/2011/11/ocean-simulation-part-two-using-the-fast-fourier-transform/), or [archived version](https://web.archive.org/web/20170606194432/https://www.keithlantz.net/2011/11/ocean-simulation-part-two-using-the-fast-fourier-transform/)
+* [Ocean simulation part one: using the discrete Fourier transform](https://www.keithlantz.net/2011/10/ocean-simulation-part-one-using-the-discrete-fourier-transform/)
+* [Ocean simulation part two: using the fast Fourier transform](https://www.keithlantz.net/2011/11/ocean-simulation-part-two-using-the-fast-fourier-transform/)
 
 ## TODO
-* Add the detection of the latest supported GLSL version as well as shaders adjusted for newer versions.
+* Adjust ocean parameters in the UI.
+* Color adjustment.
+* Mouse navigation.
 * Add build instructions for Windows.
 * Add Vulkan renderer.
