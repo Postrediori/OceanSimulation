@@ -47,7 +47,7 @@ std::string Shader::showProgramInfo(GLuint program) {
     return str;
 }
 
-bool Shader::createProgram(GLuint& program, GLuint& vertex, GLuint& fragment,
+bool Shader::createProgram(GLuint& program,
                    const std::string& vertex_shader, const std::string& fragment_shader) {
     LOGI << "Shader Files: " << vertex_shader << " " << fragment_shader;
 
@@ -63,10 +63,10 @@ bool Shader::createProgram(GLuint& program, GLuint& vertex, GLuint& fragment,
         return false;
     }
 
-    return createProgramSource(program, vertex, fragment, strVert, strFrag);
+    return createProgramSource(program, strVert, strFrag);
 }
 
-bool Shader::createProgramSource(GLuint& program, GLuint& vertex, GLuint& fragment,
+bool Shader::createProgramSource(GLuint& program,
                              const std::string& vertex_shader, const std::string& fragment_shader) {
     LOGD << "Vertex Shader    : " << vertex_shader.length() << " symbols";
     LOGD << "Fragment Shader  : " << fragment_shader.length() << " symbols";
@@ -123,14 +123,11 @@ bool Shader::createProgramSource(GLuint& program, GLuint& vertex, GLuint& fragme
         goto error;
     }
 
-    // show shader info
-    LOGD << "Vertex Shader   : " << showShaderInfo(vShader);
-    LOGD << "Fragment Shader : " << showShaderInfo(fShader);
-    LOGD << "Shader Program  : " << showProgramInfo(sProgram);
+    // Delete shader objects to free memory
+    glDeleteShader(vShader);
+    glDeleteShader(fShader);
 
     program = sProgram;
-    vertex = vShader;
-    fragment = fShader;
 
     return true;
 

@@ -22,9 +22,9 @@ struct complex_vector_norm {
     Vector3 n; // normal
 };
 
-enum GEOMETRY_TYPE {
-    GEOMETRY_LINES,
-    GEOMETRY_SOLID,
+enum GEOMETRY_TYPE : int {
+    GEOMETRY_LINES = 0,
+    GEOMETRY_SOLID = 1,
 
     GEOMETRY_TYPES
 };

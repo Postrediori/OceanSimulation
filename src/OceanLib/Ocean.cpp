@@ -180,14 +180,11 @@ int Ocean::init(const int N, const float A, const Vector2& w, const float length
                  indices_tr, GL_STATIC_DRAW);
 
     // Init shader program
-    GLuint glShaderV(0), glShaderF(0);
-    if (!Shader::createProgram(glProgram, glShaderV, glShaderF,
+    if (!Shader::createProgram(glProgram,
                                vertex_src, fragment_src)) {
         LOGE << "Failed to init ocean shader program";
         return 0;
     }
-    glDeleteShader(glShaderV);
-    glDeleteShader(glShaderF);
     
     uLightPos    = glGetUniformLocation(glProgram, "light_pos");
     uProjection  = glGetUniformLocation(glProgram, "projection");
@@ -523,7 +520,6 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
 
     glBindVertexArray(vao);
 
-	
     GLenum geometry            = (geometry_type==GEOMETRY_SOLID ? GL_TRIANGLES     : GL_LINES);
     GLuint indices_vbo         = (geometry_type==GEOMETRY_SOLID ? indices_tr_vbo   : indices_ln_vbo);
     unsigned int indices_count = (geometry_type==GEOMETRY_SOLID ? indices_tr_count : indices_ln_count);
@@ -531,10 +527,10 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_vbo);
 
     static const float ocean_scale = 1.f;
-    glm::mat4 m;
     for (int i=0; i<ocean_repeat; i++) {
         for (int j=0; j<ocean_repeat; j++) {
-            m = glm::scale(model, glm::vec3(ocean_scale));
+            glm::mat4 m = model;
+            m = glm::scale(m, glm::vec3(ocean_scale));
             m = glm::translate(m, glm::vec3(length * (-ocean_repeat/2 + i + 0.5), 0.0,
                                             length * ( ocean_repeat/2 - j - 0.5)));
 

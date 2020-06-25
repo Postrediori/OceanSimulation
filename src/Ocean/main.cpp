@@ -1,17 +1,15 @@
 #include "stdafx.h"
 #include "Config.h"
 #include "Shader.h"
-//#include "FreeType.h"
 #include "Complex.h"
 #include "Vector.h"
 #include "FFT.h"
 #include "Ocean.h"
 #include "WorldPosition.h"
-#include "FPSCounter.h"
 #include "GlFormatter.h"
 
-static const unsigned int Width  = 640;
-static const unsigned int Height = 480;
+static const unsigned int Width  = 800;
+static const unsigned int Height = 600;
 
 static const char Title[] = "Ocean Simulation";
 
@@ -21,18 +19,20 @@ static const char ConfigFile[] = "./data/ocean.cfg";
 /*****************************************************************************
  * Main variables
  ****************************************************************************/
-bool gFullscreen;
+bool gFullscreen = false;
+bool gShowUi = true;
 
-int gWindowWidth, gWindowHeight;
-float gScaleX, gScaleY;
+int gWindowWidth = Width, gWindowHeight = Height;
 
-FPSCounter gFPSCounter;
+int gSavedXPos = 0, gSavedYPos = 0;
+int gSavedWidth = 0, gSavedHeight = 0;
 
-bool gShowHelp;
+float gFps = 0.0f;
+
 Position gPosition;
 
 Ocean gOcean;
-double gElapsedTime;
+double gElapsedTime = 0.0;
 float gWindAmp;
 Vector2 gWindDir;
 
@@ -40,6 +40,7 @@ glm::vec3 gLightPosition;
 glm::mat4 gProjection, gView, gModel;
 
 GEOMETRY_TYPE gGeometryType;
+
 
 /*****************************************************************************
  * Graphics functions
@@ -51,6 +52,12 @@ bool Init() {
     LOGI << "OpenGL Vendor    : " << glGetString(GL_VENDOR);
     LOGI << "OpenGL Version   : " << glGetString(GL_VERSION);
     LOGI << "GLSL Version     : " << glGetString(GL_SHADING_LANGUAGE_VERSION);
+
+    // Setup of ImGui visual style
+    ImGui::StyleColorsClassic();
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.WindowRounding = 0.0f;
+    style.WindowBorderSize = 0.0f;
 
     // Load config file
     Config config;
@@ -79,16 +86,7 @@ bool Init() {
     gOcean.geometryType(gGeometryType);
 
     // Other configurstions
-    gFullscreen = false;
-    gShowHelp = true;
-
-    gWindowWidth = Width;
-    gWindowHeight = Height;
-    gScaleX = 2.f / (float)Width;
-    gScaleY = 2.f / (float)Height;
     gPosition.resize_screen(Width, Height);
-
-    gElapsedTime = 0.0;
 
     gProjection = glm::perspective(45.0f, (float)Width / (float)Height, 0.1f, 3000.0f);
     gView       = glm::mat4(1.0f);
@@ -123,23 +121,48 @@ void Error(int /*error*/, const char* description) {
  * GLUT Callback functions
  ****************************************************************************/
 void Display() {
-    gFPSCounter.update(glfwGetTime());
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     gView = glm::lookAt(gPosition.position, gPosition.position + gPosition.lookat, gPosition.up);
 
     gOcean.geometryType(gGeometryType);
     gOcean.render(gElapsedTime, gLightPosition, gProjection, gView, gModel, true);
-    
+}
+
+void DisplayUi() {
+    static const float UiMargin = 10.0f;
+    static const ImVec2 UiSize = ImVec2(300, 200);
+
+    ImGui::SetNextWindowPos(ImVec2(UiMargin, gWindowHeight - UiSize.y - UiMargin), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(UiSize, ImGuiCond_Always);
+
+    ImGui::Begin("Ocean Simulation", nullptr,
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+
+    ImGui::Text("Rendering mode:");
+    ImGui::RadioButton("Wireframe", (int *)&gGeometryType, (int)GEOMETRY_TYPE::GEOMETRY_LINES); ImGui::SameLine();
+    ImGui::RadioButton("Solid", (int *)&gGeometryType, (int)GEOMETRY_TYPE::GEOMETRY_SOLID);
+
+    ImGui::Separator();
+
+    ImGui::Text("User Guide:");
+    ImGui::BulletText("F1 to on/off fullscreen mode.");
+    ImGui::BulletText("F2 to show/hide UI.");
+    ImGui::BulletText("1/2 to change rendering mode.");
+    ImGui::BulletText("Arrow keys/PgUp/PgDown to navigate.");
+    ImGui::BulletText("ESCAPE to exit.");
+
+    ImGui::Separator();
+
+    ImGui::Text("FPS Counter: %.1f", gFps);
+
+    ImGui::End();
 }
 
 void Reshape(GLFWwindow* /*window*/, int width, int height) {
     glViewport(0, 0, width, height);
     gWindowWidth = width;
     gWindowHeight = height;
-    gScaleX = 2.f / (float)width;
-    gScaleY = 2.f / (float)height;
     gPosition.resize_screen(width, height);
 }
 
@@ -153,19 +176,22 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
         case GLFW_KEY_F1:
             gFullscreen = !gFullscreen;
             if (gFullscreen) {
+                glfwGetWindowPos(window, &gSavedXPos, &gSavedYPos);
+                glfwGetWindowSize(window, &gSavedWidth, &gSavedHeight);
+
                 GLFWmonitor* monitor = glfwGetPrimaryMonitor();
                 const GLFWvidmode* mode = glfwGetVideoMode(monitor);
                 glfwSetWindowMonitor(window, monitor, 0, 0,
                     mode->width, mode->height, mode->refreshRate);
             }
             else {
-                glfwSetWindowMonitor(window, nullptr, 0, 0,
-                    Width, Height, GLFW_DONT_CARE);
+                glfwSetWindowMonitor(window, nullptr, gSavedXPos, gSavedYPos,
+                    gSavedWidth, gSavedHeight, GLFW_DONT_CARE);
             }
             break;
 
         case GLFW_KEY_F2:
-            gShowHelp = !gShowHelp;
+            gShowUi = !gShowUi;
             break;
 
         case GLFW_KEY_1:
@@ -180,22 +206,29 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
 }
 
 void MousePosition(GLFWwindow* window, double x, double y) {
-    static bool warp = false;
+    //static bool warp = false;
 
-    if (!warp) {
-        gPosition.set_mouse_point(x, y);
-        glfwSetCursorPos(window, gWindowWidth / 2, gWindowHeight / 2);
-        warp = true;
-    } else {
-        warp = false;
-    }
+    //if (!warp) {
+    //    gPosition.set_mouse_point(x, y);
+    //    glfwSetCursorPos(window, gWindowWidth / 2, gWindowHeight / 2);
+    //    warp = true;
+    //} else {
+    //    warp = false;
+    //}
+
 }
 
 void Update(GLFWwindow* window) {
-    static double last_time = 0.0;
-    double t = glfwGetTime();
-    double dt = t - last_time;
-    last_time = t;
+    static double lastTime = 0.0;
+    static double lastFpsTime = 0.0;
+    double currentTime = glfwGetTime();
+    double dt = currentTime - lastTime;
+    lastTime = currentTime;
+
+    if (currentTime - lastFpsTime > 1.0) {
+        gFps = ImGui::GetIO().Framerate;
+        lastFpsTime = currentTime;
+    }
 
     gElapsedTime += dt * 0.5;
 
@@ -259,12 +292,21 @@ int main(int /*argc*/, char** /*argv*/) {
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
     glfwSetCursorPosCallback(window, MousePosition);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
     glfwSetWindowSizeCallback(window, Reshape);
 
     glfwMakeContextCurrent(window);
     gladLoadGL();
+
+    // Setup ImGui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.IniFilename = nullptr; // Disable .ini
+
+    static const char* gGlslVersion = "#version 330 core";
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(gGlslVersion);
 
     if (!Init()) {
         LOGE << "Initialization failed";
@@ -273,15 +315,37 @@ int main(int /*argc*/, char** /*argv*/) {
     }
 
     while (!glfwWindowShouldClose(window)) {
+        glfwPollEvents();
+
+        // Start ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // Render objects
         Display();
 
+        // Render ImGui window
+        if (gShowUi) {
+            DisplayUi();
+        }
+
+        // Render ImGui
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        // Update objects
         Update(window);
 
         glfwSwapBuffers(window);
-        glfwPollEvents();
     }
 
 finish:
+    // ImGui cleanup
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
     Deinit();
     if (window) {
         glfwDestroyWindow(window);
