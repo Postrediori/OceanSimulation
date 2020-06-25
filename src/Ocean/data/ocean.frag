@@ -3,19 +3,15 @@
 in vec3 normal_vector;
 in vec3 light_vector;
 in vec3 halfway_vector;
-// in vec2 tex_coord;
 in float fog_factor;
 
 out vec4 frag_col;
 
-// uniform sampler2D water_tex;
-
-// vec4 fog_color      = vec4(0.55, 0.55, 0.55, 1.0);
-const vec4 fog_color      = vec4(0.25, 0.75, 0.65, 1.0);
-const vec4 emissive_color = vec4(1.0, 1.0, 1.0,  1.0);
-const vec4 ambient_color  = vec4(0.0, 0.65, 0.75, 1.0);
-const vec4 diffuse_color  = vec4(0.5, 0.65, 0.75, 1.0);
-const vec4 specular_color = vec4(1.0, 0.25, 0.0,  1.0);
+uniform vec4 fog_color;
+uniform vec4 emissive_color;
+uniform vec4 ambient_color;
+uniform vec4 diffuse_color;
+uniform vec4 specular_color;
 
 const float emissive_contribution = 0.00;
 const float ambient_contribution  = 0.30;
@@ -27,7 +23,6 @@ void main(void) {
     vec3 light_vector1   = normalize(light_vector);
     vec3 halfway_vector1 = normalize(halfway_vector);
 
-    // vec4 c = texture2D(water_tex, tex_coord);
     vec4 c = vec4(1., 1., 1., 1.);
 
     float d = dot(normal1, light_vector1);

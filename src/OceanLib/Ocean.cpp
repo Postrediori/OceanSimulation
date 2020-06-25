@@ -191,16 +191,21 @@ int Ocean::init(const int N, const float A, const Vector2& w, const float length
     uView        = glGetUniformLocation(glProgram, "view");
     uModel       = glGetUniformLocation(glProgram, "model");
 
+    uFogColor = glGetUniformLocation(glProgram, "fog_color");
+    uEmissiveColor = glGetUniformLocation(glProgram, "emissive_color");
+    uAmbientColor = glGetUniformLocation(glProgram, "ambient_color");
+    uDiffuseColor = glGetUniformLocation(glProgram, "diffuse_color");
+    uSpecularColor = glGetUniformLocation(glProgram, "specular_color");
+
     // Init vertex arrays
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
     
     glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo);
     
-    GLint aVertex, aNormal, aTexture;
+    GLint aVertex, aNormal;
     aVertex      = glGetAttribLocation(glProgram, "vertex");
     aNormal      = glGetAttribLocation(glProgram, "normal");
-    aTexture     = glGetAttribLocation(glProgram, "texture");
     
     glEnableVertexAttribArray(aVertex);
     glVertexAttribPointer(aVertex, 3, GL_FLOAT, GL_FALSE, sizeof(ocean_vertex), 0);
@@ -518,6 +523,12 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
     glUniformMatrix4fv(uProjection,  1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(uView,        1, GL_FALSE, glm::value_ptr(view));
 
+    glUniform4fv(uFogColor, 1, fogColor);
+    glUniform4fv(uEmissiveColor, 1, emissiveColor);
+    glUniform4fv(uAmbientColor, 1, ambientColor);
+    glUniform4fv(uDiffuseColor, 1, diffuseColor);
+    glUniform4fv(uSpecularColor, 1, specularColor);
+
     glBindVertexArray(vao);
 
     GLenum geometry            = (geometry_type==GEOMETRY_SOLID ? GL_TRIANGLES     : GL_LINES);
@@ -546,4 +557,14 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
 
 void Ocean::geometryType(GEOMETRY_TYPE t) {
     geometry_type = t;
+}
+
+void Ocean::colors(float fog[], float emissive[], float ambient[], float diffuse[], float specular[]) {
+    for (size_t i = 0; i < 4; i++) {
+        fogColor[i] = fog[i];
+        emissiveColor[i] = emissive[i];
+        ambientColor[i] = ambient[i];
+        diffuseColor[i] = diffuse[i];
+        specularColor[i] = specular[i];
+    }
 }

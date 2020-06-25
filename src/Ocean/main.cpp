@@ -41,6 +41,12 @@ glm::mat4 gProjection, gView, gModel;
 
 GEOMETRY_TYPE gGeometryType;
 
+ImVec4 gFogColor = ImVec4(0.25, 0.75, 0.65, 1.0);
+ImVec4 gEmissiveColor = ImVec4(1.0, 1.0, 1.0, 1.0);
+ImVec4 gAmbientColor = ImVec4(0.0, 0.65, 0.75, 1.0);
+ImVec4 gDiffuseColor = ImVec4(0.5, 0.65, 0.75, 1.0);
+ImVec4 gSpecularColor = ImVec4(1.0, 0.25, 0.0, 1.0);
+
 
 /*****************************************************************************
  * Graphics functions
@@ -99,8 +105,6 @@ bool Init() {
     gLightPosition = glm::vec3(gPosition.position.x + 1000.0, 100.0, gPosition.position.z - 1000.0);
 
     // Set up OpenGL flags
-    // glClearColor(0.55f, 0.55f, 0.55f, 1.0f);
-    glClearColor(0.25, 0.75, 0.65, 1.0);
     glClearDepth(1.0);
 
     glEnable(GL_DEPTH_TEST);
@@ -125,13 +129,17 @@ void Display() {
 
     gView = glm::lookAt(gPosition.position, gPosition.position + gPosition.lookat, gPosition.up);
 
+    glClearColor(gFogColor.x, gFogColor.y, gFogColor.z, gFogColor.w);
+
     gOcean.geometryType(gGeometryType);
+    gOcean.colors((float*)&gFogColor, (float*)&gEmissiveColor,
+        (float*)&gAmbientColor, (float*)&gDiffuseColor, (float*)&gSpecularColor);
     gOcean.render(gElapsedTime, gLightPosition, gProjection, gView, gModel, true);
 }
 
 void DisplayUi() {
     static const float UiMargin = 10.0f;
-    static const ImVec2 UiSize = ImVec2(300, 200);
+    static const ImVec2 UiSize = ImVec2(300, 330);
 
     ImGui::SetNextWindowPos(ImVec2(UiMargin, gWindowHeight - UiSize.y - UiMargin), ImGuiCond_Always);
     ImGui::SetNextWindowSize(UiSize, ImGuiCond_Always);
@@ -142,6 +150,15 @@ void DisplayUi() {
     ImGui::Text("Rendering mode:");
     ImGui::RadioButton("Wireframe", (int *)&gGeometryType, (int)GEOMETRY_TYPE::GEOMETRY_LINES); ImGui::SameLine();
     ImGui::RadioButton("Solid", (int *)&gGeometryType, (int)GEOMETRY_TYPE::GEOMETRY_SOLID);
+
+    ImGui::Separator();
+
+    ImGui::Text("Colors:");
+    ImGui::ColorEdit3("Fog", (float*)&gFogColor);
+    ImGui::ColorEdit3("Emissive", (float*)&gEmissiveColor);
+    ImGui::ColorEdit3("Ambient", (float*)&gAmbientColor);
+    ImGui::ColorEdit3("Diffuse", (float*)&gDiffuseColor);
+    ImGui::ColorEdit3("Specular", (float*)&gSpecularColor);
 
     ImGui::Separator();
 

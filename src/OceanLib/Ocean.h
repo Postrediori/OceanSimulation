@@ -58,6 +58,8 @@ public:
 
     void geometryType(GEOMETRY_TYPE t);
 
+    void colors(float fog[], float emissive[], float ambient[], float diffuse[], float specular[]);
+
 private:
     GEOMETRY_TYPE geometry_type;
 
@@ -107,6 +109,15 @@ private:
 
     // attributes and uniforms
     GLint uLightPos, uProjection, uView, uModel;
+
+    GLint uFogColor = -1, uEmissiveColor = -1, uAmbientColor = -1,
+        uDiffuseColor = -1, uSpecularColor = -1;
+
+    float fogColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    float emissiveColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    float ambientColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    float diffuseColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    float specularColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 };
 
 #endif /* OCEAN_H */
