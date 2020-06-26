@@ -137,7 +137,7 @@ void Display() {
 
 void DisplayUi() {
     static const float UiMargin = 10.0f;
-    static const ImVec2 UiSize = ImVec2(300, 385);
+    static const ImVec2 UiSize = ImVec2(300, 275);
 
     ImGui::SetNextWindowPos(ImVec2(UiMargin, gWindowHeight - UiSize.y - UiMargin), ImGuiCond_Always);
     ImGui::SetNextWindowSize(UiSize, ImGuiCond_Always);
@@ -163,12 +163,10 @@ void DisplayUi() {
 
     ImGui::Separator();
 
-    ImGui::Text("Colors:");
-    ImGui::ColorEdit3("Fog", (float*)&gFogColor);
-    ImGui::ColorEdit3("Emissive", (float*)&gEmissiveColor);
-    ImGui::ColorEdit3("Ambient", (float*)&gAmbientColor);
-    ImGui::ColorEdit3("Diffuse", (float*)&gDiffuseColor);
-    ImGui::ColorEdit3("Specular", (float*)&gSpecularColor);
+    static bool showColorsUi = false;
+    if (ImGui::Button("Show/Hide Colors >")) {
+        showColorsUi = !showColorsUi;
+    }
 
     ImGui::Separator();
 
@@ -184,6 +182,25 @@ void DisplayUi() {
     ImGui::Text("FPS Counter: %.1f", gFps);
 
     ImGui::End();
+
+    if (showColorsUi) {
+        static const ImVec2 ColorsUiSize = ImVec2(300, 130);
+
+        ImGui::SetNextWindowPos(ImVec2(UiSize.x + UiMargin * 2,
+            gWindowHeight - ColorsUiSize.y - UiMargin), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ColorsUiSize, ImGuiCond_Always);
+
+        ImGui::Begin("Colors parameters", nullptr,
+            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+
+        ImGui::ColorEdit3("Fog", (float*)&gFogColor);
+        ImGui::ColorEdit3("Emissive", (float*)&gEmissiveColor);
+        ImGui::ColorEdit3("Ambient", (float*)&gAmbientColor);
+        ImGui::ColorEdit3("Diffuse", (float*)&gDiffuseColor);
+        ImGui::ColorEdit3("Specular", (float*)&gSpecularColor);
+
+        ImGui::End();
+    }
 }
 
 void Reshape(GLFWwindow* /*window*/, int width, int height) {
