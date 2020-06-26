@@ -9,7 +9,7 @@ Phillips spectrum and algorithm of inverse FFT.
 
 ![Ocean Simulation screenshot](images/ocean.png)
 
-![Ocean Simulation with UI](images/ocean_ui.png)
+![Ocean Simulation with UI](images/ocean_ui_win.png)
 
 ![Ocean Simulation with Colors UI](images/ocean_colors_ui.png)
 
