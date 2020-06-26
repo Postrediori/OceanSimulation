@@ -3,73 +3,72 @@
 #include "Complex.h"
 #include "FFT.h"
 
-FFT::FFT(unsigned int N)
-    : N(N)
-    , pi2(2.0 * M_PI)
-    , reversed(0)
-    , W(nullptr) {
-    c[0] = c[1] = nullptr;
+static const double Pi2 = 2.0 * M_PI;
 
-    log_2_N = (unsigned int)(log((double)N) / log((double)2));
-
-    // prepare bit reversals
-    reversed = new unsigned int[N];
-    for (int i = 0; i < N; i++) {
-        reversed[i] = reverse(i);
+unsigned int log_2(unsigned int N) {
+    unsigned int r = 0;
+    unsigned int k = N;
+    while (k >>= 1) {
+        r++;
     }
-
-    // prepare W
-    int pow2 = 1;
-    W = new Complex*[log_2_N];
-    for (int i=0; i<log_2_N; i++) {
-        W[i] = new Complex[pow2];
-        for (int j = 0; j < pow2; j++) {
-            W[i][j] = w(j, pow2 * 2);
-        }
-        pow2 *= 2;
-    }
-
-    c[0] = new Complex[N];
-    c[1] = new Complex[N];
-    which = 0;
+    return r;
 }
 
-FFT::~FFT() {
-    if (c[0]) {
-        delete[] c[0];
-    }
-    if (c[1]) {
-        delete[] c[1];
-    }
-    if (W) {
-        for (int i = 0; i < log_2_N; i++) {
-            if (W[i]) {
-                delete[] W[i];
-            }
-        }
-        delete[] W;
-    }
-    if (reversed) {
-        delete[] reversed;
-    }
-}
-
-unsigned int FFT::reverse(unsigned int i)	{
+// Reverse bits in i
+unsigned int reverse(unsigned int i, unsigned int log_2_N) {
     unsigned int res = 0;
-    for (int j=0; j<log_2_N; j++) {
-        res = (res<<1) + (i & 1);
+    for (unsigned int j = 0; j < log_2_N; j++) {
+        res = (res << 1) + (i & 1);
         i >>= 1;
     }
     return res;
 }
 
-Complex FFT::w(unsigned int x, unsigned int N) {
-    return Complex(cos(pi2 * x / N), sin(pi2 * x / N));
+// Produce array of reversed indices
+std::vector<unsigned int> reversedArray(unsigned int N) {
+    unsigned int log_2_N = log_2(N);
+    std::vector<unsigned int> reversed(N);
+    
+    for (unsigned int i = 0; i < N; i++) {
+        reversed[i] = reverse(i, log_2_N);
+    }
+
+    return reversed;
 }
 
-void FFT::fft(Complex *input, Complex *output,
+// Division of a full circle into N parts
+Complex FftW(unsigned int x, unsigned int N) {
+    return Complex(cos(Pi2 * x / N), sin(Pi2 * x / N));
+}
+
+void FFT::init(unsigned int N_) {
+    N = N_;
+    log_2_N = log_2(N);
+
+    // prepare bit reversals
+    reversed = reversedArray(N);
+
+    // prepare W
+    unsigned int pow2 = 1;
+    W.resize(log_2_N);
+    for (unsigned int i=0; i<log_2_N; i++) {
+        W[i].resize(pow2);
+        for (unsigned int j = 0; j < pow2; j++) {
+            W[i][j] = FftW(j, pow2 * 2);
+        }
+        pow2 *= 2;
+    }
+
+    c[0].resize(N);
+    c[1].resize(N);
+    which = 0;
+}
+
+void FFT::fft(const std::vector<Complex>& input,
+    std::vector<Complex>& output,
     int stride, int offset) {
-    for (int i = 0; i < N; i++) {
+
+    for (unsigned int i = 0; i < N; i++) {
         c[which][i] = input[reversed[i] * stride + offset];
     }
 
@@ -78,7 +77,7 @@ void FFT::fft(Complex *input, Complex *output,
     int size_over_2 = 1;
     int w_ = 0;
 
-    for (int i = 1; i <= log_2_N; i++) {
+    for (unsigned int i = 1; i <= log_2_N; i++) {
         which ^= 1;
         for (int j = 0; j < loops; j++) {
             for (int k = 0; k < size_over_2; k++) {
@@ -97,7 +96,7 @@ void FFT::fft(Complex *input, Complex *output,
         w_++;
     }
 
-    for (int i = 0; i < N; i++) {
+    for (unsigned int i = 0; i < N; i++) {
         output[i*stride + offset] = c[which][i];
     }
 }

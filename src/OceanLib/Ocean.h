@@ -1,6 +1,5 @@
 // Ocean.h
-#ifndef OCEAN_H
-#define OCEAN_H
+#pragma once
 
 class Complex;
 class Vector2;
@@ -17,9 +16,13 @@ struct ocean_vertex {
 
 // structure used with discrete Fourier transform
 struct complex_vector_norm {
-    Complex   h; // wave height
+    Complex h; // wave height
     Vector2 D; // displacement
     Vector3 n; // normal
+
+    complex_vector_norm() { }
+    complex_vector_norm(Complex ch, Vector2 cD, Vector3 cn)
+        : h(ch), D(cD), n(cn) { }
 };
 
 enum GEOMETRY_TYPE : int {
@@ -40,6 +43,20 @@ public:
     int init(const int N, const float A, const Vector2& w, const float length, const int ocean_repeat);
     void release();
 
+    void render(float t, const glm::vec3& light_pos,
+                const glm::mat4& proj, const glm::mat4& view, const glm::mat4& model,
+                bool use_fft);
+
+    void geometryType(GEOMETRY_TYPE t);
+
+    void colors(float fog[], float emissive[], float ambient[], float diffuse[], float specular[]);
+
+    void windAmp(float newA);
+    void windDirZ(float newWindZ);
+
+private:
+    void initVertices();
+
     // deep water
     float dispersion(int n_prime, int m_prime);
 
@@ -52,63 +69,60 @@ public:
     void evaluateWaves(float t);
     void evaluateWavesFFT(float t);
 
-    void render(float t, const glm::vec3& light_pos,
-                const glm::mat4& proj, const glm::mat4& view, const glm::mat4& model,
-                bool use_fft);
-
-    void geometryType(GEOMETRY_TYPE t);
-
-    void colors(float fog[], float emissive[], float ambient[], float diffuse[], float specular[]);
-
 private:
-    GEOMETRY_TYPE geometry_type;
+    GEOMETRY_TYPE geometry_type = GEOMETRY_TYPE::GEOMETRY_SOLID;
 
     // gravity constant
-    float g;
+    float g = 9.81f;
 
     // dimension - N should be a power of 2
-    int N, Nplus1;
+    int N = 1, Nplus1 = 2;
 
     // Phillips spectrum parameter - affects heights of waves
-    float A;
+    float A = 0.0f;
 
     // wind parameter
     Vector2 w;
 
     // length parameter
-    float length;
+    float length = 1.0f;
 
     // number of repeating ocean surface along each axis
-    int ocean_repeat;
+    int ocean_repeat = 1;
 
     // fast Fourier transform parameters
-    Complex *h_tilde,
-            *h_tilde_slopex, *h_tilde_slopez,
-            *h_tilde_dx, *h_tilde_dz;
+    std::vector<Complex> h_tilde;
+    std::vector<Complex> h_tilde_slopex;
+    std::vector<Complex> h_tilde_slopez;
+    std::vector<Complex> h_tilde_dx;
+    std::vector<Complex> h_tilde_dz;
+
+    std::vector<Complex> r;
 
     // fast Fourier transform
-    FFT *fft;
+    FFT fft;
 
     // vertices for VBO
-    ocean_vertex *vertices;
+    std::vector<ocean_vertex> vertices;
 
     // indices for VBO
-    unsigned int *indices_ln, *indices_tr;
-
     // number of indices to render
-    unsigned int indices_ln_count, indices_tr_count;
+    unsigned int indices_ln_count = 0;
+    unsigned int indices_tr_count = 0;
 
     // VAOs
-    GLuint vao;
+    GLuint vao = 0;
     
     // VBOs
-    GLuint vertices_vbo, indices_ln_vbo, indices_tr_vbo;
+    GLuint vertices_vbo = 0;
+    GLuint indices_ln_vbo = 0;
+    GLuint indices_tr_vbo = 0;
 
     // shaders
-    GLuint glProgram;
+    GLuint glProgram = 0;
 
     // attributes and uniforms
-    GLint uLightPos, uProjection, uView, uModel;
+    GLint uLightPos = -1, uProjection = -1, uView = -1, uModel = -1;
 
     GLint uFogColor = -1, uEmissiveColor = -1, uAmbientColor = -1,
         uDiffuseColor = -1, uSpecularColor = -1;
@@ -119,5 +133,3 @@ private:
     float diffuseColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     float specularColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 };
-
-#endif /* OCEAN_H */

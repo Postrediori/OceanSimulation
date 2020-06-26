@@ -1,24 +1,18 @@
 // FFT.h
-#ifndef FFT_H
-#define FFT_H
+#pragma once
 
 class FFT {
 public:
-    FFT(unsigned int N);
-    ~FFT();
-
-    unsigned int reverse(unsigned int i);
-    Complex w(unsigned int x, unsigned int N);
-    void fft(Complex *input, Complex *output,
+    void init(unsigned int N);
+    void fft(const std::vector<Complex>& input,
+            std::vector<Complex>& output,
              int stride, int offset);
 
 private:
-    unsigned int N, which;
-    unsigned int log_2_N;
-    float pi2;
-    unsigned int *reversed;
-    Complex **W;
-    Complex *c[2];
+    unsigned int N = 0;
+    unsigned int which = 0;
+    unsigned int log_2_N = 0;
+    std::vector<unsigned int> reversed;
+    std::vector<std::vector<Complex>> W;
+    std::vector<Complex> c[2];
 };
-
-#endif

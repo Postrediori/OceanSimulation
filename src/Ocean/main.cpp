@@ -33,8 +33,9 @@ Position gPosition;
 
 Ocean gOcean;
 double gElapsedTime = 0.0;
-float gWindAmp;
-Vector2 gWindDir;
+float gWaveAmp = 2.0e-5f;
+float gWindDirX = 0.0f;
+float gWindDirZ = 32.0f;
 
 glm::vec3 gLightPosition;
 glm::mat4 gProjection, gView, gModel;
@@ -70,12 +71,9 @@ bool Init() {
     config.Load(ConfigFile);
     LOGD << "Loaded Configuration File : " << ConfigFile;
 
-    float windAmp;
-    if (!config.Get("waveAmplitude", windAmp)) windAmp = 5e-4f;
-
-    float windDirX, windDirZ;
-    if (!config.Get("windDirX",      windDirX)) windDirX = 0.f;
-    if (!config.Get("windDirZ",      windDirZ)) windDirZ = 32.f;
+    config.Get("waveAmplitude", gWaveAmp);
+    config.Get("windDirX", gWindDirX);
+    config.Get("windDirZ", gWindDirZ);
 
     int oceanRepeat, oceanSize;
     float oceanLen;
@@ -85,7 +83,7 @@ bool Init() {
 
     // Ocean setup
     gGeometryType = GEOMETRY_SOLID;
-    if (gOcean.init(oceanSize, windAmp, Vector2(windDirX, windDirZ),
+    if (gOcean.init(oceanSize, gWaveAmp, Vector2(gWindDirX, gWindDirZ),
             oceanLen, oceanRepeat) <= 0) {
         return false;
     }
@@ -139,7 +137,7 @@ void Display() {
 
 void DisplayUi() {
     static const float UiMargin = 10.0f;
-    static const ImVec2 UiSize = ImVec2(300, 330);
+    static const ImVec2 UiSize = ImVec2(300, 385);
 
     ImGui::SetNextWindowPos(ImVec2(UiMargin, gWindowHeight - UiSize.y - UiMargin), ImGuiCond_Always);
     ImGui::SetNextWindowSize(UiSize, ImGuiCond_Always);
@@ -150,6 +148,18 @@ void DisplayUi() {
     ImGui::Text("Rendering mode:");
     ImGui::RadioButton("Wireframe", (int *)&gGeometryType, (int)GEOMETRY_TYPE::GEOMETRY_LINES); ImGui::SameLine();
     ImGui::RadioButton("Solid", (int *)&gGeometryType, (int)GEOMETRY_TYPE::GEOMETRY_SOLID);
+
+    ImGui::Separator();
+
+    ImGui::Text("Ocean parameters:");
+    static float waveAmp = gWaveAmp * 1e5;
+    if (ImGui::SliderFloat("Choppiness", &waveAmp, 0.0f, 5.0f, "%.1f")) {
+        gWaveAmp = waveAmp * 1e-5;
+        gOcean.windAmp(gWaveAmp);
+    }
+    if (ImGui::SliderFloat("Wind", &gWindDirZ, 0.0f, 50.0f, "%.1f m/s")) {
+        gOcean.windDirZ(gWindDirZ);
+    }
 
     ImGui::Separator();
 
@@ -232,7 +242,6 @@ void MousePosition(GLFWwindow* window, double x, double y) {
     //} else {
     //    warp = false;
     //}
-
 }
 
 void Update(GLFWwindow* window) {
