@@ -11,6 +11,7 @@
 #include <sstream>
 #include <memory>
 #include <map>
+#include <functional>
 
 #include <plog/Log.h>
 #include <plog/Appenders/ConsoleAppender.h>

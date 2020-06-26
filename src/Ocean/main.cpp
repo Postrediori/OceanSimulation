@@ -7,6 +7,7 @@
 #include "Ocean.h"
 #include "WorldPosition.h"
 #include "GlFormatter.h"
+#include "ScopeGuard.h"
 
 static const unsigned int Width  = 800;
 static const unsigned int Height = 600;
@@ -33,13 +34,20 @@ Position gPosition;
 
 Ocean gOcean;
 double gElapsedTime = 0.0;
-float gWindAmp;
-Vector2 gWindDir;
+float gWaveAmp = 2.0e-5f;
+float gWindDirX = 0.0f;
+float gWindDirZ = 32.0f;
 
 glm::vec3 gLightPosition;
 glm::mat4 gProjection, gView, gModel;
 
 GEOMETRY_TYPE gGeometryType;
+
+ImVec4 gFogColor = ImVec4(0.25, 0.75, 0.65, 1.0);
+ImVec4 gEmissiveColor = ImVec4(1.0, 1.0, 1.0, 1.0);
+ImVec4 gAmbientColor = ImVec4(0.0, 0.65, 0.75, 1.0);
+ImVec4 gDiffuseColor = ImVec4(0.5, 0.65, 0.75, 1.0);
+ImVec4 gSpecularColor = ImVec4(1.0, 0.25, 0.0, 1.0);
 
 
 /*****************************************************************************
@@ -64,12 +72,9 @@ bool Init() {
     config.Load(ConfigFile);
     LOGD << "Loaded Configuration File : " << ConfigFile;
 
-    float windAmp;
-    if (!config.Get("waveAmplitude", windAmp)) windAmp = 5e-4f;
-
-    float windDirX, windDirZ;
-    if (!config.Get("windDirX",      windDirX)) windDirX = 0.f;
-    if (!config.Get("windDirZ",      windDirZ)) windDirZ = 32.f;
+    config.Get("waveAmplitude", gWaveAmp);
+    config.Get("windDirX", gWindDirX);
+    config.Get("windDirZ", gWindDirZ);
 
     int oceanRepeat, oceanSize;
     float oceanLen;
@@ -79,7 +84,7 @@ bool Init() {
 
     // Ocean setup
     gGeometryType = GEOMETRY_SOLID;
-    if (gOcean.init(oceanSize, windAmp, Vector2(windDirX, windDirZ),
+    if (gOcean.init(oceanSize, gWaveAmp, Vector2(gWindDirX, gWindDirZ),
             oceanLen, oceanRepeat) <= 0) {
         return false;
     }
@@ -99,8 +104,6 @@ bool Init() {
     gLightPosition = glm::vec3(gPosition.position.x + 1000.0, 100.0, gPosition.position.z - 1000.0);
 
     // Set up OpenGL flags
-    // glClearColor(0.55f, 0.55f, 0.55f, 1.0f);
-    glClearColor(0.25, 0.75, 0.65, 1.0);
     glClearDepth(1.0);
 
     glEnable(GL_DEPTH_TEST);
@@ -125,13 +128,17 @@ void Display() {
 
     gView = glm::lookAt(gPosition.position, gPosition.position + gPosition.lookat, gPosition.up);
 
+    glClearColor(gFogColor.x, gFogColor.y, gFogColor.z, gFogColor.w);
+
     gOcean.geometryType(gGeometryType);
+    gOcean.colors((float*)&gFogColor, (float*)&gEmissiveColor,
+        (float*)&gAmbientColor, (float*)&gDiffuseColor, (float*)&gSpecularColor);
     gOcean.render(gElapsedTime, gLightPosition, gProjection, gView, gModel, true);
 }
 
 void DisplayUi() {
     static const float UiMargin = 10.0f;
-    static const ImVec2 UiSize = ImVec2(300, 200);
+    static const ImVec2 UiSize = ImVec2(300, 275);
 
     ImGui::SetNextWindowPos(ImVec2(UiMargin, gWindowHeight - UiSize.y - UiMargin), ImGuiCond_Always);
     ImGui::SetNextWindowSize(UiSize, ImGuiCond_Always);
@@ -142,6 +149,25 @@ void DisplayUi() {
     ImGui::Text("Rendering mode:");
     ImGui::RadioButton("Wireframe", (int *)&gGeometryType, (int)GEOMETRY_TYPE::GEOMETRY_LINES); ImGui::SameLine();
     ImGui::RadioButton("Solid", (int *)&gGeometryType, (int)GEOMETRY_TYPE::GEOMETRY_SOLID);
+
+    ImGui::Separator();
+
+    ImGui::Text("Ocean parameters:");
+    static float waveAmp = gWaveAmp * 1e5;
+    if (ImGui::SliderFloat("Choppiness", &waveAmp, 0.0f, 5.0f, "%.1f")) {
+        gWaveAmp = waveAmp * 1e-5;
+        gOcean.windAmp(gWaveAmp);
+    }
+    if (ImGui::SliderFloat("Wind", &gWindDirZ, 0.0f, 50.0f, "%.1f m/s")) {
+        gOcean.windDirZ(gWindDirZ);
+    }
+
+    ImGui::Separator();
+
+    static bool showColorsUi = false;
+    if (ImGui::Button("Show/Hide Colors >")) {
+        showColorsUi = !showColorsUi;
+    }
 
     ImGui::Separator();
 
@@ -157,6 +183,25 @@ void DisplayUi() {
     ImGui::Text("FPS Counter: %.1f", gFps);
 
     ImGui::End();
+
+    if (showColorsUi) {
+        static const ImVec2 ColorsUiSize = ImVec2(300, 130);
+
+        ImGui::SetNextWindowPos(ImVec2(UiSize.x + UiMargin * 2,
+            gWindowHeight - ColorsUiSize.y - UiMargin), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ColorsUiSize, ImGuiCond_Always);
+
+        ImGui::Begin("Colors parameters", nullptr,
+            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+
+        ImGui::ColorEdit3("Fog", (float*)&gFogColor);
+        ImGui::ColorEdit3("Emissive", (float*)&gEmissiveColor);
+        ImGui::ColorEdit3("Ambient", (float*)&gAmbientColor);
+        ImGui::ColorEdit3("Diffuse", (float*)&gDiffuseColor);
+        ImGui::ColorEdit3("Specular", (float*)&gSpecularColor);
+
+        ImGui::End();
+    }
 }
 
 void Reshape(GLFWwindow* /*window*/, int width, int height) {
@@ -215,7 +260,6 @@ void MousePosition(GLFWwindow* window, double x, double y) {
     //} else {
     //    warp = false;
     //}
-
 }
 
 void Update(GLFWwindow* window) {
@@ -259,8 +303,6 @@ void Update(GLFWwindow* window) {
  * Main program
  ****************************************************************************/
 int main(int /*argc*/, char** /*argv*/) {
-    int status = EXIT_SUCCESS;
-    
     static plog::ConsoleAppender<plog::GlFormatter> consoleAppender;
 #ifdef NDEBUG
     plog::init(plog::info, &consoleAppender);
@@ -274,6 +316,10 @@ int main(int /*argc*/, char** /*argv*/) {
         LOGE << "Failed to load GLFW";
         return EXIT_FAILURE;
     }
+    ScopeGuard glfwGuard([]() {
+        glfwTerminate();
+        LOGD << "Cleanup : GLFW context";
+    });
 
     LOGI << "Init window context with OpenGL 3.3 Core Profile";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -284,9 +330,12 @@ int main(int /*argc*/, char** /*argv*/) {
     auto window = glfwCreateWindow(Width, Height, Title, nullptr, nullptr);
     if (!window) {
         LOGE << "Unable to Create OpenGL 3.3 Core Profile Context";
-        status = EXIT_FAILURE;
-        goto finish;
+        return EXIT_FAILURE;
     }
+    ScopeGuard windowGuard([window] () {
+        glfwDestroyWindow(window);
+        LOGD << "Cleanup : GLFW window";
+    });
 
     glfwSetKeyCallback(window, Keyboard);
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
@@ -308,11 +357,20 @@ int main(int /*argc*/, char** /*argv*/) {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(gGlslVersion);
 
+    ScopeGuard imGuiContextGuard([]() {
+            ImGui_ImplOpenGL3_Shutdown();
+            ImGui_ImplGlfw_Shutdown();
+            LOGD << "Cleanup : ImGui";
+        });
+
     if (!Init()) {
         LOGE << "Initialization failed";
-        status = EXIT_FAILURE;
-        goto finish;
+        return EXIT_FAILURE;
     }
+    ScopeGuard scopeGuard([]() {
+        Deinit();
+        LOGD << "Cleanup : Simulation";
+    });
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -340,17 +398,7 @@ int main(int /*argc*/, char** /*argv*/) {
         glfwSwapBuffers(window);
     }
 
-finish:
-    // ImGui cleanup
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
+    // Cleanup is done by scope guards
 
-    Deinit();
-    if (window) {
-        glfwDestroyWindow(window);
-    }
-    glfwTerminate();
-
-    return status;
+    return EXIT_SUCCESS;
 }
