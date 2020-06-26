@@ -11,6 +11,8 @@ Phillips spectrum and algorithm of inverse FFT.
 
 ![Ocean Simulation with UI](images/ocean_ui.png)
 
+![Ocean Simulation with Colors UI](images/ocean_colors_ui.png)
+
 
 ## Prerequisites
 
@@ -24,9 +26,9 @@ This includes:
 * [plog](https://github.com/SergiusTheBest/plog) - Logging library.
 * [imgui](https://github.com/ocornut/imgui) - UI library.
 
-## Environment Setup
+## Building for Linux
 
-### Debian-based Systems
+### Dependencies
 
 The following instructions apply to:
 
@@ -41,8 +43,6 @@ sudo apt-get install -y \
     libgl1-mesa-dev \
     libfreetype6-dev
 ```
-
-### RedHat-based Systems
 
 The following instructions apply to:
 
@@ -74,16 +74,15 @@ sudo yum install -y \
     freetype-devel
 ```
 
-## Cloning Repository
-
-Cloning the repository requires passing the `--recursive` flag to load dependencies
-
+### Cloning Repository
 ```
 git clone --recursive https://github.com/Postrediori/OceanSimulation.git
 cd OceanSimulation
 ```
 
-## Building Project
+Cloning the repository requires passing the `--recursive` flag to load Git submodules.
+
+### Building Project
 
 The program is built with the commands below. CMake requires the directory 
 with the main project's `CMakeLists.txt` file as an argument. Then the CMake 
@@ -91,35 +90,18 @@ creates the build files for the GNU make which build an executable.
 
 ```
 mkdir build && cd build
-cmake ..
-make
-```
-
-## Building Project in Release Mode
-
-```
-mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make
+make install
 ```
 
 ## Running Project
 
-After the successful build the binary `Ocean` will end up in `build/src/Ocean/` directory.
+After the successful build the binary `Ocean` will end up in `<source dir>/bundle/Ocean`.
 
 ```
-cd build
-./src/Ocean/Ocean
-```
-
-## Installation
-
-In order to make the stand-alone bundle for the simulation executable and all the data files `make install`
-is used.
-
-```
-cd <PathToProject>/build
-make install
+cd bundle/Ocean
+./Ocean
 ```
 
 This will install all of the files required for an executable to `<PathToProject>/bundle/Ocean` directory.
@@ -136,9 +118,38 @@ tree
     └── Ocean
 
 2 directories, 7 files
-cd bundle/Ocean
-./Ocean
 ```
+
+## Building for macOS
+
+### Dependencies
+You’ll need to download and install the following to build the project:
+* Xcode and the Xcode command line tools
+* [CMake](https://cmake.org/) (e.g. via homebrew `brew install cmake`)
+
+### Cloning Repository
+```
+git clone --recursive https://github.com/Postrediori/OceanSimulation
+cd OceanSimulation
+```
+
+### Using CMake
+Generate makefiles for the build:
+
+```
+mkdir build
+cd build
+cmake .. -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_BUILD_TYPE=Release
+```
+
+### Building
+```
+make -j4
+make install
+```
+
+An `Ocean` application bundle will now be present under `<Source directory>/bundle/Ocean`.
+
 
 ## Configuration
 
@@ -187,8 +198,8 @@ stands for the length of the patch.
 * [Ocean simulation part two: using the fast Fourier transform](https://www.keithlantz.net/2011/11/ocean-simulation-part-two-using-the-fast-fourier-transform/)
 
 ## TODO
-* Adjust ocean parameters in the UI.
-* Color adjustment.
-* Mouse navigation.
-* Add build instructions for Windows.
-* Add Vulkan renderer.
+* [x] Adjust ocean parameters in the UI.
+* [x] Color adjustment.
+* [  ] Mouse navigation.
+* [  ] Add build instructions for Windows.
+* [  ] Add Vulkan renderer.

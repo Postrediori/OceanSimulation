@@ -7,6 +7,7 @@
 #include "Ocean.h"
 #include "WorldPosition.h"
 #include "GlFormatter.h"
+#include "ScopeGuard.h"
 
 static const unsigned int Width  = 800;
 static const unsigned int Height = 600;
@@ -302,8 +303,6 @@ void Update(GLFWwindow* window) {
  * Main program
  ****************************************************************************/
 int main(int /*argc*/, char** /*argv*/) {
-    int status = EXIT_SUCCESS;
-    
     static plog::ConsoleAppender<plog::GlFormatter> consoleAppender;
 #ifdef NDEBUG
     plog::init(plog::info, &consoleAppender);
@@ -317,6 +316,10 @@ int main(int /*argc*/, char** /*argv*/) {
         LOGE << "Failed to load GLFW";
         return EXIT_FAILURE;
     }
+    ScopeGuard glfwGuard([]() {
+        glfwTerminate();
+        LOGD << "Cleanup : GLFW context";
+    });
 
     LOGI << "Init window context with OpenGL 3.3 Core Profile";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -327,9 +330,12 @@ int main(int /*argc*/, char** /*argv*/) {
     auto window = glfwCreateWindow(Width, Height, Title, nullptr, nullptr);
     if (!window) {
         LOGE << "Unable to Create OpenGL 3.3 Core Profile Context";
-        status = EXIT_FAILURE;
-        goto finish;
+        return EXIT_FAILURE;
     }
+    ScopeGuard windowGuard([window] () {
+        glfwDestroyWindow(window);
+        LOGD << "Cleanup : GLFW window";
+    });
 
     glfwSetKeyCallback(window, Keyboard);
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
@@ -351,11 +357,20 @@ int main(int /*argc*/, char** /*argv*/) {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(gGlslVersion);
 
+    ScopeGuard imGuiContextGuard([]() {
+            ImGui_ImplOpenGL3_Shutdown();
+            ImGui_ImplGlfw_Shutdown();
+            LOGD << "Cleanup : ImGui";
+        });
+
     if (!Init()) {
         LOGE << "Initialization failed";
-        status = EXIT_FAILURE;
-        goto finish;
+        return EXIT_FAILURE;
     }
+    ScopeGuard scopeGuard([]() {
+        Deinit();
+        LOGD << "Cleanup : Simulation";
+    });
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -383,17 +398,7 @@ int main(int /*argc*/, char** /*argv*/) {
         glfwSwapBuffers(window);
     }
 
-finish:
-    // ImGui cleanup
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
+    // Cleanup is done by scope guards
 
-    Deinit();
-    if (window) {
-        glfwDestroyWindow(window);
-    }
-    glfwTerminate();
-
-    return status;
+    return EXIT_SUCCESS;
 }
