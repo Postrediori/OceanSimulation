@@ -16,8 +16,8 @@ Phillips spectrum and algorithm of inverse FFT.
 
 ## Prerequisites
 
-Compiling and running the sample project requires GCC, CMake, GNU Make.
-Most of the dependencies needed for build are bundled with the repository as submodules.
+Generating build files for your OS and build system requires CMake.
+Most of the dependencies are bundled with the repository as git submodules.
 This includes:
 
 * [glad](https://github.com/Dav1dde/glad) - OpenGL Function Loader.
@@ -104,7 +104,7 @@ cd bundle/Ocean
 ./Ocean
 ```
 
-This will install all of the files required for an executable to `<PathToProject>/bundle/Ocean` directory.
+All of the files required for an executable run are stored in `<PathToProject>/bundle/Ocean`:
 
 ```
 cd <PathToProject>/bundle
