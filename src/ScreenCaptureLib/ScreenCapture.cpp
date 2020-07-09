@@ -1,3 +1,5 @@
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stdafx.h"
 #include "ScreenCapture.h"
 

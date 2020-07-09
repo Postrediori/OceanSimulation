@@ -1,5 +1,3 @@
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stdafx.h"
 #include "Config.h"
 #include "Shader.h"

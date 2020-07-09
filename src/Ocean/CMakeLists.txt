@@ -19,6 +19,7 @@ target_link_libraries(${PROJECT}
     FftLib
     GraphicsLib
     OceanLib
+    ScreenCaptureLib
     )
 
 # Data files
