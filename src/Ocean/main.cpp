@@ -1,3 +1,5 @@
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stdafx.h"
 #include "Config.h"
 #include "Shader.h"
@@ -8,6 +10,7 @@
 #include "WorldPosition.h"
 #include "GlFormatter.h"
 #include "ScopeGuard.h"
+#include "ScreenCapture.h"
 
 static const unsigned int Width  = 800;
 static const unsigned int Height = 600;
@@ -138,7 +141,7 @@ void Display() {
 
 void DisplayUi() {
     static const float UiMargin = 10.0f;
-    static const ImVec2 UiSize = ImVec2(300, 275);
+    static const ImVec2 UiSize = ImVec2(300, 295);
 
     ImGui::SetNextWindowPos(ImVec2(UiMargin, gWindowHeight - UiSize.y - UiMargin), ImGuiCond_Always);
     ImGui::SetNextWindowSize(UiSize, ImGuiCond_Always);
@@ -174,6 +177,7 @@ void DisplayUi() {
     ImGui::Text("User Guide:");
     ImGui::BulletText("F1 to on/off fullscreen mode.");
     ImGui::BulletText("F2 to show/hide UI.");
+    ImGui::BulletText("F11 to save screenshot to file.");
     ImGui::BulletText("1/2 to change rendering mode.");
     ImGui::BulletText("Arrow keys/PgUp/PgDown to navigate.");
     ImGui::BulletText("ESCAPE to exit.");
@@ -237,6 +241,10 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
 
         case GLFW_KEY_F2:
             gShowUi = !gShowUi;
+            break;
+
+        case GLFW_KEY_F11:
+            ScreenCapture::SaveToFile(ScreenCaptureFormat::Png, gWindowWidth, gWindowHeight);
             break;
 
         case GLFW_KEY_1:
@@ -303,102 +311,108 @@ void Update(GLFWwindow* window) {
  * Main program
  ****************************************************************************/
 int main(int /*argc*/, char** /*argv*/) {
-    static plog::ConsoleAppender<plog::GlFormatter> consoleAppender;
+    try {
+
+        static plog::ConsoleAppender<plog::GlFormatter> consoleAppender;
 #ifdef NDEBUG
-    plog::init(plog::info, &consoleAppender);
+        plog::init(plog::info, &consoleAppender);
 #else
-    plog::init(plog::debug, &consoleAppender);
+        plog::init(plog::debug, &consoleAppender);
 #endif
 
-    glfwSetErrorCallback(Error);
+        glfwSetErrorCallback(Error);
 
-    if (!glfwInit()) {
-        LOGE << "Failed to load GLFW";
-        return EXIT_FAILURE;
-    }
-    ScopeGuard glfwGuard([]() {
-        glfwTerminate();
-        LOGD << "Cleanup : GLFW context";
-    });
+        if (!glfwInit()) {
+            LOGE << "Failed to load GLFW";
+            return EXIT_FAILURE;
+        }
+        ScopeGuard glfwGuard([]() {
+            glfwTerminate();
+            LOGD << "Cleanup : GLFW context";
+        });
 
-    LOGI << "Init window context with OpenGL 3.3 Core Profile";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Required on Mac
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    auto window = glfwCreateWindow(Width, Height, Title, nullptr, nullptr);
-    if (!window) {
-        LOGE << "Unable to Create OpenGL 3.3 Core Profile Context";
-        return EXIT_FAILURE;
-    }
-    ScopeGuard windowGuard([window] () {
-        glfwDestroyWindow(window);
-        LOGD << "Cleanup : GLFW window";
-    });
+        LOGI << "Init window context with OpenGL 3.3 Core Profile";
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Required on Mac
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+        auto window = glfwCreateWindow(Width, Height, Title, nullptr, nullptr);
+        if (!window) {
+            LOGE << "Unable to Create OpenGL 3.3 Core Profile Context";
+            return EXIT_FAILURE;
+        }
+        ScopeGuard windowGuard([window]() {
+            glfwDestroyWindow(window);
+            LOGD << "Cleanup : GLFW window";
+        });
 
-    glfwSetKeyCallback(window, Keyboard);
-    glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
+        glfwSetKeyCallback(window, Keyboard);
+        glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
-    glfwSetCursorPosCallback(window, MousePosition);
+        glfwSetCursorPosCallback(window, MousePosition);
 
-    glfwSetWindowSizeCallback(window, Reshape);
+        glfwSetWindowSizeCallback(window, Reshape);
 
-    glfwMakeContextCurrent(window);
-    gladLoadGL();
+        glfwMakeContextCurrent(window);
+        gladLoadGL();
 
-    // Setup ImGui
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.IniFilename = nullptr; // Disable .ini
+        // Setup ImGui
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO();
+        io.IniFilename = nullptr; // Disable .ini
 
-    static const char* gGlslVersion = "#version 330 core";
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init(gGlslVersion);
+        static const char* gGlslVersion = "#version 330 core";
+        ImGui_ImplGlfw_InitForOpenGL(window, true);
+        ImGui_ImplOpenGL3_Init(gGlslVersion);
 
-    ScopeGuard imGuiContextGuard([]() {
+        ScopeGuard imGuiContextGuard([]() {
             ImGui_ImplOpenGL3_Shutdown();
             ImGui_ImplGlfw_Shutdown();
             LOGD << "Cleanup : ImGui";
         });
 
-    if (!Init()) {
-        LOGE << "Initialization failed";
-        return EXIT_FAILURE;
-    }
-    ScopeGuard scopeGuard([]() {
-        Deinit();
-        LOGD << "Cleanup : Simulation";
-    });
+        if (!Init()) {
+            LOGE << "Initialization failed";
+            return EXIT_FAILURE;
+        }
+        ScopeGuard scopeGuard([]() {
+            Deinit();
+            LOGD << "Cleanup : Simulation";
+        });
 
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
+        while (!glfwWindowShouldClose(window)) {
+            glfwPollEvents();
 
-        // Start ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+            // Start ImGui frame
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
 
-        // Render objects
-        Display();
+            // Render objects
+            Display();
 
-        // Render ImGui window
-        if (gShowUi) {
-            DisplayUi();
+            // Render ImGui window
+            if (gShowUi) {
+                DisplayUi();
+            }
+
+            // Render ImGui
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+            // Update objects
+            Update(window);
+
+            glfwSwapBuffers(window);
         }
 
-        // Render ImGui
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        // Update objects
-        Update(window);
-
-        glfwSwapBuffers(window);
     }
-
-    // Cleanup is done by scope guards
+    catch (const std::exception& ex) {
+        LOGE << "Exception " << ex.what();
+        return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }

@@ -7,6 +7,7 @@ include_directories(
     ${GLFW_INCLUDE_DIR}
     ${GLAD_INCLUDE_DIR}
     ${IMGUI_INCLUDE_DIR}
+    ${STB_INCLUDE_DIR}
     )
 
 target_link_libraries(${PROJECT}
