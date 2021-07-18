@@ -1,5 +1,7 @@
 project(OceanSimulation)
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.11)
+
+set(CMAKE_CXX_STANDARD 17)
 
 # 3rd party libraries
 include(cmake/3rdparty.cmake)
