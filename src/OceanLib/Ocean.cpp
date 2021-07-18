@@ -126,8 +126,8 @@ int Ocean::init(const int N_, const float A_, const Vector2& w_, const float len
         indices_tr.data(), GL_STATIC_DRAW);
 
     // Init shader program
-    if (!Shader::createProgram(glProgram,
-        vertex_src, fragment_src)) {
+    glProgram = Shader::CreateProgram(vertex_src, fragment_src);
+    if (!glProgram) {
         LOGE << "Failed to init ocean shader program";
         return 0;
     }
@@ -165,7 +165,7 @@ int Ocean::init(const int N_, const float A_, const Vector2& w_, const float len
     glBindVertexArray(0);
 
     initVertices();
-  
+
     return 1;
 }
 
