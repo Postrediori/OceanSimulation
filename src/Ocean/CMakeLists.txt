@@ -46,14 +46,6 @@ configure_file(
     ${CMAKE_CURRENT_BINARY_DIR}/data/screen.frag COPYONLY)
 
 configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/data/screen-wave.frag
-    ${CMAKE_CURRENT_BINARY_DIR}/data/screen-wave.frag COPYONLY)
-
-configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/data/screen-bw.frag
-    ${CMAKE_CURRENT_BINARY_DIR}/data/screen-bw.frag COPYONLY)
-
-configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/data/screen-gray.frag
     ${CMAKE_CURRENT_BINARY_DIR}/data/screen-gray.frag COPYONLY)
 
@@ -69,4 +61,7 @@ configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/data/screen-dither.frag
     ${CMAKE_CURRENT_BINARY_DIR}/data/screen-dither.frag COPYONLY)
 
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/screen-dither-gb.frag
+    ${CMAKE_CURRENT_BINARY_DIR}/data/screen-dither-gb.frag COPYONLY)
 

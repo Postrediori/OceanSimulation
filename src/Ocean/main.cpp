@@ -20,15 +20,14 @@ static const char Title[] = "Ocean Simulation";
 
 static const char ConfigFile[] = "./data/ocean.cfg";
 
-constexpr size_t ScreenShadersCount = 7;
+constexpr size_t ScreenShadersCount = 6;
 const std::array<ScreenShaderInfo, ScreenShadersCount> ScreenShadersInfo = {{
     {"Normal", "data/screen.vert", "data/screen.frag"},
-    {"Wave", "data/screen.vert", "data/screen-wave.frag"},
-    {"B&W", "data/screen.vert", "data/screen-bw.frag"},
     {"Gray", "data/screen.vert", "data/screen-gray.frag"},
     {"Blur", "data/screen.vert", "data/screen-blur.frag"},
     {"Sobel", "data/screen.vert", "data/screen-sobel.frag"},
-    {"Dither", "data/screen.vert", "data/screen-dither.frag"}
+    {"Dither B&W", "data/screen.vert", "data/screen-dither.frag"},
+    {"Dither GB", "data/screen.vert", "data/screen-dither-gb.frag"}
 }};
 
 
