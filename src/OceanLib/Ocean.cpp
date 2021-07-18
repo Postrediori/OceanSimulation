@@ -4,6 +4,7 @@
 #include "Vector.h"
 #include "Complex.h"
 #include "FFT.h"
+#include "GraphicsUtils.h"
 #include "Ocean.h"
 
 static const float Epsilon = 1e-6f;
@@ -101,29 +102,29 @@ int Ocean::init(const int N_, const float A_, const Vector2& w_, const float len
     }
 
     // create VBOs
-    glGenBuffers(1, &vertices_vbo);
+    glGenBuffers(1, &vertices_vbo); LOGOPENGLERROR();
     if (!vertices_vbo) {
         return 0;
     }
-    glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo); LOGOPENGLERROR();
     glBufferData(GL_ARRAY_BUFFER, sizeof(ocean_vertex) * Nplus1 * Nplus1,
-        vertices.data(), GL_DYNAMIC_DRAW);
+        vertices.data(), GL_DYNAMIC_DRAW); LOGOPENGLERROR();
 
-    glGenBuffers(1, &indices_ln_vbo);
+    glGenBuffers(1, &indices_ln_vbo); LOGOPENGLERROR();
     if (!indices_ln_vbo) {
         return 0;
     }
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_ln_vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_ln_vbo); LOGOPENGLERROR();
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_ln_count * sizeof(GLuint),
-        indices_ln.data(), GL_STATIC_DRAW);
+        indices_ln.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
 
-    glGenBuffers(1, &indices_tr_vbo);
+    glGenBuffers(1, &indices_tr_vbo); LOGOPENGLERROR();
     if (!indices_tr_vbo) {
         return 0;
     }
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_tr_vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_tr_vbo); LOGOPENGLERROR();
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_tr_count * sizeof(GLuint),
-        indices_tr.data(), GL_STATIC_DRAW);
+        indices_tr.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
 
     // Init shader program
     glProgram = Shader::CreateProgram(vertex_src, fragment_src);
@@ -132,37 +133,37 @@ int Ocean::init(const int N_, const float A_, const Vector2& w_, const float len
         return 0;
     }
 
-    uLightPos = glGetUniformLocation(glProgram, "light_pos");
-    uProjection = glGetUniformLocation(glProgram, "projection");
-    uView = glGetUniformLocation(glProgram, "view");
-    uModel = glGetUniformLocation(glProgram, "model");
+    uLightPos = glGetUniformLocation(glProgram, "light_pos"); LOGOPENGLERROR();
+    uProjection = glGetUniformLocation(glProgram, "projection"); LOGOPENGLERROR();
+    uView = glGetUniformLocation(glProgram, "view"); LOGOPENGLERROR();
+    uModel = glGetUniformLocation(glProgram, "model"); LOGOPENGLERROR();
 
-    uFogColor = glGetUniformLocation(glProgram, "fog_color");
-    uEmissiveColor = glGetUniformLocation(glProgram, "emissive_color");
-    uAmbientColor = glGetUniformLocation(glProgram, "ambient_color");
-    uDiffuseColor = glGetUniformLocation(glProgram, "diffuse_color");
-    uSpecularColor = glGetUniformLocation(glProgram, "specular_color");
+    uFogColor = glGetUniformLocation(glProgram, "fog_color"); LOGOPENGLERROR();
+    uEmissiveColor = glGetUniformLocation(glProgram, "emissive_color"); LOGOPENGLERROR();
+    uAmbientColor = glGetUniformLocation(glProgram, "ambient_color"); LOGOPENGLERROR();
+    uDiffuseColor = glGetUniformLocation(glProgram, "diffuse_color"); LOGOPENGLERROR();
+    uSpecularColor = glGetUniformLocation(glProgram, "specular_color"); LOGOPENGLERROR();
 
     // Init vertex arrays
-    glGenVertexArrays(1, &vao);
+    glGenVertexArrays(1, &vao); LOGOPENGLERROR();
     if (!vao) {
         return 0;
     }
-    glBindVertexArray(vao);
+    glBindVertexArray(vao); LOGOPENGLERROR();
 
-    glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo); LOGOPENGLERROR();
 
-    GLint aVertex = glGetAttribLocation(glProgram, "vertex");
-    GLint aNormal = glGetAttribLocation(glProgram, "normal");
+    GLint aVertex = glGetAttribLocation(glProgram, "vertex"); LOGOPENGLERROR();
+    GLint aNormal = glGetAttribLocation(glProgram, "normal"); LOGOPENGLERROR();
 
-    glEnableVertexAttribArray(aVertex);
-    glVertexAttribPointer(aVertex, 3, GL_FLOAT, GL_FALSE, sizeof(ocean_vertex), 0);
+    glEnableVertexAttribArray(aVertex); LOGOPENGLERROR();
+    glVertexAttribPointer(aVertex, 3, GL_FLOAT, GL_FALSE, sizeof(ocean_vertex), 0); LOGOPENGLERROR();
 
-    glEnableVertexAttribArray(aNormal);
+    glEnableVertexAttribArray(aNormal); LOGOPENGLERROR();
     glVertexAttribPointer(aNormal, 3, GL_FLOAT, GL_FALSE, sizeof(ocean_vertex),
-        (void *)(sizeof(GLfloat) * 3));
+        (void *)(sizeof(GLfloat) * 3)); LOGOPENGLERROR();
 
-    glBindVertexArray(0);
+    glBindVertexArray(0); LOGOPENGLERROR();
 
     initVertices();
 
@@ -192,30 +193,30 @@ void Ocean::initVertices() {
         }
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo); LOGOPENGLERROR();
     glBufferData(GL_ARRAY_BUFFER, sizeof(ocean_vertex)*Nplus1*Nplus1,
-        vertices.data(), GL_DYNAMIC_DRAW);
+        vertices.data(), GL_DYNAMIC_DRAW); LOGOPENGLERROR();
 }
 
 void Ocean::release() {
     if (vertices_vbo) {
-        glDeleteBuffers(1, &vertices_vbo);
+        glDeleteBuffers(1, &vertices_vbo); LOGOPENGLERROR();
         vertices_vbo = 0;
     }
     if (indices_ln_vbo) {
-        glDeleteBuffers(1, &indices_ln_vbo);
+        glDeleteBuffers(1, &indices_ln_vbo); LOGOPENGLERROR();
         indices_ln_vbo = 0;
     }
     if (indices_tr_vbo) {
-        glDeleteBuffers(1, &indices_tr_vbo);
+        glDeleteBuffers(1, &indices_tr_vbo); LOGOPENGLERROR();
         indices_tr_vbo = 0;
     }
     if (vao) {
-        glDeleteVertexArrays(1, &vao);
+        glDeleteVertexArrays(1, &vao); LOGOPENGLERROR();
         vao = 0;
     }
     if (glProgram) {
-        glDeleteProgram(glProgram);
+        glDeleteProgram(glProgram); LOGOPENGLERROR();
         glProgram = 0;
     }
 }
@@ -478,22 +479,22 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
         evaluateWavesFFT(t);
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(ocean_vertex)*Nplus1*Nplus1, vertices.data());
+    glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo); LOGOPENGLERROR();
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(ocean_vertex)*Nplus1*Nplus1, vertices.data()); LOGOPENGLERROR();
 
-    glUseProgram(glProgram);
+    glUseProgram(glProgram); LOGOPENGLERROR();
 
-    glUniform3f(uLightPos, light_pos.x, light_pos.y, light_pos.z);
-    glUniformMatrix4fv(uProjection,  1, GL_FALSE, glm::value_ptr(proj));
-    glUniformMatrix4fv(uView,        1, GL_FALSE, glm::value_ptr(view));
+    glUniform3f(uLightPos, light_pos.x, light_pos.y, light_pos.z); LOGOPENGLERROR();
+    glUniformMatrix4fv(uProjection,  1, GL_FALSE, glm::value_ptr(proj)); LOGOPENGLERROR();
+    glUniformMatrix4fv(uView,        1, GL_FALSE, glm::value_ptr(view)); LOGOPENGLERROR();
 
-    glUniform4fv(uFogColor, 1, fogColor);
-    glUniform4fv(uEmissiveColor, 1, emissiveColor);
-    glUniform4fv(uAmbientColor, 1, ambientColor);
-    glUniform4fv(uDiffuseColor, 1, diffuseColor);
-    glUniform4fv(uSpecularColor, 1, specularColor);
+    glUniform4fv(uFogColor, 1, fogColor); LOGOPENGLERROR();
+    glUniform4fv(uEmissiveColor, 1, emissiveColor); LOGOPENGLERROR();
+    glUniform4fv(uAmbientColor, 1, ambientColor); LOGOPENGLERROR();
+    glUniform4fv(uDiffuseColor, 1, diffuseColor); LOGOPENGLERROR();
+    glUniform4fv(uSpecularColor, 1, specularColor); LOGOPENGLERROR();
 
-    glBindVertexArray(vao);
+    glBindVertexArray(vao); LOGOPENGLERROR();
 
     GLenum geometry = 0;
     GLuint indices_vbo = 0;
@@ -509,7 +510,7 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
         indices_count = indices_ln_count;
     }
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_vbo); LOGOPENGLERROR();
 
     static const float ocean_scale = 1.f;
     for (int i=0; i<ocean_repeat; i++) {
@@ -519,14 +520,14 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
             m = glm::translate(m, glm::vec3(length * (-ocean_repeat/2 + i + 0.5), 0.0,
                                             length * ( ocean_repeat/2 - j - 0.5)));
 
-            glUniformMatrix4fv(uModel,       1, GL_FALSE, glm::value_ptr(m));
+            glUniformMatrix4fv(uModel,       1, GL_FALSE, glm::value_ptr(m)); LOGOPENGLERROR();
 
-            glDrawElements(geometry, indices_count, GL_UNSIGNED_INT, 0);
+            glDrawElements(geometry, indices_count, GL_UNSIGNED_INT, 0); LOGOPENGLERROR();
         }
     }
 
-    glBindVertexArray(0);
-    glUseProgram(0);
+    glBindVertexArray(0); LOGOPENGLERROR();
+    glUseProgram(0); LOGOPENGLERROR();
 }
 
 void Ocean::geometryType(GEOMETRY_TYPE t) {

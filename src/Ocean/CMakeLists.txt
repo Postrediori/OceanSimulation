@@ -35,3 +35,38 @@ configure_file(
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/data/ocean.frag
     ${CMAKE_CURRENT_BINARY_DIR}/data/ocean.frag COPYONLY)
+
+# Screen post-processing shaders
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/screen.vert
+    ${CMAKE_CURRENT_BINARY_DIR}/data/screen.vert COPYONLY)
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/screen.frag
+    ${CMAKE_CURRENT_BINARY_DIR}/data/screen.frag COPYONLY)
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/screen-wave.frag
+    ${CMAKE_CURRENT_BINARY_DIR}/data/screen-wave.frag COPYONLY)
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/screen-bw.frag
+    ${CMAKE_CURRENT_BINARY_DIR}/data/screen-bw.frag COPYONLY)
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/screen-gray.frag
+    ${CMAKE_CURRENT_BINARY_DIR}/data/screen-gray.frag COPYONLY)
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/screen-blur.frag
+    ${CMAKE_CURRENT_BINARY_DIR}/data/screen-blur.frag COPYONLY)
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/screen-sobel.frag
+    ${CMAKE_CURRENT_BINARY_DIR}/data/screen-sobel.frag COPYONLY)
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/screen-dither.frag
+    ${CMAKE_CURRENT_BINARY_DIR}/data/screen-dither.frag COPYONLY)
+
+

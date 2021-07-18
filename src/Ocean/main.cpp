@@ -7,8 +7,11 @@
 #include "Ocean.h"
 #include "WorldPosition.h"
 #include "GlFormatter.h"
+#include "GraphicsUtils.h"
 #include "ScopeGuard.h"
 #include "ScreenCapture.h"
+#include "Framebuffer.h"
+#include "ScreenShader.h"
 
 static const unsigned int Width  = 800;
 static const unsigned int Height = 600;
@@ -16,6 +19,17 @@ static const unsigned int Height = 600;
 static const char Title[] = "Ocean Simulation";
 
 static const char ConfigFile[] = "./data/ocean.cfg";
+
+constexpr size_t ScreenShadersCount = 7;
+const std::array<ScreenShaderInfo, ScreenShadersCount> ScreenShadersInfo = {{
+    {"Normal", "data/screen.vert", "data/screen.frag"},
+    {"Wave", "data/screen.vert", "data/screen-wave.frag"},
+    {"B&W", "data/screen.vert", "data/screen-bw.frag"},
+    {"Gray", "data/screen.vert", "data/screen-gray.frag"},
+    {"Blur", "data/screen.vert", "data/screen-blur.frag"},
+    {"Sobel", "data/screen.vert", "data/screen-sobel.frag"},
+    {"Dither", "data/screen.vert", "data/screen-dither.frag"}
+}};
 
 
 /*****************************************************************************
@@ -50,6 +64,10 @@ ImVec4 gAmbientColor = ImVec4(0.0, 0.65, 0.75, 1.0);
 ImVec4 gDiffuseColor = ImVec4(0.5, 0.65, 0.75, 1.0);
 ImVec4 gSpecularColor = ImVec4(1.0, 0.25, 0.0, 1.0);
 
+Framebuffer gFramebuffer;
+
+int gCurrentScreenShader = 0;
+std::array<ScreenShader, ScreenShadersCount> gScreenShaders;
 
 /*****************************************************************************
  * Graphics functions
@@ -91,6 +109,20 @@ bool Init() {
     }
     gOcean.geometryType(gGeometryType);
 
+    // Screen shader and framebuffer
+    for (int i = 0; i < ScreenShadersCount; i++) {
+        if (!gScreenShaders[i].Init(ScreenShadersInfo[i])) {
+            LOGE << "Failed to load screen shader";
+            return false;
+        }
+    }
+
+    if (!gFramebuffer.Init(Width, Height)) {
+        LOGE << "Failed to create framebuffer";
+        return false;
+    }
+    gFramebuffer.Resize(Width, Height);
+
     // Other configurstions
     gPosition.resize_screen(Width, Height);
 
@@ -105,16 +137,21 @@ bool Init() {
     gLightPosition = glm::vec3(gPosition.position.x + 1000.0, 100.0, gPosition.position.z - 1000.0);
 
     // Set up OpenGL flags
-    glClearDepth(1.0);
+    glClearDepth(1.0); LOGOPENGLERROR();
+    glClearStencil(0); LOGOPENGLERROR();
 
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
+    glEnable(GL_DEPTH_TEST); LOGOPENGLERROR();
+    glDepthFunc(GL_LEQUAL); LOGOPENGLERROR();
 
     return true;
 }
 
 void Deinit() {
     gOcean.release();
+    gFramebuffer.Release();
+    for (int i=0; i<ScreenShadersCount; i++) {
+        gScreenShaders[i].Release();
+    }
 }
 
 void Error(int /*error*/, const char* description) {
@@ -125,21 +162,35 @@ void Error(int /*error*/, const char* description) {
  * GLUT Callback functions
  ****************************************************************************/
 void Display() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // Start using framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, gFramebuffer.frame_buffer); LOGOPENGLERROR();
+
+    // Render scene
+    glEnable(GL_DEPTH_TEST); LOGOPENGLERROR();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); LOGOPENGLERROR();
 
     gView = glm::lookAt(gPosition.position, gPosition.position + gPosition.lookat, gPosition.up);
 
-    glClearColor(gFogColor.x, gFogColor.y, gFogColor.z, gFogColor.w);
+    glClearColor(gFogColor.x, gFogColor.y, gFogColor.z, gFogColor.w); LOGOPENGLERROR();
 
     gOcean.geometryType(gGeometryType);
     gOcean.colors((float*)&gFogColor, (float*)&gEmissiveColor,
         (float*)&gAmbientColor, (float*)&gDiffuseColor, (float*)&gSpecularColor);
     gOcean.render(gElapsedTime, gLightPosition, gProjection, gView, gModel, true);
+
+    // Finish using framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
+
+    // Render post-processed image
+    glDisable(GL_DEPTH_TEST); LOGOPENGLERROR();
+    glClear(GL_COLOR_BUFFER_BIT); LOGOPENGLERROR();
+
+    gScreenShaders[gCurrentScreenShader].Render(gFramebuffer.tex_color_buffer);
 }
 
 void DisplayUi() {
     static const float UiMargin = 10.0f;
-    static const ImVec2 UiSize = ImVec2(300, 295);
+    static const ImVec2 UiSize = ImVec2(300, 345);
 
     ImGui::SetNextWindowPos(ImVec2(UiMargin, gWindowHeight - UiSize.y - UiMargin), ImGuiCond_Always);
     ImGui::SetNextWindowSize(UiSize, ImGuiCond_Always);
@@ -169,6 +220,12 @@ void DisplayUi() {
     if (ImGui::Button("Show/Hide Colors >")) {
         showColorsUi = !showColorsUi;
     }
+
+    ImGui::Separator();
+
+    ImGui::Text("Post-processing shader:");
+    const char* elemName = ScreenShadersInfo[gCurrentScreenShader].Name;
+    ImGui::SliderInt("", &gCurrentScreenShader, 0, ScreenShadersCount - 1, elemName);
 
     ImGui::Separator();
 
@@ -211,6 +268,7 @@ void Reshape(GLFWwindow* /*window*/, int width, int height) {
     gWindowWidth = width;
     gWindowHeight = height;
     gPosition.resize_screen(width, height);
+    gFramebuffer.Resize(width, height);
 }
 
 void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*mods*/) {
@@ -251,6 +309,13 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
 
         case GLFW_KEY_2:
             gGeometryType = GEOMETRY_SOLID;
+            break;
+
+        case GLFW_KEY_S:
+            gCurrentScreenShader++;
+            if (gCurrentScreenShader>=ScreenShadersCount) {
+                gCurrentScreenShader = 0;
+            }
             break;
         }
     }
