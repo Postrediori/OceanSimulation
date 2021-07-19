@@ -11,6 +11,7 @@
 #include <sstream>
 #include <memory>
 #include <map>
+#include <array>
 #include <functional>
 
 #include <plog/Log.h>
