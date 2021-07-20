@@ -41,6 +41,9 @@ macro(make_executable)
     install(
         TARGETS ${PROJECT}
         DESTINATION ${CMAKE_INSTALL_PREFIX})
+    install(
+        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/data"
+        DESTINATION ${CMAKE_INSTALL_PREFIX})
 endmacro()
 
 macro(make_library)
