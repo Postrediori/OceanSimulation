@@ -224,7 +224,7 @@ void DisplayUi() {
 
     ImGui::Text("Post-processing shader:");
     const char* elemName = ScreenShadersInfo[gCurrentScreenShader].Name;
-    ImGui::SliderInt("", &gCurrentScreenShader, 0, ScreenShadersCount - 1, elemName);
+    ImGui::SliderInt("##", &gCurrentScreenShader, 0, ScreenShadersCount - 1, elemName);
 
     ImGui::Separator();
 
