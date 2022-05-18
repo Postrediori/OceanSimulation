@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Config.h"
 #include "Shader.h"
-#include "FreeType.h"
+#include "FreeTypeHelpers.h"
 #include "Complex.h"
 #include "Vector.h"
 #include "FFT.h"
@@ -164,22 +164,22 @@ void Display() {
         fr.renderStart();
         fr.renderColor(White);
 
-        fr.renderText(a24, {-1+8*gScaleX, -1+225*gScaleY, gScaleX, gScaleY}, "1-2 ... Change rendering mode");
-        fr.renderText(a24, {-1+8*gScaleX, -1+200*gScaleY, gScaleX, gScaleY}, "Up/Down");
-        fr.renderText(a24, {-1+8*gScaleX, -1+175*gScaleY, gScaleX, gScaleY}, "Left/Right ... Move around");
-        fr.renderText(a24, {-1+8*gScaleX, -1+150*gScaleY, gScaleX, gScaleY}, "PgUp/PgDn");
+        fr.renderText(a24, FontArea(-1+8*gScaleX, -1+225*gScaleY, gScaleX, gScaleY), "1-2 ... Change rendering mode");
+        fr.renderText(a24, FontArea(-1+8*gScaleX, -1+200*gScaleY, gScaleX, gScaleY), "Up/Down");
+        fr.renderText(a24, FontArea(-1+8*gScaleX, -1+175*gScaleY, gScaleX, gScaleY), "Left/Right ... Move around");
+        fr.renderText(a24, FontArea(-1+8*gScaleX, -1+150*gScaleY, gScaleX, gScaleY), "PgUp/PgDn");
 
-        fr.renderText(a24, {-1+8*gScaleX, -1+125*gScaleY, gScaleX, gScaleY}, "Mouse ... Look around");
-        fr.renderText(a24, {-1+8*gScaleX, -1+100*gScaleY, gScaleX, gScaleY}, "F2 ... Show/hide help");
-        fr.renderText(a24, {-1+8*gScaleX, -1+75*gScaleY, gScaleX, gScaleY}, "F1 ... Toggle fullscreen on/off");
+        fr.renderText(a24, FontArea(-1+8*gScaleX, -1+125*gScaleY, gScaleX, gScaleY), "Mouse ... Look around");
+        fr.renderText(a24, FontArea(-1+8*gScaleX, -1+100*gScaleY, gScaleX, gScaleY), "F2 ... Show/hide help");
+        fr.renderText(a24, FontArea(-1+8*gScaleX, -1+75*gScaleY, gScaleX, gScaleY), "F1 ... Toggle fullscreen on/off");
 
         std::stringstream str;
         str << "Mode : " << GeometryTypeNames[gGeometryType];
-        fr.renderText(a24, {-1+8*gScaleX, -1+50*gScaleY, gScaleX, gScaleY}, str.str());
+        fr.renderText(a24, FontArea(-1+8*gScaleX, -1+50*gScaleY, gScaleX, gScaleY), str.str());
 
         str.str(std::string());
         str << "FPS : " << std::setprecision(3) << gFPSCounter.fps;
-        fr.renderText(a24, {-1+8*gScaleX, -1+25*gScaleY, gScaleX, gScaleY}, str.str());
+        fr.renderText(a24, FontArea(-1+8*gScaleX, -1+25*gScaleY, gScaleX, gScaleY), str.str());
 
         fr.renderEnd();
     }

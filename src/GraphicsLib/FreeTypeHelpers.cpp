@@ -1,7 +1,7 @@
-// FreeType.cpp
+// FreeTypeHelpers.cpp
 #include "stdafx.h"
 #include "Shader.h"
-#include "FreeType.h"
+#include "FreeTypeHelpers.h"
 
 #define max(a,b) ((a)>(b)?(a):(b))
 
@@ -304,7 +304,8 @@ void FontRenderer::renderText(FontHandle_t typeset,
     glVertexAttribPointer(aCoord, 4, GL_FLOAT, GL_FALSE, 0, 0);
 
     size_t len = text.length();
-    std::vector<Coord2d> coords(6 * len);
+    std::vector<Coord2d> coords;
+	coords.reserve(6 * len);
 
     GLfloat tdx, tdy;
     float w, h;
@@ -333,13 +334,13 @@ void FontRenderer::renderText(FontHandle_t typeset,
         tdx = inf.bw/(float)a->w;
         tdy = inf.bh/(float)a->h;
 
-        coords.push_back({x2+w, -y2, inf.tx+tdx, inf.ty});
-        coords.push_back({x2, -y2-h, inf.tx, inf.ty+tdy});
-        coords.push_back({x2+w, -y2-h, inf.tx+tdx, inf.ty+tdy});
+        coords.push_back(Coord2d(x2+w, -y2, inf.tx+tdx, inf.ty));
+        coords.push_back(Coord2d(x2, -y2-h, inf.tx, inf.ty+tdy));
+        coords.push_back(Coord2d(x2+w, -y2-h, inf.tx+tdx, inf.ty+tdy));
 
-        coords.push_back({x2, -y2, inf.tx, inf.ty});
-        coords.push_back({x2, -y2-h, inf.tx, inf.ty+tdy});
-        coords.push_back({x2+w, -y2, inf.tx+tdx, inf.ty});
+        coords.push_back(Coord2d(x2, -y2, inf.tx, inf.ty));
+        coords.push_back(Coord2d(x2, -y2-h, inf.tx, inf.ty+tdy));
+        coords.push_back(Coord2d(x2+w, -y2, inf.tx+tdx, inf.ty));
     }
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(Coord2d)*coords.size(), coords.data(), GL_DYNAMIC_DRAW);

@@ -1,4 +1,4 @@
-// FreeType.h
+// FreeTypeHelpers.h
 #ifndef FTYPE_H
 #define FTYPE_H
 
@@ -35,11 +35,15 @@ public:
 struct Coord2d {
     GLfloat x, y;
     GLfloat s, t;
+	Coord2d(GLfloat x_, GLfloat y_, GLfloat s_, GLfloat t_)
+		: x(x_), y(y_), s(s_), t(t_) { }
 };
 
 struct FontArea {
     float textx, texty;
     float sx, sy;
+	FontArea(float tx, float ty, float sx_, float sy_)
+		: textx(tx), texty(ty), sx(sx_), sy(sy_) { }
 };
 
 typedef unsigned int FontHandle_t;
