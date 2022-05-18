@@ -9,10 +9,6 @@
 static const float Epsilon = 1e-6f;
 static const char vertex_src_1_10[] = "./data/ocean110.vert";
 static const char fragment_src_1_10[] = "./data/ocean110.frag";
-static const char vertex_src_1_30[] = "./data/ocean130.vert";
-static const char fragment_src_1_30[] = "./data/ocean130.frag";
-static const char vertex_src_3_30[] = "./data/ocean330.vert";
-static const char fragment_src_3_30[] = "./data/ocean330.frag";
 
 static float uniformRandomVariable() {
     return (float)rand() / RAND_MAX;
@@ -573,25 +569,6 @@ void Ocean::geometryType(GEOMETRY_TYPE t) {
 }
 
 int Ocean::initShaderProgram() {
-#ifdef __APPLE__
-    // Use OpenGL 2.1 shader
-    return Shader::createProgram(glProgram, glShaderV, glShaderF,
-                                 vertex_src_1_10, fragment_src_1_10);
-#else
-    if (Shader::createProgram(glProgram, glShaderV, glShaderF,
-                          vertex_src_3_30, fragment_src_3_30)) {
-        shaderVersion = 330;
-        LOGI << "Using GLSL 3.30 for Ocean Rendering";
-        return 1;
-    }
-
-    if (Shader::createProgram(glProgram, glShaderV, glShaderF,
-                          vertex_src_1_30, fragment_src_1_30)) {
-        shaderVersion = 130;
-        LOGI << "Using GLSL 1.30 for Ocean Rendering";
-        return 1;
-    }
-
     if (Shader::createProgram(glProgram, glShaderV, glShaderF,
                           vertex_src_1_10, fragment_src_1_10)) {
         shaderVersion = 110;
@@ -600,7 +577,6 @@ int Ocean::initShaderProgram() {
     }
 
     return 0;
-#endif
 }
 
 void Ocean::initAttributes() {
