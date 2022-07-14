@@ -7,16 +7,15 @@ struct ScreenShaderInfo {
 };
 
 struct ScreenShader {
-    ~ScreenShader();
+    ScreenShader() = default;
 
     int Init(ScreenShaderInfo info);
-    void Release();
 
     void Render(GLuint texture);
 
-    GLuint vao;
-    GLuint quadVbo;
+    GraphicsUtils::unique_vertex_array vao;
+    GraphicsUtils::unique_buffer quadVbo;
 
-    GLuint program;
-    GLint uScreenTex;
+    GraphicsUtils::unique_program program;
+    GLint uScreenTex{ -1 };
 };

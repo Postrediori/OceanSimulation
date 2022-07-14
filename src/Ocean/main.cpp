@@ -4,6 +4,7 @@
 #include "Complex.h"
 #include "Vector.h"
 #include "FFT.h"
+#include "GraphicsResource.h"
 #include "Ocean.h"
 #include "WorldPosition.h"
 #include "LogFormatter.h"
@@ -12,7 +13,6 @@
 #include "Framebuffer.h"
 #include "GlfwWrapper.h"
 #include "ImGuiWrapper.h"
-#include "ScopeGuard.h"
 #include "ScreenShader.h"
 
 static const unsigned int Width  = 800;
@@ -141,20 +141,12 @@ bool Init() {
     return true;
 }
 
-void Deinit() {
-    gOcean.release();
-    gFramebuffer.Release();
-    for (int i=0; i<ScreenShadersCount; i++) {
-        gScreenShaders[i].Release();
-    }
-}
-
 /*****************************************************************************
  * GLUT Callback functions
  ****************************************************************************/
 void Display() {
     // Start using framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, gFramebuffer.frame_buffer); LOGOPENGLERROR();
+    glBindFramebuffer(GL_FRAMEBUFFER, gFramebuffer.GetFramebuffer()); LOGOPENGLERROR();
 
     // Render scene
     glEnable(GL_DEPTH_TEST); LOGOPENGLERROR();
@@ -176,7 +168,7 @@ void Display() {
     glDisable(GL_DEPTH_TEST); LOGOPENGLERROR();
     glClear(GL_COLOR_BUFFER_BIT); LOGOPENGLERROR();
 
-    gScreenShaders[gCurrentScreenShader].Render(gFramebuffer.tex_color_buffer);
+    gScreenShaders[gCurrentScreenShader].Render(gFramebuffer.GetTexture());
 }
 
 void DisplayUi() {
@@ -399,10 +391,6 @@ int main(int /*argc*/, char** /*argv*/) {
             LOGE << "Initialization failed";
             return EXIT_FAILURE;
         }
-        ScopeGuard scopeGuard([]() {
-            Deinit();
-            LOGD << "Cleanup : Simulation";
-        });
 
         while (!glfwWindowShouldClose(glfwWrapper.GetWindow())) {
             glfwPollEvents();

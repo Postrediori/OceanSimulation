@@ -37,11 +37,9 @@ enum GEOMETRY_TYPE : int {
  ****************************************************************************/
 class Ocean {
 public:
-    Ocean();
-    ~Ocean();
+    Ocean() = default;
 
     int init(const int N, const float A, const Vector2& w, const float length, const int ocean_repeat);
-    void release();
 
     void render(float t, const glm::vec3& light_pos,
                 const glm::mat4& proj, const glm::mat4& view, const glm::mat4& model,
@@ -111,15 +109,15 @@ private:
     unsigned int indices_tr_count = 0;
 
     // VAOs
-    GLuint vao = 0;
+    GraphicsUtils::unique_vertex_array vao;
     
     // VBOs
-    GLuint vertices_vbo = 0;
-    GLuint indices_ln_vbo = 0;
-    GLuint indices_tr_vbo = 0;
+    GraphicsUtils::unique_buffer vertices_vbo;
+    GraphicsUtils::unique_buffer indices_ln_vbo;
+    GraphicsUtils::unique_buffer indices_tr_vbo;
 
     // shaders
-    GLuint glProgram = 0;
+    GraphicsUtils::unique_program glProgram;
 
     // attributes and uniforms
     GLint uLightPos = -1, uProjection = -1, uView = -1, uModel = -1;
