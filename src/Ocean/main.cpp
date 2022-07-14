@@ -36,50 +36,77 @@ const std::array<ScreenShaderInfo, ScreenShadersCount> ScreenShadersInfo = {{
 /*****************************************************************************
  * Main variables
  ****************************************************************************/
-bool gFullscreen = false;
-bool gShowUi = true;
+struct OceanContext {
+    OceanContext() = default;
 
-int gWindowWidth = Width, gWindowHeight = Height;
+    bool Init(GLFWwindow* window);
 
-int gSavedXPos = 0, gSavedYPos = 0;
-int gSavedWidth = 0, gSavedHeight = 0;
+    void Display();
+    void DisplayUi();
 
-float gFps = 0.0f;
+    void Update();
 
-Position gPosition;
+    void RegisterCallbacks();
 
-Ocean gOcean;
-double gElapsedTime = 0.0;
-float gWaveAmp = 2.0e-5f;
-float gWindDirX = 0.0f;
-float gWindDirZ = 32.0f;
+    void Reshape(int width, int height);
+    void Keyboard(int key, int /*scancode*/, int action, int /*mods*/);
+    void MousePosition(double x, double y);
 
-glm::vec3 gLightPosition;
-glm::mat4 gProjection, gView, gModel;
+    static void ReshapeCallback(GLFWwindow* window, int width, int height);
+    static void KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    static void MousePositionCallback(GLFWwindow* window, double x, double y);
 
-GEOMETRY_TYPE gGeometryType;
+    GLFWwindow* window{ nullptr };
 
-ImVec4 gFogColor = ImVec4(0.25, 0.75, 0.65, 1.0);
-ImVec4 gEmissiveColor = ImVec4(1.0, 1.0, 1.0, 1.0);
-ImVec4 gAmbientColor = ImVec4(0.0, 0.65, 0.75, 1.0);
-ImVec4 gDiffuseColor = ImVec4(0.5, 0.65, 0.75, 1.0);
-ImVec4 gSpecularColor = ImVec4(1.0, 0.25, 0.0, 1.0);
+    bool gFullscreen = false;
+    bool gShowUi = true;
 
-Framebuffer gFramebuffer;
+    int gWindowWidth = Width, gWindowHeight = Height;
 
-int gCurrentScreenShader = 0;
-std::array<ScreenShader, ScreenShadersCount> gScreenShaders;
+    int gSavedXPos = 0, gSavedYPos = 0;
+    int gSavedWidth = 0, gSavedHeight = 0;
+
+    float gFps = 0.0f;
+
+    Position gPosition;
+
+    Ocean gOcean;
+    double gElapsedTime = 0.0;
+    float gWaveAmp = 2.0e-5f;
+    float gWindDirX = 0.0f;
+    float gWindDirZ = 32.0f;
+
+    glm::vec3 gLightPosition;
+    glm::mat4 gProjection, gView, gModel;
+
+    GEOMETRY_TYPE gGeometryType;
+
+    ImVec4 gFogColor = ImVec4(0.25, 0.75, 0.65, 1.0);
+    ImVec4 gEmissiveColor = ImVec4(1.0, 1.0, 1.0, 1.0);
+    ImVec4 gAmbientColor = ImVec4(0.0, 0.65, 0.75, 1.0);
+    ImVec4 gDiffuseColor = ImVec4(0.5, 0.65, 0.75, 1.0);
+    ImVec4 gSpecularColor = ImVec4(1.0, 0.25, 0.0, 1.0);
+
+    Framebuffer gFramebuffer;
+
+    int gCurrentScreenShader = 0;
+    std::array<ScreenShader, ScreenShadersCount> gScreenShaders;
+};
 
 /*****************************************************************************
  * Graphics functions
  ****************************************************************************/
-bool Init() {
+bool OceanContext::Init(GLFWwindow* w) {
     srand(time(0));
+
+    window = w;
 
     LOGI << "OpenGL Renderer  : " << glGetString(GL_RENDERER);
     LOGI << "OpenGL Vendor    : " << glGetString(GL_VENDOR);
     LOGI << "OpenGL Version   : " << glGetString(GL_VERSION);
     LOGI << "GLSL Version     : " << glGetString(GL_SHADING_LANGUAGE_VERSION);
+
+    RegisterCallbacks();
 
     // Load config file
     Config config;
@@ -144,7 +171,7 @@ bool Init() {
 /*****************************************************************************
  * GLUT Callback functions
  ****************************************************************************/
-void Display() {
+void OceanContext::Display() {
     // Start using framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, gFramebuffer.GetFramebuffer()); LOGOPENGLERROR();
 
@@ -171,9 +198,13 @@ void Display() {
     gScreenShaders[gCurrentScreenShader].Render(gFramebuffer.GetTexture());
 }
 
-void DisplayUi() {
+void OceanContext::DisplayUi() {
     static const float UiMargin = 10.0f;
     static const ImVec2 UiSize = ImVec2(300, 345);
+
+    if (!gShowUi) {
+        return;
+    }
 
     ImGui::SetNextWindowPos(ImVec2(UiMargin, gWindowHeight - UiSize.y - UiMargin), ImGuiCond_Always);
     ImGui::SetNextWindowSize(UiSize, ImGuiCond_Always);
@@ -246,7 +277,7 @@ void DisplayUi() {
     }
 }
 
-void Reshape(GLFWwindow* /*window*/, int width, int height) {
+void OceanContext::Reshape(int width, int height) {
     glViewport(0, 0, width, height);
     gWindowWidth = width;
     gWindowHeight = height;
@@ -254,7 +285,7 @@ void Reshape(GLFWwindow* /*window*/, int width, int height) {
     gFramebuffer.Resize(width, height);
 }
 
-void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*mods*/) {
+void OceanContext::Keyboard(int key, int /*scancode*/, int action, int /*mods*/) {
     if (action == GLFW_PRESS) {
         switch (key) {
         case GLFW_KEY_ESCAPE:
@@ -304,7 +335,7 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
     }
 }
 
-void MousePosition(GLFWwindow* window, double x, double y) {
+void OceanContext::MousePosition(double x, double y) {
     //static bool warp = false;
 
     //if (!warp) {
@@ -316,16 +347,42 @@ void MousePosition(GLFWwindow* window, double x, double y) {
     //}
 }
 
-void RegisterCallbacks(GLFWwindow* window) {
-    glfwSetKeyCallback(window, Keyboard);
-    glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
+void OceanContext::KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    auto p = glfwGetWindowUserPointer(window);
+    assert(p);
 
-    glfwSetCursorPosCallback(window, MousePosition);
-
-    glfwSetWindowSizeCallback(window, Reshape);
+    auto pContext = reinterpret_cast<OceanContext*>(p);
+    pContext->Keyboard(key, scancode, action, mods);
 }
 
-void Update(GLFWwindow* window) {
+void OceanContext::MousePositionCallback(GLFWwindow* window, double x, double y) {
+    auto p = glfwGetWindowUserPointer(window);
+    assert(p);
+
+    auto pContext = reinterpret_cast<OceanContext*>(p);
+    pContext->MousePosition(x, y);
+}
+
+void OceanContext::ReshapeCallback(GLFWwindow* window, int width, int height) {
+    auto p = glfwGetWindowUserPointer(window);
+    assert(p);
+
+    auto pContext = reinterpret_cast<OceanContext*>(p);
+    pContext->Reshape(width, height);
+}
+
+void OceanContext::RegisterCallbacks() {
+    glfwSetWindowUserPointer(window, static_cast<void*>(this));
+
+    glfwSetKeyCallback(window, OceanContext::KeyboardCallback);
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
+
+    glfwSetCursorPosCallback(window, OceanContext::MousePositionCallback);
+
+    glfwSetWindowSizeCallback(window, OceanContext::ReshapeCallback);
+}
+
+void OceanContext::Update() {
     static double lastTime = 0.0;
     static double lastFpsTime = 0.0;
     double currentTime = glfwGetTime();
@@ -381,13 +438,12 @@ int main(int /*argc*/, char** /*argv*/) {
             return EXIT_FAILURE;
         }
 
-        RegisterCallbacks(glfwWrapper.GetWindow());
-
         // Setup ImGui
         GraphicsUtils::ImGuiWrapper imguiWrapper;
         imguiWrapper.Init(glfwWrapper.GetWindow());
 
-        if (!Init()) {
+        OceanContext context;
+        if (!context.Init(glfwWrapper.GetWindow())) {
             LOGE << "Initialization failed";
             return EXIT_FAILURE;
         }
@@ -399,18 +455,16 @@ int main(int /*argc*/, char** /*argv*/) {
             imguiWrapper.StartFrame();
 
             // Render objects
-            Display();
+            context.Display();
 
             // Render ImGui window
-            if (gShowUi) {
-                DisplayUi();
-            }
+            context.DisplayUi();
 
             // Render ImGui
             imguiWrapper.Render();
 
             // Update objects
-            Update(glfwWrapper.GetWindow());
+            context.Update();
 
             glfwSwapBuffers(glfwWrapper.GetWindow());
         }
