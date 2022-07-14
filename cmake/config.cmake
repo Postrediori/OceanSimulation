@@ -28,7 +28,7 @@ macro(make_project_options_)
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         target_compile_options(${PROJECT} PUBLIC -Wall -Wextra -Wpedantic)
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-        # TODO: Clang options
+        target_compile_options(${PROJECT} PUBLIC -Wall -Wextra -Wpedantic)
     endif ()
 endmacro ()
 
