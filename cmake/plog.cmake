@@ -1,10 +1,6 @@
-if(GCC)
-    file(GLOB_RECURSE PLOG_HEADERS ${CMAKE_SOURCE_DIR}/3rdparty/plog/*.h)
+set(PLOG_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/3rdparty/plog)
 
-    add_library(plog STATIC ${PLOG_HEADERS})
+add_library(plog INTERFACE)
+target_include_directories(plog INTERFACE ${PLOG_INCLUDE_DIR}/include)
 
-    set_target_properties(plog PROPERTIES LINKER_LANGUAGE CXX)
-    set_target_properties(plog PROPERTIES FOLDER Include)
-endif(GCC)
-
-set(PLOG_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/3rdparty/plog/include)
+set(PLOG_LIBRARY plog)
