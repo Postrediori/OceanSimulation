@@ -4,7 +4,7 @@
 #include "Vector.h"
 #include "Complex.h"
 #include "FFT.h"
-#include "GraphicsUtils.h"
+#include "GraphicsLogger.h"
 #include "GraphicsResource.h"
 #include "Ocean.h"
 

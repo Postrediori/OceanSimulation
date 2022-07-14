@@ -5,7 +5,7 @@
 #endif
 
 #include "stdafx.h"
-#include "GraphicsUtils.h"
+#include "GraphicsLogger.h"
 #include "ScreenCapture.h"
 
 std::string ScreenCapture::GetNextFileName(Format format) {

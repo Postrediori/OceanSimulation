@@ -7,7 +7,6 @@
 #include <vector>
 #include <memory>
 #include <array>
-#include <unordered_map>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
