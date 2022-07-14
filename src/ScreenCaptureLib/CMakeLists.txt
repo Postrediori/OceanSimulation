@@ -9,4 +9,5 @@ target_link_libraries(${PROJECT}
     ${GLAD_LIBRARIES}
     ${PLOG_LIBRARY}
     ${STB_LIBRARY}
+    GraphicsLib
     )

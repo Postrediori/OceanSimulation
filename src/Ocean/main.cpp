@@ -283,7 +283,7 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
             break;
 
         case GLFW_KEY_F11:
-            ScreenCapture::SaveToFile(ScreenCaptureFormat::Png, gWindowWidth, gWindowHeight);
+            ScreenCapture::SaveToFile(ScreenCapture::Format::Png, gWindowWidth, gWindowHeight);
             break;
 
         case GLFW_KEY_1:

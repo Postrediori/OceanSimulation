@@ -1,14 +1,14 @@
 #pragma once
 
-enum class ScreenCaptureFormat {
+namespace ScreenCapture {
+
+enum class Format {
     Png,
     Jpg,
 };
 
-class ScreenCapture {
-public:
-    static bool SaveToFile(ScreenCaptureFormat format, int width, int height);
+bool SaveToFile(Format format, int width, int height);
 
-private:
-    static std::string GetNextFileName(ScreenCaptureFormat format);
-};
+std::string GetNextFileName(Format format);
+
+}
