@@ -8,6 +8,11 @@ struct ScreenShaderInfo {
 
 struct ScreenShader {
     ScreenShader() = default;
+    ScreenShader(ScreenShader&& other)
+        : vao(std::move(other.vao))
+        , quadVbo(std::move(other.quadVbo))
+        , program(std::move(other.program)) {
+    }
 
     int Init(ScreenShaderInfo info);
 

@@ -60,6 +60,7 @@ struct OceanContext {
 
     bool gFullscreen = false;
     bool gShowUi = true;
+    bool gShowColorsUi = false;
 
     int gWindowWidth = Width, gWindowHeight = Height;
 
@@ -90,7 +91,7 @@ struct OceanContext {
     Framebuffer gFramebuffer;
 
     int gCurrentScreenShader = 0;
-    std::array<ScreenShader, ScreenShadersCount> gScreenShaders;
+    std::vector<ScreenShader> gScreenShaders;
 };
 
 /*****************************************************************************
@@ -132,11 +133,13 @@ bool OceanContext::Init(GLFWwindow* w) {
     gOcean.geometryType(gGeometryType);
 
     // Screen shader and framebuffer
-    for (int i = 0; i < ScreenShadersCount; i++) {
-        if (!gScreenShaders[i].Init(ScreenShadersInfo[i])) {
+    for (const auto& info : ScreenShadersInfo) {
+        ScreenShader s;
+        if (!s.Init(info)) {
             LOGE << "Failed to load screen shader";
-            return false;
+            continue;
         }
+        gScreenShaders.push_back(std::move(s));
     }
 
     if (!gFramebuffer.Init(Width, Height)) {
@@ -230,16 +233,15 @@ void OceanContext::DisplayUi() {
 
     ImGui::Separator();
 
-    static bool showColorsUi = false;
     if (ImGui::Button("Show/Hide Colors >")) {
-        showColorsUi = !showColorsUi;
+        gShowColorsUi = !gShowColorsUi;
     }
 
     ImGui::Separator();
 
     ImGui::Text("Post-processing shader:");
     const char* elemName = ScreenShadersInfo[gCurrentScreenShader].Name;
-    ImGui::SliderInt("##", &gCurrentScreenShader, 0, ScreenShadersCount - 1, elemName);
+    ImGui::SliderInt("##", &gCurrentScreenShader, 0, ScreenShadersInfo.size() - 1, elemName);
 
     ImGui::Separator();
 
@@ -257,7 +259,7 @@ void OceanContext::DisplayUi() {
 
     ImGui::End();
 
-    if (showColorsUi) {
+    if (gShowColorsUi) {
         static const ImVec2 ColorsUiSize = ImVec2(300, 130);
 
         ImGui::SetNextWindowPos(ImVec2(UiSize.x + UiMargin * 2,
@@ -327,7 +329,7 @@ void OceanContext::Keyboard(int key, int /*scancode*/, int action, int /*mods*/)
 
         case GLFW_KEY_S:
             gCurrentScreenShader++;
-            if (gCurrentScreenShader>=ScreenShadersCount) {
+            if (gCurrentScreenShader>= gScreenShaders.size()) {
                 gCurrentScreenShader = 0;
             }
             break;
