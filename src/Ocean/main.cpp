@@ -6,7 +6,7 @@
 #include "FFT.h"
 #include "Ocean.h"
 #include "WorldPosition.h"
-#include "GlFormatter.h"
+#include "LogFormatter.h"
 #include "GraphicsUtils.h"
 #include "ScopeGuard.h"
 #include "ScreenCapture.h"
@@ -375,7 +375,7 @@ void Update(GLFWwindow* window) {
 int main(int /*argc*/, char** /*argv*/) {
     try {
 
-        static plog::ConsoleAppender<plog::GlFormatter> consoleAppender;
+        plog::ConsoleAppender<plog::LogFormatter> consoleAppender;
 #ifdef NDEBUG
         plog::init(plog::info, &consoleAppender);
 #else

@@ -4,7 +4,7 @@
 #include <iomanip>
 
 namespace plog {
-    class GlFormatter {
+    class LogFormatter {
     public:
         static util::nstring header() {
             return util::nstring();
