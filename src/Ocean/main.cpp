@@ -8,9 +8,11 @@
 #include "WorldPosition.h"
 #include "LogFormatter.h"
 #include "GraphicsUtils.h"
-#include "ScopeGuard.h"
 #include "ScreenCapture.h"
 #include "Framebuffer.h"
+#include "GlfwWrapper.h"
+#include "ImGuiWrapper.h"
+#include "ScopeGuard.h"
 #include "ScreenShader.h"
 
 static const unsigned int Width  = 800;
@@ -79,12 +81,6 @@ bool Init() {
     LOGI << "OpenGL Version   : " << glGetString(GL_VERSION);
     LOGI << "GLSL Version     : " << glGetString(GL_SHADING_LANGUAGE_VERSION);
 
-    // Setup of ImGui visual style
-    ImGui::StyleColorsClassic();
-    ImGuiStyle& style = ImGui::GetStyle();
-    style.WindowRounding = 0.0f;
-    style.WindowBorderSize = 0.0f;
-
     // Load config file
     Config config;
     config.Load(ConfigFile);
@@ -151,10 +147,6 @@ void Deinit() {
     for (int i=0; i<ScreenShadersCount; i++) {
         gScreenShaders[i].Release();
     }
-}
-
-void Error(int /*error*/, const char* description) {
-    LOGE << "Error: " << description;
 }
 
 /*****************************************************************************
@@ -332,6 +324,15 @@ void MousePosition(GLFWwindow* window, double x, double y) {
     //}
 }
 
+void RegisterCallbacks(GLFWwindow* window) {
+    glfwSetKeyCallback(window, Keyboard);
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
+
+    glfwSetCursorPosCallback(window, MousePosition);
+
+    glfwSetWindowSizeCallback(window, Reshape);
+}
+
 void Update(GLFWwindow* window) {
     static double lastTime = 0.0;
     static double lastFpsTime = 0.0;
@@ -382,58 +383,17 @@ int main(int /*argc*/, char** /*argv*/) {
         plog::init(plog::debug, &consoleAppender);
 #endif
 
-        glfwSetErrorCallback(Error);
-
-        if (!glfwInit()) {
+        GraphicsUtils::GlfwWrapper glfwWrapper;
+        if (glfwWrapper.Init(Title, Width, Height) != 0) {
             LOGE << "Failed to load GLFW";
             return EXIT_FAILURE;
         }
-        ScopeGuard glfwGuard([]() {
-            glfwTerminate();
-            LOGD << "Cleanup : GLFW context";
-        });
 
-        LOGI << "Init window context with OpenGL 3.3 Core Profile";
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Required on Mac
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-        auto window = glfwCreateWindow(Width, Height, Title, nullptr, nullptr);
-        if (!window) {
-            LOGE << "Unable to Create OpenGL 3.3 Core Profile Context";
-            return EXIT_FAILURE;
-        }
-        ScopeGuard windowGuard([window]() {
-            glfwDestroyWindow(window);
-            LOGD << "Cleanup : GLFW window";
-        });
-
-        glfwSetKeyCallback(window, Keyboard);
-        glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
-
-        glfwSetCursorPosCallback(window, MousePosition);
-
-        glfwSetWindowSizeCallback(window, Reshape);
-
-        glfwMakeContextCurrent(window);
-        gladLoadGL();
+        RegisterCallbacks(glfwWrapper.GetWindow());
 
         // Setup ImGui
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO();
-        io.IniFilename = nullptr; // Disable .ini
-
-        static const char* gGlslVersion = "#version 330 core";
-        ImGui_ImplGlfw_InitForOpenGL(window, true);
-        ImGui_ImplOpenGL3_Init(gGlslVersion);
-
-        ScopeGuard imGuiContextGuard([]() {
-            ImGui_ImplOpenGL3_Shutdown();
-            ImGui_ImplGlfw_Shutdown();
-            LOGD << "Cleanup : ImGui";
-        });
+        GraphicsUtils::ImGuiWrapper imguiWrapper;
+        imguiWrapper.Init(glfwWrapper.GetWindow());
 
         if (!Init()) {
             LOGE << "Initialization failed";
@@ -444,13 +404,11 @@ int main(int /*argc*/, char** /*argv*/) {
             LOGD << "Cleanup : Simulation";
         });
 
-        while (!glfwWindowShouldClose(window)) {
+        while (!glfwWindowShouldClose(glfwWrapper.GetWindow())) {
             glfwPollEvents();
 
             // Start ImGui frame
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
+            imguiWrapper.StartFrame();
 
             // Render objects
             Display();
@@ -461,13 +419,12 @@ int main(int /*argc*/, char** /*argv*/) {
             }
 
             // Render ImGui
-            ImGui::Render();
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+            imguiWrapper.Render();
 
             // Update objects
-            Update(window);
+            Update(glfwWrapper.GetWindow());
 
-            glfwSwapBuffers(window);
+            glfwSwapBuffers(glfwWrapper.GetWindow());
         }
 
     }

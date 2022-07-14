@@ -14,5 +14,6 @@ target_link_libraries(${PROJECT}
     ${OPENGL_LIBRARIES}
     ${GLFW_LIBRARIES}
     ${GLAD_LIBRARIES}
+    ${IMGUI_LIBRARIES}
     ${PLOG_LIBRARY}
     )
