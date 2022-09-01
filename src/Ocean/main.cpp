@@ -440,6 +440,8 @@ int main(int /*argc*/, char** /*argv*/) {
             return EXIT_FAILURE;
         }
 
+        glfwSwapInterval(0); // Disable vsync to get maximum number of iterations
+
         // Setup ImGui
         GraphicsUtils::ImGuiWrapper imguiWrapper;
         imguiWrapper.Init(glfwWrapper.GetWindow());
