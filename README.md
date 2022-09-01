@@ -151,6 +151,39 @@ make install
 An `Ocean` application bundle will now be present under `<Source directory>/bundle/Ocean`.
 
 
+## Building for Windows
+
+### Pre-requisites
+
+Install [MSYS2](http://msys2.github.io/) and update it to the latest version by `pacman -Syu`.
+
+### Dependencies
+
+Open the "MSYS2 MinGW 64-bit" (`mingw64.exe`) shell. Download and install all dependencies
+
+```
+pacman -S mingw-w64-x86_64-{gcc,cmake} make git
+```
+
+### Cloning Repository
+
+```
+git clone --recursive https://github.com/Postrediori/OceanSimulation
+cd OceanSimulation
+```
+
+### Building
+
+```
+mkdir build && cd build
+cmake -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+make
+make install
+```
+
+An `Ocean` application bundle will now be present under `<Source directory>/bundle/Ocean`.
+
+
 ## Configuration
 
 The parameters of the model can be adjusted in the `data/ocean.cfg` file:
@@ -200,6 +233,6 @@ stands for the length of the patch.
 ## TODO
 * [x] Adjust ocean parameters in the UI.
 * [x] Color adjustment.
-* [  ] Mouse navigation.
-* [  ] Add build instructions for Windows.
-* [  ] Add Vulkan renderer.
+* [x] Add build instructions for Windows.
+* [ ] Mouse navigation.
+* [ ] Add Vulkan renderer.
