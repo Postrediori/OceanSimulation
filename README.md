@@ -53,6 +53,7 @@ sudo dnf install -y \
     gcc gcc-c++ make \
     cmake \
     mesa-libGL-devel \
+    mesa-libGLU-devel \
     libXrandr-devel \
     libXinerama-devel \
     libXcursor-devel \
@@ -67,6 +68,7 @@ sudo yum install -y \
     gcc gcc-c++ make \
     cmake \
     mesa-libGL-devel \
+    mesa-libGLU-devel \
     libXrandr-devel \
     libXinerama-devel \
     libXcursor-devel \
