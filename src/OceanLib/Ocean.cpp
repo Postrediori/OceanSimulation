@@ -9,8 +9,13 @@
 #include "Ocean.h"
 
 constexpr float Epsilon = 1e-6f;
+#ifdef USE_OPENGL2_0
+const std::filesystem::path VertexShader = "ocean110.vert";
+const std::filesystem::path FragmentShader = "ocean110.frag";
+#else
 const std::filesystem::path VertexShader = "ocean.vert";
 const std::filesystem::path FragmentShader = "ocean.frag";
+#endif
 
 constexpr float Lambda = -1.0;
 

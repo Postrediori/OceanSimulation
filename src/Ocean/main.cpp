@@ -23,6 +23,16 @@ const std::string Title = "Ocean Simulation";
 
 const std::filesystem::path ConfigFile = "ocean.cfg";
 
+#ifdef USE_OPENGL2_0
+const std::vector<ScreenShaderInfo> ScreenShadersInfo = {
+    {"Normal", "screen110.vert", "screen110-normal.frag"},
+    {"Gray", "screen110.vert", "screen110-gray.frag"},
+    {"Blur", "screen110.vert", "screen110-blur.frag"},
+    {"Sobel", "screen110.vert", "screen110-sobel.frag"},
+    {"Dither B&W", "screen110.vert", "screen110-dither.frag"},
+    {"Dither GB", "screen110.vert", "screen110-dither-gb.frag"}
+};
+#else
 const std::vector<ScreenShaderInfo> ScreenShadersInfo = {
     {"Normal", "screen.vert", "screen-normal.frag"},
     {"Gray", "screen.vert", "screen-gray.frag"},
@@ -31,6 +41,7 @@ const std::vector<ScreenShaderInfo> ScreenShadersInfo = {
     {"Dither B&W", "screen.vert", "screen-dither.frag"},
     {"Dither GB", "screen.vert", "screen-dither-gb.frag"}
 };
+#endif
 
 
 /*****************************************************************************

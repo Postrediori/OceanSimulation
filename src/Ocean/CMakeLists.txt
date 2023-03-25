@@ -26,10 +26,10 @@ configure_file(
 if (USE_OPENGL2_0)
     configure_file(
         ${CMAKE_SOURCE_DIR}/data/ocean110.vert
-        ${CMAKE_CURRENT_BINARY_DIR}/data/ocean.vert COPYONLY)
+        ${CMAKE_CURRENT_BINARY_DIR}/data/ocean110.vert COPYONLY)
     configure_file(
         ${CMAKE_SOURCE_DIR}/data/ocean110.frag
-        ${CMAKE_CURRENT_BINARY_DIR}/data/ocean.frag COPYONLY)
+        ${CMAKE_CURRENT_BINARY_DIR}/data/ocean110.frag COPYONLY)
 else ()
     configure_file(
         ${CMAKE_SOURCE_DIR}/data/ocean.vert
@@ -43,25 +43,25 @@ endif ()
 if (USE_OPENGL2_0)
     configure_file(
         ${CMAKE_SOURCE_DIR}/data/screen110.vert
-        ${CMAKE_CURRENT_BINARY_DIR}/data/screen.vert COPYONLY)
+        ${CMAKE_CURRENT_BINARY_DIR}/data/screen110.vert COPYONLY)
     configure_file(
         ${CMAKE_SOURCE_DIR}/data/screen110-normal.frag
-        ${CMAKE_CURRENT_BINARY_DIR}/data/screen-normal.frag COPYONLY)
+        ${CMAKE_CURRENT_BINARY_DIR}/data/screen110-normal.frag COPYONLY)
     configure_file(
         ${CMAKE_SOURCE_DIR}/data/screen110-gray.frag
-        ${CMAKE_CURRENT_BINARY_DIR}/data/screen-gray.frag COPYONLY)
+        ${CMAKE_CURRENT_BINARY_DIR}/data/screen110-gray.frag COPYONLY)
     configure_file(
         ${CMAKE_SOURCE_DIR}/data/screen110-blur.frag
-        ${CMAKE_CURRENT_BINARY_DIR}/data/screen-blur.frag COPYONLY)
+        ${CMAKE_CURRENT_BINARY_DIR}/data/screen110-blur.frag COPYONLY)
     configure_file(
         ${CMAKE_SOURCE_DIR}/data/screen110-sobel.frag
-        ${CMAKE_CURRENT_BINARY_DIR}/data/screen-sobel.frag COPYONLY)
+        ${CMAKE_CURRENT_BINARY_DIR}/data/screen110-sobel.frag COPYONLY)
     configure_file(
         ${CMAKE_SOURCE_DIR}/data/screen110-dither.frag
-        ${CMAKE_CURRENT_BINARY_DIR}/data/screen-dither.frag COPYONLY)
+        ${CMAKE_CURRENT_BINARY_DIR}/data/screen110-dither.frag COPYONLY)
     configure_file(
         ${CMAKE_SOURCE_DIR}/data/screen110-dither-gb.frag
-        ${CMAKE_CURRENT_BINARY_DIR}/data/screen-dither-gb.frag COPYONLY)
+        ${CMAKE_CURRENT_BINARY_DIR}/data/screen110-dither-gb.frag COPYONLY)
 else ()
     configure_file(
         ${CMAKE_SOURCE_DIR}/data/screen.vert
