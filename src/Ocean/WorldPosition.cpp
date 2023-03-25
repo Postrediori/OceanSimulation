@@ -4,51 +4,55 @@
 constexpr float MotionVel = 100.0f;
 constexpr float RotationVel = 0.005f;
 
-void Position::set_position(const glm::vec3& new_pos
-    , const glm::vec3& new_angle) {
+void Position::SetPosition(const glm::vec3& new_pos, const glm::vec3& new_angle) {
     position = new_pos;
     angle = new_angle;
-    update();
+    Update();
 }
 
-void Position::move_forward(float dt) {
+void Position::MoveForward(float dt) {
     position += forward * MotionVel * dt;
 }
 
-void Position::move_back(float dt) {
+void Position::MoveBack(float dt) {
     position -= forward * MotionVel * dt;
 }
 
-void Position::move_left(float dt) {
+void Position::MoveLeft(float dt) {
     position -= right * MotionVel * dt;
 }
 
-void Position::move_right(float dt) {
+void Position::MoveRight(float dt) {
     position += right * MotionVel * dt;
 }
 
-void Position::move_up(float dt) {
+void Position::MoveUp(float dt) {
     position.y += MotionVel * dt;
 }
 
-void Position::move_down(float dt) {
+void Position::MoveDown(float dt) {
     position.y -= MotionVel * dt;
 }
 
-void Position::resize_screen(int w, int h) {
-    width = w;
-    height = h;
+void Position::MouseDown(double x, double y) {
+    mouseDragX = x;
+    mouseDragY = y;
+    mouseDrag = true;
 }
 
-void Position::set_mouse_point(int x, int y) {
-    angle.x -= static_cast<float>(x - width / 2) * RotationVel;
-    angle.y -= static_cast<float>(y - height / 2) * RotationVel;
+void Position::MouseMove(double x, double y) {
+    if (!mouseDrag) {
+        return;
+    }
+
+    angle.x -= static_cast<float>(x - mouseDragX) * RotationVel;
+    angle.y -= static_cast<float>(y - mouseDragY) * RotationVel;
 
     // Boundary Conditions
     if (angle.x<-M_PI) {
         angle.x += M_PI * 2;
     }
-    
+
     if (angle.x>M_PI) {
         angle.x -= M_PI * 2;
     }
@@ -61,10 +65,17 @@ void Position::set_mouse_point(int x, int y) {
         angle.y = M_PI / 2;
     }
 
-    update();
+    mouseDragX = x;
+    mouseDragY = y;
+
+    Update();
 }
 
-void Position::update() {
+void Position::MouseUp() {
+    mouseDrag = false;
+}
+
+void Position::Update() {
     forward.x = sin(angle.x);
     forward.y = 0.0;
     forward.z = cos(angle.x);

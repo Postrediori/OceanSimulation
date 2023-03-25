@@ -4,22 +4,26 @@ class Position {
 public:
     Position() = default;
 
-    void set_position(const glm::vec3& new_pos, const glm::vec3& new_angle);
+    void SetPosition(const glm::vec3& new_pos, const glm::vec3& new_angle);
 
-    void move_forward(float dt);
-    void move_back(float dt);
-    void move_left(float dt);
-    void move_right(float dt);
-    void move_up(float dt);
-    void move_down(float dt);
+    void MoveForward(float dt);
+    void MoveBack(float dt);
+    void MoveLeft(float dt);
+    void MoveRight(float dt);
+    void MoveUp(float dt);
+    void MoveDown(float dt);
 
-    void resize_screen(int w, int h);
-    void set_mouse_point(int x, int y);
+    void MouseDown(double x, double y);
+    void MouseMove(double x, double y);
+    void MouseUp();
 
-    void update();
+    void Update();
 
 public:
     int width = 0, height = 0;
+
+    bool mouseDrag = false;
+    double mouseDragX = 0, mouseDragY = 0;
 
     glm::vec3 position = glm::vec3();
     glm::vec3 forward = glm::vec3();

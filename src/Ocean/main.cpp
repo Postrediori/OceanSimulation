@@ -55,10 +55,12 @@ struct OceanContext {
     void Reshape(int width, int height);
     void Keyboard(int key, int /*scancode*/, int action, int /*mods*/);
     void MousePosition(double x, double y);
+    void MouseButtons(int button, int action, int mods);
 
     static void ReshapeCallback(GLFWwindow* window, int width, int height);
     static void KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
     static void MousePositionCallback(GLFWwindow* window, double x, double y);
+    static void MouseButtonsCallback(GLFWwindow* window, int button, int action, int mods);
 
     GLFWwindow* window = nullptr;
 
@@ -170,13 +172,11 @@ bool OceanContext::Init(GLFWwindow* w, const std::string& modulePath) {
 #endif
 
     // Other configurstions
-    gPosition.resize_screen(Width, Height);
-
     gProjection = glm::perspective(45.0f, (float)Width / (float)Height, 0.1f, 3000.0f);
     gView = glm::mat4(1.0f);
     gModel = glm::mat4(1.0f);
 
-    gPosition.set_position(
+    gPosition.SetPosition(
         glm::vec3(0.0f, 100.0f, 0.0f), // Position
         glm::vec3(2.4f, -0.3f, 0.0f)); // Look angle
 
@@ -233,7 +233,7 @@ void OceanContext::Display() {
 
 void OceanContext::DisplayUi() {
     constexpr float UiMargin = 10.0f;
-    static const ImVec2 UiSize = ImVec2(300, 345);
+    static const ImVec2 UiSize = ImVec2(300, 355);
 
     ImGui::SetNextWindowPos(ImVec2(UiMargin, gWindowHeight - UiSize.y - UiMargin), ImGuiCond_Always);
     ImGui::SetNextWindowSize(UiSize, ImGuiCond_Always);
@@ -279,6 +279,7 @@ void OceanContext::DisplayUi() {
     ImGui::BulletText("F11 to save screenshot to file.");
     ImGui::BulletText("1/2 to change rendering mode.");
     ImGui::BulletText("Arrow keys/PgUp/PgDown to navigate.");
+    ImGui::BulletText("RMB and move mouse to rotate view.");
     ImGui::BulletText("ESCAPE to exit.");
 
     ImGui::Separator();
@@ -311,7 +312,6 @@ void OceanContext::Reshape(int width, int height) {
     glViewport(0, 0, width, height);
     gWindowWidth = width;
     gWindowHeight = height;
-    gPosition.resize_screen(width, height);
 #ifndef USE_OPENGL2_0
     gFramebuffer.Resize(width, height);
 #endif
@@ -370,15 +370,27 @@ void OceanContext::Keyboard(int key, int /*scancode*/, int action, int /*mods*/)
 }
 
 void OceanContext::MousePosition(double x, double y) {
-    //static bool warp = false;
+    gPosition.MouseMove(x, y);
+}
 
-    //if (!warp) {
-    //    gPosition.set_mouse_point(x, y);
-    //    glfwSetCursorPos(window, gWindowWidth / 2, gWindowHeight / 2);
-    //    warp = true;
-    //} else {
-    //    warp = false;
-    //}
+void OceanContext::MouseButtons(int button, int action, int /*mods*/) {
+    if (button == GLFW_MOUSE_BUTTON_2) {
+        switch (action) {
+        case GLFW_PRESS: {
+                double x = 0.0, y = 0.0;
+                glfwGetCursorPos(window, &x, &y);
+                gPosition.MouseDown(x, y);
+            }
+            break;
+
+        case GLFW_RELEASE:
+            gPosition.MouseUp();
+            break;
+
+        default:
+            break;
+        }
+    }
 }
 
 void OceanContext::KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -397,6 +409,14 @@ void OceanContext::MousePositionCallback(GLFWwindow* window, double x, double y)
     pContext->MousePosition(x, y);
 }
 
+void OceanContext::MouseButtonsCallback(GLFWwindow* window, int button, int action, int mods) {
+    auto p = glfwGetWindowUserPointer(window);
+    assert(p);
+
+    auto pContext = reinterpret_cast<OceanContext*>(p);
+    pContext->MouseButtons(button, action, mods);
+}
+
 void OceanContext::ReshapeCallback(GLFWwindow* window, int width, int height) {
     auto p = glfwGetWindowUserPointer(window);
     assert(p);
@@ -412,6 +432,7 @@ void OceanContext::RegisterCallbacks() {
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
     glfwSetCursorPosCallback(window, OceanContext::MousePositionCallback);
+    glfwSetMouseButtonCallback(window, OceanContext::MouseButtonsCallback);
 
     glfwSetWindowSizeCallback(window, OceanContext::ReshapeCallback);
 }
@@ -431,22 +452,22 @@ void OceanContext::Update() {
     gElapsedTime += dt * 0.5;
 
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        gPosition.move_forward(dt);
+        gPosition.MoveForward(dt);
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        gPosition.move_back(dt);
+        gPosition.MoveBack(dt);
     }
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        gPosition.move_left(dt);
+        gPosition.MoveLeft(dt);
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        gPosition.move_right(dt);
+        gPosition.MoveRight(dt);
     }
     if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
-        gPosition.move_up(dt);
+        gPosition.MoveUp(dt);
     }
     if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
-        gPosition.move_down(dt);
+        gPosition.MoveDown(dt);
     }
 
     gLightPosition = glm::vec3(gPosition.position.x + 1000.0,
