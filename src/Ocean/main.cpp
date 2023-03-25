@@ -236,7 +236,7 @@ void OceanContext::DisplayUi() {
 #ifdef USE_OPENGL2_0
     static const ImVec2 UiSize = ImVec2(300, 320);
 #else
-    static const ImVec2 UiSize = ImVec2(300, 355);
+    static const ImVec2 UiSize = ImVec2(300, 375);
 #endif
 
     ImGui::SetNextWindowPos(ImVec2(UiMargin, gWindowHeight - UiSize.y - UiMargin), ImGuiCond_Always);
@@ -282,6 +282,9 @@ void OceanContext::DisplayUi() {
     ImGui::BulletText("F2 to show/hide UI.");
     ImGui::BulletText("F11 to save screenshot to file.");
     ImGui::BulletText("1/2 to change rendering mode.");
+#ifndef USE_OPENGL2_0
+    ImGui::BulletText("S to switch post-processing filter.");
+#endif
     ImGui::BulletText("Arrow keys/PgUp/PgDown to navigate.");
     ImGui::BulletText("RMB and move mouse to rotate view.");
     ImGui::BulletText("ESCAPE to exit.");
