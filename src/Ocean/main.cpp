@@ -218,7 +218,8 @@ void OceanContext::Display() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
 
     // Render post-processed image
-    glClear(GL_COLOR_BUFFER_BIT); LOGOPENGLERROR();
+    // With Mesa3d Depth bit should also be cleaned even if the 'scene' there is a 2D plane
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); LOGOPENGLERROR();
 
     gScreenShaders[gCurrentScreenShader].Render(gFramebuffer.GetTexture(),
         gFramebuffer.GetWidth(), gFramebuffer.GetHeight());
