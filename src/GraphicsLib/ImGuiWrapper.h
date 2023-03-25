@@ -6,11 +6,11 @@ namespace GraphicsUtils {
         ImGuiWrapper() = default;
         ~ImGuiWrapper();
         
-        void Init(GLFWwindow* window);
-        void Release();
+        static void Init(GLFWwindow* window);
+        static void Release();
         
-        void StartFrame();
-        void Render();
+        static void StartFrame();
+        static void Render();
     };
 
 }

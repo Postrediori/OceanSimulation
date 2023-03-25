@@ -233,7 +233,11 @@ void OceanContext::Display() {
 
 void OceanContext::DisplayUi() {
     constexpr float UiMargin = 10.0f;
+#ifdef USE_OPENGL2_0
+    static const ImVec2 UiSize = ImVec2(300, 320);
+#else
     static const ImVec2 UiSize = ImVec2(300, 355);
+#endif
 
     ImGui::SetNextWindowPos(ImVec2(UiMargin, gWindowHeight - UiSize.y - UiMargin), ImGuiCond_Always);
     ImGui::SetNextWindowSize(UiSize, ImGuiCond_Always);
@@ -357,6 +361,7 @@ void OceanContext::Keyboard(int key, int /*scancode*/, int action, int /*mods*/)
         case GLFW_KEY_2:
             gGeometryType = GeometryRenderType::Solid;
             break;
+
 #ifndef USE_OPENGL2_0
         case GLFW_KEY_S:
             gCurrentScreenShader++;
@@ -494,6 +499,12 @@ int main(int argc, const char* argv[]) {
 
         glfwSwapInterval(0); // Disable vsync to get maximum number of iterations
 
+        OceanContext context;
+        if (!context.Init(glfwWrapper.GetWindow(), argv[0])) {
+            LOGE << "Initialization failed";
+            return EXIT_FAILURE;
+        }
+
         // Setup ImGui
         GraphicsUtils::ImGuiWrapper imguiWrapper;
         imguiWrapper.Init(glfwWrapper.GetWindow());
@@ -503,12 +514,6 @@ int main(int argc, const char* argv[]) {
         ImGuiStyle& style = ImGui::GetStyle();
         style.WindowRounding = 0.0f;
         style.WindowBorderSize = 0.0f;
-
-        OceanContext context;
-        if (!context.Init(glfwWrapper.GetWindow(), argv[0])) {
-            LOGE << "Initialization failed";
-            return EXIT_FAILURE;
-        }
 
         while (!glfwWindowShouldClose(glfwWrapper.GetWindow())) {
             glfwPollEvents();

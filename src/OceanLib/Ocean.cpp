@@ -158,8 +158,6 @@ int Ocean::init(const std::filesystem::path& dataDir,
     glBindVertexArray(vao.get()); LOGOPENGLERROR();
 #endif
 
-    glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo.get()); LOGOPENGLERROR();
-
     aVertex = glGetAttribLocation(glProgram.get(), "vertex"); LOGOPENGLERROR();
     aNormal = glGetAttribLocation(glProgram.get(), "normal"); LOGOPENGLERROR();
 
@@ -167,6 +165,12 @@ int Ocean::init(const std::filesystem::path& dataDir,
 
 #ifndef USE_OPENGL2_0
     glBindVertexArray(0); LOGOPENGLERROR();
+#else
+    glDisableVertexAttribArray(aVertex); LOGOPENGLERROR();
+    glDisableVertexAttribArray(aNormal); LOGOPENGLERROR();
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0); LOGOPENGLERROR();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); LOGOPENGLERROR();
 #endif
 
     initVertices();
@@ -200,6 +204,10 @@ void Ocean::initVertices() {
     glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo.get()); LOGOPENGLERROR();
     glBufferData(GL_ARRAY_BUFFER, sizeof(ocean_vertex)*Nplus1*Nplus1,
         vertices.data(), GL_DYNAMIC_DRAW); LOGOPENGLERROR();
+
+#ifdef USE_OPENGL2_0
+    glBindBuffer(GL_ARRAY_BUFFER, 0); LOGOPENGLERROR();
+#endif
 }
 
 void Ocean::initBufferAttributes() {
@@ -530,6 +538,13 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
 
 #ifndef USE_OPENGL2_0
     glBindVertexArray(0); LOGOPENGLERROR();
+#else
+    // All context should be switched off for compatibility with ImGui
+    glDisableVertexAttribArray(aVertex); LOGOPENGLERROR();
+    glDisableVertexAttribArray(aNormal); LOGOPENGLERROR();
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0); LOGOPENGLERROR();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); LOGOPENGLERROR();
 #endif
     glUseProgram(0); LOGOPENGLERROR();
 }
