@@ -11,10 +11,12 @@
 #include "WorldPosition.h"
 #include "LogFormatter.h"
 #include "ScreenCapture.h"
-#include "Framebuffer.h"
 #include "GlfwWrapper.h"
 #include "ImGuiWrapper.h"
+#ifndef USE_OPENGL2_0
+#include "Framebuffer.h"
 #include "ScreenShader.h"
+#endif
 
 constexpr int Width = 800;
 constexpr int Height = 600;
@@ -23,16 +25,7 @@ const std::string Title = "Ocean Simulation";
 
 const std::filesystem::path ConfigFile = "ocean.cfg";
 
-#ifdef USE_OPENGL2_0
-const std::vector<ScreenShaderInfo> ScreenShadersInfo = {
-    {"Normal", "screen110.vert", "screen110-normal.frag"},
-    {"Gray", "screen110.vert", "screen110-gray.frag"},
-    {"Blur", "screen110.vert", "screen110-blur.frag"},
-    {"Sobel", "screen110.vert", "screen110-sobel.frag"},
-    {"Dither B&W", "screen110.vert", "screen110-dither.frag"},
-    {"Dither GB", "screen110.vert", "screen110-dither-gb.frag"}
-};
-#else
+#ifndef USE_OPENGL2_0
 const std::vector<ScreenShaderInfo> ScreenShadersInfo = {
     {"Normal", "screen.vert", "screen-normal.frag"},
     {"Gray", "screen.vert", "screen-gray.frag"},
@@ -103,10 +96,12 @@ struct OceanContext {
     ImVec4 gDiffuseColor = ImVec4(0.5, 0.65, 0.75, 1.0);
     ImVec4 gSpecularColor = ImVec4(1.0, 0.25, 0.0, 1.0);
 
+#ifndef USE_OPENGL2_0
     Framebuffer gFramebuffer;
 
     int gCurrentScreenShader = 0;
     std::vector<ScreenShader> gScreenShaders;
+#endif
 };
 
 /*****************************************************************************
@@ -154,6 +149,7 @@ bool OceanContext::Init(GLFWwindow* w, const std::string& modulePath) {
     }
     gOcean.geometryType(gGeometryType);
 
+#ifndef USE_OPENGL2_0
     // Screen shader and framebuffer
     for (const auto& info : ScreenShadersInfo) {
         ScreenShaderInfo i = { info.Name, dataDir / info.Vertex, dataDir / info.Fragment };
@@ -171,6 +167,7 @@ bool OceanContext::Init(GLFWwindow* w, const std::string& modulePath) {
         return false;
     }
     gFramebuffer.Resize(Width, Height);
+#endif
 
     // Other configurstions
     gPosition.resize_screen(Width, Height);
@@ -199,8 +196,10 @@ bool OceanContext::Init(GLFWwindow* w, const std::string& modulePath) {
  * GLUT Callback functions
  ****************************************************************************/
 void OceanContext::Display() {
+#ifndef USE_OPENGL2_0
     // Start using framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, gFramebuffer.GetFramebuffer()); LOGOPENGLERROR();
+#endif
 
     // Render scene
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); LOGOPENGLERROR();
@@ -214,6 +213,7 @@ void OceanContext::Display() {
         (float*)&gAmbientColor, (float*)&gDiffuseColor, (float*)&gSpecularColor);
     gOcean.render(gElapsedTime, gLightPosition, gProjection, gView, gModel, true);
 
+#ifndef USE_OPENGL2_0
     // Finish using framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
 
@@ -222,6 +222,7 @@ void OceanContext::Display() {
 
     gScreenShaders[gCurrentScreenShader].Render(gFramebuffer.GetTexture(),
         gFramebuffer.GetWidth(), gFramebuffer.GetHeight());
+#endif
 
     if (gShowUi) {
         // Render ImGui window
@@ -263,11 +264,13 @@ void OceanContext::DisplayUi() {
 
     ImGui::Separator();
 
+#ifndef USE_OPENGL2_0
     ImGui::Text("Post-processing shader:");
     const auto& elemName = ScreenShadersInfo[gCurrentScreenShader].Name;
     ImGui::SliderInt("##", &gCurrentScreenShader, 0, ScreenShadersInfo.size() - 1, elemName.c_str());
 
     ImGui::Separator();
+#endif
 
     ImGui::Text("User Guide:");
     ImGui::BulletText("F1 to on/off fullscreen mode.");
@@ -308,7 +311,9 @@ void OceanContext::Reshape(int width, int height) {
     gWindowWidth = width;
     gWindowHeight = height;
     gPosition.resize_screen(width, height);
+#ifndef USE_OPENGL2_0
     gFramebuffer.Resize(width, height);
+#endif
 }
 
 void OceanContext::Keyboard(int key, int /*scancode*/, int action, int /*mods*/) {
@@ -351,13 +356,14 @@ void OceanContext::Keyboard(int key, int /*scancode*/, int action, int /*mods*/)
         case GLFW_KEY_2:
             gGeometryType = GeometryRenderType::Solid;
             break;
-
+#ifndef USE_OPENGL2_0
         case GLFW_KEY_S:
             gCurrentScreenShader++;
             if (gCurrentScreenShader>= gScreenShaders.size()) {
                 gCurrentScreenShader = 0;
             }
             break;
+#endif
         }
     }
 }
