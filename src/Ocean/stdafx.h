@@ -6,13 +6,14 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <iomanip>
+#include <filesystem>
 #include <fstream>
-#include <sstream>
-#include <memory>
-#include <map>
-#include <array>
 #include <functional>
+#include <iomanip>
+#include <map>
+#include <sstream>
+#include <tuple>
+#include <vector>
 
 #include <plog/Log.h>
 #include <plog/Appenders/ConsoleAppender.h>

@@ -1,5 +1,11 @@
 find_package(OpenGL REQUIRED)
 
+if (USE_OPENGL2_0)
+    message(STATUS "The project will use legacy OpenGL 2.0 for rendering")
+else ()
+    message(STATUS "The project will use OpenGL 3.3 for rendering")
+endif ()
+
 if (CMAKE_SYSTEM_NAME STREQUAL Linux)
   find_package(X11 REQUIRED)
 

@@ -100,9 +100,11 @@ namespace GraphicsUtils {
         void close();
     };
 
+#ifndef USE_OPENGL2_0
     struct unique_vertex_array : public unique_any {
         void close();
     };
+#endif
 
     struct unique_buffer : public unique_any {
         void close();

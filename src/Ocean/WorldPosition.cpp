@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "WorldPosition.h"
 
-const float MotionVel = 100.0;
-const float RotationVel = 0.005;
+constexpr float MotionVel = 100.0f;
+constexpr float RotationVel = 0.005f;
 
 void Position::set_position(const glm::vec3& new_pos
     , const glm::vec3& new_angle) {
@@ -41,8 +41,8 @@ void Position::resize_screen(int w, int h) {
 }
 
 void Position::set_mouse_point(int x, int y) {
-    angle.x -= (x - width / 2) * RotationVel;
-    angle.y -= (y - height / 2) * RotationVel;
+    angle.x -= static_cast<float>(x - width / 2) * RotationVel;
+    angle.y -= static_cast<float>(y - height / 2) * RotationVel;
 
     // Boundary Conditions
     if (angle.x<-M_PI) {

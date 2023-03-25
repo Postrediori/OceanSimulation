@@ -6,7 +6,7 @@ namespace GraphicsUtils {
         ImGuiWrapper() = default;
         ~ImGuiWrapper();
         
-        int Init(GLFWwindow* window);
+        void Init(GLFWwindow* window);
         void Release();
         
         void StartFrame();

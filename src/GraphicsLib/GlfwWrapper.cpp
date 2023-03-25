@@ -16,17 +16,23 @@ int GlfwWrapper::Init(const std::string& title, int width, int height) {
         return -1;
     }
 
+#ifdef USE_OPENGL2_0
+    LOGI << "Init window context with OpenGL 2.0";
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+#else
     LOGI << "Init window context with OpenGL 3.3";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Required on Mac
+#endif
 
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
     window_ = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
     if (window_ == nullptr) {
-        LOGE << "Cannot create OpenGL 3.3 context";
+        LOGE << "Cannot create OpenGL context";
         return -1;
     };
 

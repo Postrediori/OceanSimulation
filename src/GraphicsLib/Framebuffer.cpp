@@ -20,8 +20,6 @@ int Framebuffer::Init(int w, int h) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
                  GL_UNSIGNED_BYTE, nullptr); LOGOPENGLERROR();
 
-    // glBindTexture(GL_TEXTURE_2D, 0); LOGOPENGLERROR();
-
     // Create render buffer object
     glGenRenderbuffers(1, rbo_depth_stencil.put()); LOGOPENGLERROR();
     if (!rbo_depth_stencil) {
@@ -68,6 +66,7 @@ int Framebuffer::Init(int w, int h) {
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
+    glBindRenderbuffer(GL_RENDERBUFFER, 0); LOGOPENGLERROR();
 
     return 1;
 }

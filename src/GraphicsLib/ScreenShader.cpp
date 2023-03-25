@@ -5,7 +5,7 @@
 #include "ScreenShader.h"
 
 constexpr size_t QuadVerticesCount = 6;
-static const std::array<GLfloat,4*QuadVerticesCount> QuadVertices = {
+const std::vector<GLfloat> QuadVertices = {
     -1., 1., 0., 1.,
     1., 1., 1., 1.,
     1., -1., 1., 0.,
@@ -15,16 +15,20 @@ static const std::array<GLfloat,4*QuadVerticesCount> QuadVertices = {
     -1., 1., 0., 1.
 };
 
-int ScreenShader::Init(ScreenShaderInfo info) {
+int ScreenShader::Init(const ScreenShaderInfo& info) {
     // Init shader
-    program.reset(Shader::CreateProgram(info.Vertex, info.Fragment));
+    program.reset(Shader::CreateProgramFromFiles(info.Vertex.string(), info.Fragment.string()));
     if (!program) {
         LOGE << "Failed to create program for screen shader";
         return 0;
     }
 
     uScreenTex = glGetUniformLocation(program.get(), "tex"); LOGOPENGLERROR();
+#ifdef USE_OPENGL2_0
+    uTexSize = glGetUniformLocation(program.get(), "tex_size"); LOGOPENGLERROR();
+#endif
 
+#ifndef USE_OPENGL2_0
     // Init vertex array
     glGenVertexArrays(1, vao.put()); LOGOPENGLERROR();
     if (!vao) {
@@ -33,6 +37,7 @@ int ScreenShader::Init(ScreenShaderInfo info) {
     }
 
     glBindVertexArray(vao.get()); LOGOPENGLERROR();
+#endif
 
     // Init quad vertex buffer
     glGenBuffers(1, quadVbo.put()); LOGOPENGLERROR();
@@ -42,27 +47,32 @@ int ScreenShader::Init(ScreenShaderInfo info) {
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, quadVbo.get()); LOGOPENGLERROR();
-    glBufferData(GL_ARRAY_BUFFER, sizeof(QuadVertices), QuadVertices.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
+    glBufferData(GL_ARRAY_BUFFER,
+        sizeof(GLfloat) * QuadVertices.size(), QuadVertices.data(),
+        GL_STATIC_DRAW); LOGOPENGLERROR();
 
-    GLint aScreenCoord    = glGetAttribLocation(program.get(), "coord"); LOGOPENGLERROR();
-    GLint aScreenTexCoord = glGetAttribLocation(program.get(), "tex_coord"); LOGOPENGLERROR();
+    aScreenCoord = glGetAttribLocation(program.get(), "coord"); LOGOPENGLERROR();
+    aScreenTexCoord = glGetAttribLocation(program.get(), "tex_coord"); LOGOPENGLERROR();
 
-    glEnableVertexAttribArray(aScreenCoord); LOGOPENGLERROR();
-    glVertexAttribPointer(aScreenCoord, 2, GL_FLOAT, GL_FALSE,
-                          4*sizeof(GLfloat), reinterpret_cast<void*>(0)); LOGOPENGLERROR();
+    InitBufferAttributes();
 
-    glEnableVertexAttribArray(aScreenTexCoord); LOGOPENGLERROR();
-    glVertexAttribPointer(aScreenTexCoord, 2, GL_FLOAT, GL_FALSE,
-                          4*sizeof(GLfloat), reinterpret_cast<void *>(2*sizeof(GLfloat))); LOGOPENGLERROR();
-
+#ifndef USE_OPENGL2_0
     glBindVertexArray(0); LOGOPENGLERROR();
+#endif
 
     return 1;
 }
 
-void ScreenShader::Render(GLuint texture) {
+void ScreenShader::Render(GLuint texture, int w, int h) {
     glUseProgram(program.get()); LOGOPENGLERROR();
+
+#ifdef USE_OPENGL2_0
+    glBindBuffer(GL_ARRAY_BUFFER, quadVbo.get()); LOGOPENGLERROR();
+    InitBufferAttributes();
+    glUniform2i(uTexSize, w, h); LOGOPENGLERROR();
+#else
     glBindVertexArray(vao.get()); LOGOPENGLERROR();
+#endif
 
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
 
@@ -76,5 +86,17 @@ void ScreenShader::Render(GLuint texture) {
     glDrawArrays(GL_TRIANGLES, 0, QuadVerticesCount); LOGOPENGLERROR();
 
     glUseProgram(0); LOGOPENGLERROR();
+#ifndef USE_OPENGL2_0
     glBindVertexArray(0); LOGOPENGLERROR();
+#endif
+}
+
+void ScreenShader::InitBufferAttributes() {
+    glEnableVertexAttribArray(aScreenCoord); LOGOPENGLERROR();
+    glVertexAttribPointer(aScreenCoord, 2, GL_FLOAT, GL_FALSE,
+        4 * sizeof(GLfloat), reinterpret_cast<void*>(0)); LOGOPENGLERROR();
+
+    glEnableVertexAttribArray(aScreenTexCoord); LOGOPENGLERROR();
+    glVertexAttribPointer(aScreenTexCoord, 2, GL_FLOAT, GL_FALSE,
+        4 * sizeof(GLfloat), reinterpret_cast<void*>(2 * sizeof(GLfloat))); LOGOPENGLERROR();
 }

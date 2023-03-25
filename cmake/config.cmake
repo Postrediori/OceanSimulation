@@ -2,6 +2,12 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose build type: Debug  Release" FORCE)
 endif ()
 
+set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/bundle")
+
+install(
+    DIRECTORY "${CMAKE_SOURCE_DIR}/data"
+    DESTINATION ${CMAKE_INSTALL_PREFIX})
+
 macro(make_project_)
     if (NOT DEFINED PROJECT)
         get_filename_component(PROJECT ${CMAKE_CURRENT_SOURCE_DIR} NAME)
@@ -22,12 +28,16 @@ macro(make_project_)
 endmacro ()
 
 macro(make_project_options_)
-    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    if (USE_OPENGL2_0)
+        target_compile_definitions(${PROJECT} PUBLIC USE_OPENGL2_0)
+    endif ()
+
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         target_compile_options(${PROJECT} PUBLIC /Wall)
         target_compile_definitions(${PROJECT} PUBLIC _USE_MATH_DEFINES)
-    elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         target_compile_options(${PROJECT} PUBLIC -Wall -Wextra -Wpedantic)
-    elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         target_compile_options(${PROJECT} PUBLIC -Wall -Wextra -Wpedantic)
     endif ()
 endmacro ()
@@ -37,12 +47,8 @@ macro(make_executable)
     add_executable(${PROJECT} ${HEADERS} ${SOURCES})
     make_project_options_()
 
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/bundle/${PROJECT}")
     install(
         TARGETS ${PROJECT}
-        DESTINATION ${CMAKE_INSTALL_PREFIX})
-    install(
-        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/data"
         DESTINATION ${CMAKE_INSTALL_PREFIX})
 endmacro()
 

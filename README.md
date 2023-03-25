@@ -1,8 +1,8 @@
+# Ocean Simulation
+
 ## Introduction
 
-Ocean simulation is based on the project by [Keith Lantz](https://keithlantz.net/).
-This program uses OpenGL 3.3 for rendering.
-The version that uses OpenGL 2.0 and can be run on older hardware can be checked in a separate branch: [OceanSimulation/opengl2_0]( https://github.com/Postrediori/OceanSimulation/tree/opengl2_0).
+Ocean simulation is based on the project by [Keith Lantz](https://keithlantz.net/). This project uses OpenGL 3.3 by default and it is possible to make configuration for OpenGL 2.0 for maximum compatibility.
 
 The numerical model is based on the paper by J. Tessendorf and utilizes
 Phillips spectrum and algorithm of inverse FFT.
@@ -97,29 +97,25 @@ make
 make install
 ```
 
+### Additional build options
+
+The following options are available when running CMake:
+* `USE_OPENGL2_0` (default value: OFF) - Use rendering with legacy OpenGL 2.0 (and GLSL 1.10) for maximum compatibility.
+
+Example usage:
+
+```
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DUSE_OPENGL2_0=ON
+```
+
 ## Running Project
 
-After the successful build the binary `Ocean` will end up in `<source dir>/bundle/Ocean`.
+After the successful build the binary `Ocean` will end up in `<source dir>/bundle`.
 
 ```
-cd bundle/Ocean
-./Ocean
-```
-
-All of the files required for an executable run are stored in `<PathToProject>/bundle/Ocean`:
-
-```
-cd <PathToProject>/bundle
-tree
-.
-└── Ocean
-    ├── data
-    │   ├── ocean.frag
-    │   ├── ocean.vert
-    │   └── ocean.cfg
-    └── Ocean
-
-2 directories, 7 files
+cd <PathToProject>
+./bundle/Ocean
 ```
 
 ## Building for macOS
@@ -139,18 +135,17 @@ cd OceanSimulation
 Generate makefiles for the build:
 
 ```
-mkdir build
-cd build
+mkdir build && cd build
 cmake .. -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_BUILD_TYPE=Release
 ```
 
 ### Building
 ```
-make -j4
+make
 make install
 ```
 
-An `Ocean` application bundle will now be present under `<Source directory>/bundle/Ocean`.
+An `Ocean` application bundle will now be present under `<Source directory>/bundle`.
 
 
 ## Building for Windows
@@ -183,7 +178,7 @@ make
 make install
 ```
 
-An `Ocean` application bundle will now be present under `<Source directory>/bundle/Ocean`.
+An `Ocean` application bundle will now be present under `<Source directory>/bundle`.
 
 
 ## Configuration
@@ -225,6 +220,7 @@ stands for the length of the patch.
 * `PgUp/PgDown` - Adjust vertical position of the viewer point.
 * `1` - Toggle wireframe mode.
 * `2` - Toggle solid surface ("normal") mode.
+* `S` - Switch to the next post-processing shader.
 
 ## Links
 

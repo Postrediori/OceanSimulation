@@ -1,8 +1,8 @@
 #pragma once
 
 namespace Shader {
-    GLuint CreateProgram(
+    GLuint CreateProgramFromFiles(
             const std::string& vertex_shader, const std::string& fragment_shader);
-    GLuint CreateProgramSource(
+    GLuint CreateProgramFromSources(
             const std::string& vertex_shader, const std::string& fragment_shader);
 }

@@ -7,39 +7,49 @@ ImGuiWrapper::~ImGuiWrapper() {
     Release();
 }
 
-int ImGuiWrapper::Init(GLFWwindow* window) {
+void ImGuiWrapper::Init(GLFWwindow* window) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr; // Disable .ini
 
+#ifdef USE_OPENGL2_0
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL2_Init();
+#else
     static const std::string ImguiGlslVersion = "#version 330 core";
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(ImguiGlslVersion.c_str());
-
-    // Setup of ImGui visual style
-    ImGui::StyleColorsClassic();
-    ImGuiStyle& style = ImGui::GetStyle();
-    style.WindowRounding = 0.0f;
-    style.WindowBorderSize = 0.0f;
-    
-    return 0;
+#endif
 }
 
 void ImGuiWrapper::Release() {
+#ifdef USE_OPENGL2_0
+    ImGui_ImplOpenGL2_Shutdown();
+#else
     ImGui_ImplOpenGL3_Shutdown();
+#endif
     ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 }
 
 void ImGuiWrapper::StartFrame() {
+#ifdef USE_OPENGL2_0
+    ImGui_ImplOpenGL2_NewFrame();
+#else
     ImGui_ImplOpenGL3_NewFrame();
+#endif
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 }
 
 void ImGuiWrapper::Render() {
     ImGui::Render();
+#ifdef USE_OPENGL2_0
+    ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+#else
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+#endif
 }
 
 } // namespace GraphicsUtils

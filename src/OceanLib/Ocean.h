@@ -25,11 +25,9 @@ struct complex_vector_norm {
         : h(ch), D(cD), n(cn) { }
 };
 
-enum GEOMETRY_TYPE : int {
-    GEOMETRY_LINES = 0,
-    GEOMETRY_SOLID = 1,
-
-    GEOMETRY_TYPES
+enum class GeometryRenderType : int {
+    Wireframe,
+    Solid
 };
 
 /*****************************************************************************
@@ -39,13 +37,14 @@ class Ocean {
 public:
     Ocean() = default;
 
-    int init(const int N, const float A, const Vector2& w, const float length, const int ocean_repeat);
+    int init(const std::filesystem::path& dataDir,
+        const int N, const float A, const Vector2& w, const float length, const int ocean_repeat);
 
     void render(float t, const glm::vec3& light_pos,
                 const glm::mat4& proj, const glm::mat4& view, const glm::mat4& model,
                 bool use_fft);
 
-    void geometryType(GEOMETRY_TYPE t);
+    void geometryType(GeometryRenderType t);
 
     void colors(float fog[], float emissive[], float ambient[], float diffuse[], float specular[]);
 
@@ -54,6 +53,7 @@ public:
 
 private:
     void initVertices();
+    void initBufferAttributes();
 
     // deep water
     float dispersion(int n_prime, int m_prime);
@@ -68,7 +68,7 @@ private:
     void evaluateWavesFFT(float t);
 
 private:
-    GEOMETRY_TYPE geometry_type = GEOMETRY_TYPE::GEOMETRY_SOLID;
+    GeometryRenderType geometry_type = GeometryRenderType::Solid;
 
     // gravity constant
     float g = 9.81f;
@@ -108,9 +108,11 @@ private:
     unsigned int indices_ln_count = 0;
     unsigned int indices_tr_count = 0;
 
+#ifndef USE_OPENGL2_0
     // VAOs
     GraphicsUtils::unique_vertex_array vao;
-    
+#endif
+
     // VBOs
     GraphicsUtils::unique_buffer vertices_vbo;
     GraphicsUtils::unique_buffer indices_ln_vbo;
@@ -120,7 +122,12 @@ private:
     GraphicsUtils::unique_program glProgram;
 
     // attributes and uniforms
+    GLint aVertex = -1, aNormal = -1;
     GLint uLightPos = -1, uProjection = -1, uView = -1, uModel = -1;
+#ifdef USE_OPENGL2_0
+    // Additional uniform for passing inverse(transpose(view * model));
+    GLint uMVTranspInv = -1;
+#endif
 
     GLint uFogColor = -1, uEmissiveColor = -1, uAmbientColor = -1,
         uDiffuseColor = -1, uSpecularColor = -1;

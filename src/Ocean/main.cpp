@@ -6,6 +6,7 @@
 #include "FFT.h"
 #include "GraphicsLogger.h"
 #include "GraphicsResource.h"
+#include "ResourceFinder.h"
 #include "Ocean.h"
 #include "WorldPosition.h"
 #include "LogFormatter.h"
@@ -15,22 +16,21 @@
 #include "ImGuiWrapper.h"
 #include "ScreenShader.h"
 
-static const unsigned int Width  = 800;
-static const unsigned int Height = 600;
+constexpr int Width = 800;
+constexpr int Height = 600;
 
-static const char Title[] = "Ocean Simulation";
+const std::string Title = "Ocean Simulation";
 
-static const char ConfigFile[] = "./data/ocean.cfg";
+const std::filesystem::path ConfigFile = "ocean.cfg";
 
-constexpr size_t ScreenShadersCount = 6;
-const std::array<ScreenShaderInfo, ScreenShadersCount> ScreenShadersInfo = {{
-    {"Normal", "data/screen.vert", "data/screen.frag"},
-    {"Gray", "data/screen.vert", "data/screen-gray.frag"},
-    {"Blur", "data/screen.vert", "data/screen-blur.frag"},
-    {"Sobel", "data/screen.vert", "data/screen-sobel.frag"},
-    {"Dither B&W", "data/screen.vert", "data/screen-dither.frag"},
-    {"Dither GB", "data/screen.vert", "data/screen-dither-gb.frag"}
-}};
+const std::vector<ScreenShaderInfo> ScreenShadersInfo = {
+    {"Normal", "screen.vert", "screen-normal.frag"},
+    {"Gray", "screen.vert", "screen-gray.frag"},
+    {"Blur", "screen.vert", "screen-blur.frag"},
+    {"Sobel", "screen.vert", "screen-sobel.frag"},
+    {"Dither B&W", "screen.vert", "screen-dither.frag"},
+    {"Dither GB", "screen.vert", "screen-dither-gb.frag"}
+};
 
 
 /*****************************************************************************
@@ -39,7 +39,7 @@ const std::array<ScreenShaderInfo, ScreenShadersCount> ScreenShadersInfo = {{
 struct OceanContext {
     OceanContext() = default;
 
-    bool Init(GLFWwindow* window);
+    bool Init(GLFWwindow* window, const std::string& modulePath);
 
     void Display();
     void DisplayUi();
@@ -56,16 +56,18 @@ struct OceanContext {
     static void KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
     static void MousePositionCallback(GLFWwindow* window, double x, double y);
 
-    GLFWwindow* window{ nullptr };
+    GLFWwindow* window = nullptr;
 
     bool gFullscreen = false;
+    struct {
+        int XPos, YPos;
+        int Width, Height;
+    } gSavedWindowPos = { 0, 0, 0, 0 };
+
     bool gShowUi = true;
     bool gShowColorsUi = false;
 
     int gWindowWidth = Width, gWindowHeight = Height;
-
-    int gSavedXPos = 0, gSavedYPos = 0;
-    int gSavedWidth = 0, gSavedHeight = 0;
 
     float gFps = 0.0f;
 
@@ -77,10 +79,12 @@ struct OceanContext {
     float gWindDirX = 0.0f;
     float gWindDirZ = 32.0f;
 
-    glm::vec3 gLightPosition;
-    glm::mat4 gProjection, gView, gModel;
+    glm::vec3 gLightPosition = glm::vec3();
+    glm::mat4 gProjection = glm::mat4();
+    glm::mat4 gView = glm::mat4();
+    glm::mat4 gModel = glm::mat4();
 
-    GEOMETRY_TYPE gGeometryType;
+    GeometryRenderType gGeometryType = GeometryRenderType::Solid;
 
     ImVec4 gFogColor = ImVec4(0.25, 0.75, 0.65, 1.0);
     ImVec4 gEmissiveColor = ImVec4(1.0, 1.0, 1.0, 1.0);
@@ -97,10 +101,16 @@ struct OceanContext {
 /*****************************************************************************
  * Graphics functions
  ****************************************************************************/
-bool OceanContext::Init(GLFWwindow* w) {
+bool OceanContext::Init(GLFWwindow* w, const std::string& modulePath) {
     srand(time(0));
 
     window = w;
+
+    std::filesystem::path dataDir;
+    if (!Utils::ResourceFinder::GetDataDirectory(modulePath, dataDir)) {
+        LOGE << "Cannot find directory with data files";
+        return false;
+    }
 
     LOGI << "OpenGL Renderer  : " << glGetString(GL_RENDERER);
     LOGI << "OpenGL Vendor    : " << glGetString(GL_VENDOR);
@@ -110,9 +120,10 @@ bool OceanContext::Init(GLFWwindow* w) {
     RegisterCallbacks();
 
     // Load config file
+    auto configFilePath = dataDir / ConfigFile;
     Config config;
-    config.Load(ConfigFile);
-    LOGD << "Loaded Configuration File : " << ConfigFile;
+    config.Load(configFilePath.string());
+    LOGD << "Loaded Configuration File : " << configFilePath.string();
 
     config.Get("waveAmplitude", gWaveAmp);
     config.Get("windDirX", gWindDirX);
@@ -120,13 +131,13 @@ bool OceanContext::Init(GLFWwindow* w) {
 
     int oceanRepeat, oceanSize;
     float oceanLen;
-    if (!config.Get("oceanSize",   oceanSize))   oceanSize = 64;
-    if (!config.Get("oceanLen",    oceanLen))    oceanLen = 64.f;
+    if (!config.Get("oceanSize", oceanSize)) oceanSize = 64;
+    if (!config.Get("oceanLen", oceanLen)) oceanLen = 64.f;
     if (!config.Get("oceanRepeat", oceanRepeat)) oceanRepeat = 10;
 
     // Ocean setup
-    gGeometryType = GEOMETRY_SOLID;
-    if (gOcean.init(oceanSize, gWaveAmp, Vector2(gWindDirX, gWindDirZ),
+    gGeometryType = GeometryRenderType::Solid;
+    if (gOcean.init(dataDir, oceanSize, gWaveAmp, Vector2(gWindDirX, gWindDirZ),
             oceanLen, oceanRepeat) <= 0) {
         return false;
     }
@@ -134,8 +145,10 @@ bool OceanContext::Init(GLFWwindow* w) {
 
     // Screen shader and framebuffer
     for (const auto& info : ScreenShadersInfo) {
+        ScreenShaderInfo i = { info.Name, dataDir / info.Vertex, dataDir / info.Fragment };
+
         ScreenShader s;
-        if (!s.Init(info)) {
+        if (!s.Init(i)) {
             LOGE << "Failed to load screen shader";
             continue;
         }
@@ -152,8 +165,8 @@ bool OceanContext::Init(GLFWwindow* w) {
     gPosition.resize_screen(Width, Height);
 
     gProjection = glm::perspective(45.0f, (float)Width / (float)Height, 0.1f, 3000.0f);
-    gView       = glm::mat4(1.0f);
-    gModel      = glm::mat4(1.0f);
+    gView = glm::mat4(1.0f);
+    gModel = glm::mat4(1.0f);
 
     gPosition.set_position(
         glm::vec3(0.0f, 100.0f, 0.0f), // Position
@@ -179,7 +192,6 @@ void OceanContext::Display() {
     glBindFramebuffer(GL_FRAMEBUFFER, gFramebuffer.GetFramebuffer()); LOGOPENGLERROR();
 
     // Render scene
-    glEnable(GL_DEPTH_TEST); LOGOPENGLERROR();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); LOGOPENGLERROR();
 
     gView = glm::lookAt(gPosition.position, gPosition.position + gPosition.lookat, gPosition.up);
@@ -195,19 +207,20 @@ void OceanContext::Display() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
 
     // Render post-processed image
-    glDisable(GL_DEPTH_TEST); LOGOPENGLERROR();
     glClear(GL_COLOR_BUFFER_BIT); LOGOPENGLERROR();
 
-    gScreenShaders[gCurrentScreenShader].Render(gFramebuffer.GetTexture());
+    gScreenShaders[gCurrentScreenShader].Render(gFramebuffer.GetTexture(),
+        gFramebuffer.GetWidth(), gFramebuffer.GetHeight());
+
+    if (gShowUi) {
+        // Render ImGui window
+        DisplayUi();
+    }
 }
 
 void OceanContext::DisplayUi() {
-    static const float UiMargin = 10.0f;
+    constexpr float UiMargin = 10.0f;
     static const ImVec2 UiSize = ImVec2(300, 345);
-
-    if (!gShowUi) {
-        return;
-    }
 
     ImGui::SetNextWindowPos(ImVec2(UiMargin, gWindowHeight - UiSize.y - UiMargin), ImGuiCond_Always);
     ImGui::SetNextWindowSize(UiSize, ImGuiCond_Always);
@@ -216,8 +229,8 @@ void OceanContext::DisplayUi() {
         ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 
     ImGui::Text("Rendering mode:");
-    ImGui::RadioButton("Wireframe", (int *)&gGeometryType, (int)GEOMETRY_TYPE::GEOMETRY_LINES); ImGui::SameLine();
-    ImGui::RadioButton("Solid", (int *)&gGeometryType, (int)GEOMETRY_TYPE::GEOMETRY_SOLID);
+    ImGui::RadioButton("Wireframe", (int *)&gGeometryType, static_cast<int>(GeometryRenderType::Wireframe)); ImGui::SameLine();
+    ImGui::RadioButton("Solid", (int *)&gGeometryType, static_cast<int>(GeometryRenderType::Solid));
 
     ImGui::Separator();
 
@@ -240,8 +253,8 @@ void OceanContext::DisplayUi() {
     ImGui::Separator();
 
     ImGui::Text("Post-processing shader:");
-    const char* elemName = ScreenShadersInfo[gCurrentScreenShader].Name;
-    ImGui::SliderInt("##", &gCurrentScreenShader, 0, ScreenShadersInfo.size() - 1, elemName);
+    const auto& elemName = ScreenShadersInfo[gCurrentScreenShader].Name;
+    ImGui::SliderInt("##", &gCurrentScreenShader, 0, ScreenShadersInfo.size() - 1, elemName.c_str());
 
     ImGui::Separator();
 
@@ -297,8 +310,8 @@ void OceanContext::Keyboard(int key, int /*scancode*/, int action, int /*mods*/)
         case GLFW_KEY_F1:
             gFullscreen = !gFullscreen;
             if (gFullscreen) {
-                glfwGetWindowPos(window, &gSavedXPos, &gSavedYPos);
-                glfwGetWindowSize(window, &gSavedWidth, &gSavedHeight);
+                glfwGetWindowPos(window, &gSavedWindowPos.XPos, &gSavedWindowPos.YPos);
+                glfwGetWindowSize(window, &gSavedWindowPos.Width, &gSavedWindowPos.Height);
 
                 GLFWmonitor* monitor = glfwGetPrimaryMonitor();
                 const GLFWvidmode* mode = glfwGetVideoMode(monitor);
@@ -306,8 +319,9 @@ void OceanContext::Keyboard(int key, int /*scancode*/, int action, int /*mods*/)
                     mode->width, mode->height, mode->refreshRate);
             }
             else {
-                glfwSetWindowMonitor(window, nullptr, gSavedXPos, gSavedYPos,
-                    gSavedWidth, gSavedHeight, GLFW_DONT_CARE);
+                glfwSetWindowMonitor(window, nullptr,
+                    gSavedWindowPos.XPos, gSavedWindowPos.YPos,
+                    gSavedWindowPos.Width, gSavedWindowPos.Height, GLFW_DONT_CARE);
             }
             break;
 
@@ -320,11 +334,11 @@ void OceanContext::Keyboard(int key, int /*scancode*/, int action, int /*mods*/)
             break;
 
         case GLFW_KEY_1:
-            gGeometryType = GEOMETRY_LINES;
+            gGeometryType = GeometryRenderType::Wireframe;
             break;
 
         case GLFW_KEY_2:
-            gGeometryType = GEOMETRY_SOLID;
+            gGeometryType = GeometryRenderType::Solid;
             break;
 
         case GLFW_KEY_S:
@@ -424,9 +438,8 @@ void OceanContext::Update() {
 /*****************************************************************************
  * Main program
  ****************************************************************************/
-int main(int /*argc*/, char** /*argv*/) {
+int main(int argc, const char* argv[]) {
     try {
-
         plog::ConsoleAppender<plog::LogFormatter> consoleAppender;
 #ifdef NDEBUG
         plog::init(plog::info, &consoleAppender);
@@ -446,8 +459,14 @@ int main(int /*argc*/, char** /*argv*/) {
         GraphicsUtils::ImGuiWrapper imguiWrapper;
         imguiWrapper.Init(glfwWrapper.GetWindow());
 
+        // Setup of ImGui visual style
+        ImGui::StyleColorsClassic();
+        ImGuiStyle& style = ImGui::GetStyle();
+        style.WindowRounding = 0.0f;
+        style.WindowBorderSize = 0.0f;
+
         OceanContext context;
-        if (!context.Init(glfwWrapper.GetWindow())) {
+        if (!context.Init(glfwWrapper.GetWindow(), argv[0])) {
             LOGE << "Initialization failed";
             return EXIT_FAILURE;
         }
@@ -461,18 +480,15 @@ int main(int /*argc*/, char** /*argv*/) {
             // Render objects
             context.Display();
 
-            // Render ImGui window
-            context.DisplayUi();
-
             // Render ImGui
             imguiWrapper.Render();
 
             // Update objects
             context.Update();
 
+            glfwMakeContextCurrent(glfwWrapper.GetWindow());
             glfwSwapBuffers(glfwWrapper.GetWindow());
         }
-
     }
     catch (const std::exception& ex) {
         LOGE << "Exception " << ex.what();

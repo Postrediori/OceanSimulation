@@ -21,9 +21,11 @@ void unique_program::close() {
     glDeleteProgram(resourceId_); LOGOPENGLERROR();
 }
 
+#ifndef USE_OPENGL2_0
 void unique_vertex_array::close() {
     glDeleteVertexArrays(1, &resourceId_); LOGOPENGLERROR();
 }
+#endif
 
 void unique_buffer::close() {
     glDeleteBuffers(1, &resourceId_); LOGOPENGLERROR();
