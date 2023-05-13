@@ -25,6 +25,7 @@ This includes:
 * [glm](https://github.com/g-truc/glm) - OpenGL Mathematics.
 * [plog](https://github.com/SergiusTheBest/plog) - Logging library.
 * [imgui](https://github.com/ocornut/imgui) - UI library.
+* [stb](https://github.com/nothings/stb) - Saving images for making screenshots.
 
 ## Building for Linux
 
