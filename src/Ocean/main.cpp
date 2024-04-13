@@ -40,8 +40,15 @@ const std::vector<ScreenShaderInfo> ScreenShadersInfo = {
 /*****************************************************************************
  * Main variables
  ****************************************************************************/
+
+struct WindowDimensions {
+    int X, Y;
+    int Width, Height;
+};
+
 struct OceanContext {
     OceanContext() = default;
+    ~OceanContext() = default;
 
     bool Init(GLFWwindow* window, const std::string& modulePath);
 
@@ -64,45 +71,42 @@ struct OceanContext {
 
     GLFWwindow* window = nullptr;
 
-    bool gFullscreen = false;
-    struct {
-        int XPos, YPos;
-        int Width, Height;
-    } gSavedWindowPos = { 0, 0, 0, 0 };
+    bool isFullscreen = false;
+    WindowDimensions savedWindowPos = { 0, 0, 0, 0 };
 
-    bool gShowUi = true;
-    bool gShowColorsUi = false;
+    bool showUi = true;
+    bool showColorsUi = false;
 
     int gWindowWidth = Width, gWindowHeight = Height;
 
-    float gFps = 0.0f;
+    float fps = 0.0f;
 
-    Position gPosition;
+    Position viewPosition;
 
-    Ocean gOcean;
-    double gElapsedTime = 0.0;
-    float gWaveAmp = 2.0e-5f;
-    float gWindDirX = 0.0f;
-    float gWindDirZ = 32.0f;
+    Ocean ocean;
+    double elapsedTime = 0.0;
+    float waveAmp = 2.0e-5f;
+    float windDirX = 0.0f;
+    float windDirZ = 32.0f;
 
-    glm::vec3 gLightPosition = glm::vec3();
-    glm::mat4 gProjection = glm::mat4();
-    glm::mat4 gView = glm::mat4();
-    glm::mat4 gModel = glm::mat4();
+    glm::vec3 lightPosition = glm::vec3();
+    glm::mat4 projection = glm::mat4();
+    glm::mat4 view = glm::mat4();
+    glm::mat4 model = glm::mat4();
 
-    GeometryRenderType gGeometryType = GeometryRenderType::Solid;
+    GeometryRenderType geometryType = GeometryRenderType::Solid;
 
-    ImVec4 gFogColor = ImVec4(0.25, 0.75, 0.65, 1.0);
-    ImVec4 gEmissiveColor = ImVec4(1.0, 1.0, 1.0, 1.0);
-    ImVec4 gAmbientColor = ImVec4(0.0, 0.65, 0.75, 1.0);
-    ImVec4 gDiffuseColor = ImVec4(0.5, 0.65, 0.75, 1.0);
-    ImVec4 gSpecularColor = ImVec4(1.0, 0.25, 0.0, 1.0);
+    ImVec4 fogColor = ImVec4(0.25, 0.75, 0.65, 1.0);
+    ImVec4 emissiveColor = ImVec4(1.0, 1.0, 1.0, 1.0);
+    ImVec4 ambientColor = ImVec4(0.0, 0.65, 0.75, 1.0);
+    ImVec4 diffuseColor = ImVec4(0.5, 0.65, 0.75, 1.0);
+    ImVec4 specularColor = ImVec4(1.0, 0.25, 0.0, 1.0);
 
 #ifndef USE_OPENGL2_0
-    Framebuffer gFramebuffer;
+    Framebuffer postProcFramebuffer;
 
-    int gCurrentScreenShader = 0;
-    std::vector<ScreenShader> gScreenShaders;
+    int currentScreenShader = 0;
+    std::vector<ScreenShader> screenShaders;
 #endif
 };
 
@@ -125,6 +129,10 @@ bool OceanContext::Init(GLFWwindow* w, const std::string& modulePath) {
     LOGI << "OpenGL Version   : " << glGetString(GL_VERSION);
     LOGI << "GLSL Version     : " << glGetString(GL_SHADING_LANGUAGE_VERSION);
 
+    LOGI << "GLM Version      : " << GLM_VERSION_MAJOR << "." << GLM_VERSION_MINOR << "." << GLM_VERSION_PATCH;
+    LOGI << "GLFW Version     : " << GLFW_VERSION_MAJOR << "." << GLFW_VERSION_MINOR << "." << GLFW_VERSION_REVISION;
+    LOGI << "ImGui Version    : " << IMGUI_VERSION << " (" << IMGUI_VERSION_NUM << ")";
+
     RegisterCallbacks();
 
     // Load config file
@@ -133,9 +141,9 @@ bool OceanContext::Init(GLFWwindow* w, const std::string& modulePath) {
     config.Load(configFilePath.string());
     LOGD << "Loaded Configuration File : " << configFilePath.string();
 
-    config.Get("waveAmplitude", gWaveAmp);
-    config.Get("windDirX", gWindDirX);
-    config.Get("windDirZ", gWindDirZ);
+    config.Get("waveAmplitude", waveAmp);
+    config.Get("windDirX", windDirX);
+    config.Get("windDirZ", windDirZ);
 
     int oceanRepeat, oceanSize;
     float oceanLen;
@@ -144,12 +152,12 @@ bool OceanContext::Init(GLFWwindow* w, const std::string& modulePath) {
     if (!config.Get("oceanRepeat", oceanRepeat)) oceanRepeat = 10;
 
     // Ocean setup
-    gGeometryType = GeometryRenderType::Solid;
-    if (gOcean.init(dataDir, oceanSize, gWaveAmp, Vector2(gWindDirX, gWindDirZ),
+    geometryType = GeometryRenderType::Solid;
+    if (ocean.init(dataDir, oceanSize, waveAmp, Vector2(windDirX, windDirZ),
             oceanLen, oceanRepeat) <= 0) {
         return false;
     }
-    gOcean.geometryType(gGeometryType);
+    ocean.geometryType(geometryType);
 
 #ifndef USE_OPENGL2_0
     // Screen shader and framebuffer
@@ -161,26 +169,26 @@ bool OceanContext::Init(GLFWwindow* w, const std::string& modulePath) {
             LOGE << "Failed to load screen shader";
             continue;
         }
-        gScreenShaders.push_back(std::move(s));
+        screenShaders.push_back(std::move(s));
     }
 
-    if (!gFramebuffer.Init(Width, Height)) {
+    if (!postProcFramebuffer.Init(Width, Height)) {
         LOGE << "Failed to create framebuffer";
         return false;
     }
-    gFramebuffer.Resize(Width, Height);
+    postProcFramebuffer.Resize(Width, Height);
 #endif
 
     // Other configurstions
-    gProjection = glm::perspective(45.0f, (float)Width / (float)Height, 0.1f, 3000.0f);
-    gView = glm::mat4(1.0f);
-    gModel = glm::mat4(1.0f);
+    projection = glm::perspective(45.0f, (float)Width / (float)Height, 0.1f, 3000.0f);
+    view = glm::mat4(1.0f);
+    model = glm::mat4(1.0f);
 
-    gPosition.SetPosition(
+    viewPosition.SetPosition(
         glm::vec3(0.0f, 100.0f, 0.0f), // Position
         glm::vec3(2.4f, -0.3f, 0.0f)); // Look angle
 
-    gLightPosition = glm::vec3(gPosition.position.x + 1000.0, 100.0, gPosition.position.z - 1000.0);
+    lightPosition = glm::vec3(viewPosition.position.x + 1000.0, 100.0, viewPosition.position.z - 1000.0);
 
     // Set up OpenGL flags
     glClearDepth(1.0); LOGOPENGLERROR();
@@ -198,20 +206,20 @@ bool OceanContext::Init(GLFWwindow* w, const std::string& modulePath) {
 void OceanContext::Display() {
 #ifndef USE_OPENGL2_0
     // Start using framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, gFramebuffer.GetFramebuffer()); LOGOPENGLERROR();
+    glBindFramebuffer(GL_FRAMEBUFFER, postProcFramebuffer.GetFramebuffer()); LOGOPENGLERROR();
 #endif
 
     // Render scene
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); LOGOPENGLERROR();
 
-    gView = glm::lookAt(gPosition.position, gPosition.position + gPosition.lookat, gPosition.up);
+    view = glm::lookAt(viewPosition.position, viewPosition.position + viewPosition.lookat, viewPosition.up);
 
-    glClearColor(gFogColor.x, gFogColor.y, gFogColor.z, gFogColor.w); LOGOPENGLERROR();
+    glClearColor(fogColor.x, fogColor.y, fogColor.z, fogColor.w); LOGOPENGLERROR();
 
-    gOcean.geometryType(gGeometryType);
-    gOcean.colors((float*)&gFogColor, (float*)&gEmissiveColor,
-        (float*)&gAmbientColor, (float*)&gDiffuseColor, (float*)&gSpecularColor);
-    gOcean.render(gElapsedTime, gLightPosition, gProjection, gView, gModel, true);
+    ocean.geometryType(geometryType);
+    ocean.colors((float*)&fogColor, (float*)&emissiveColor,
+        (float*)&ambientColor, (float*)&diffuseColor, (float*)&specularColor);
+    ocean.render(elapsedTime, lightPosition, projection, view, model, true);
 
 #ifndef USE_OPENGL2_0
     // Finish using framebuffer
@@ -221,11 +229,11 @@ void OceanContext::Display() {
     // With Mesa3d Depth bit should also be cleaned even if the 'scene' there is a 2D plane
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); LOGOPENGLERROR();
 
-    gScreenShaders[gCurrentScreenShader].Render(gFramebuffer.GetTexture(),
-        gFramebuffer.GetWidth(), gFramebuffer.GetHeight());
+    screenShaders[currentScreenShader].Render(postProcFramebuffer.GetTexture(),
+        postProcFramebuffer.GetWidth(), postProcFramebuffer.GetHeight());
 #endif
 
-    if (gShowUi) {
+    if (showUi) {
         // Render ImGui window
         DisplayUi();
     }
@@ -246,33 +254,33 @@ void OceanContext::DisplayUi() {
         ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 
     ImGui::Text("Rendering mode:");
-    ImGui::RadioButton("Wireframe", (int *)&gGeometryType, static_cast<int>(GeometryRenderType::Wireframe)); ImGui::SameLine();
-    ImGui::RadioButton("Solid", (int *)&gGeometryType, static_cast<int>(GeometryRenderType::Solid));
+    ImGui::RadioButton("Wireframe", (int *)&geometryType, static_cast<int>(GeometryRenderType::Wireframe)); ImGui::SameLine();
+    ImGui::RadioButton("Solid", (int *)&geometryType, static_cast<int>(GeometryRenderType::Solid));
 
     ImGui::Separator();
 
     ImGui::Text("Ocean parameters:");
-    static float waveAmp = gWaveAmp * 1e5;
+    static float waveAmp = waveAmp * 1e5;
     if (ImGui::SliderFloat("Choppiness", &waveAmp, 0.0f, 5.0f, "%.1f")) {
-        gWaveAmp = waveAmp * 1e-5;
-        gOcean.windAmp(gWaveAmp);
+        waveAmp = waveAmp * 1e-5;
+        ocean.windAmp(waveAmp);
     }
-    if (ImGui::SliderFloat("Wind", &gWindDirZ, 0.0f, 50.0f, "%.1f m/s")) {
-        gOcean.windDirZ(gWindDirZ);
+    if (ImGui::SliderFloat("Wind", &windDirZ, 0.0f, 50.0f, "%.1f m/s")) {
+        ocean.windDirZ(windDirZ);
     }
 
     ImGui::Separator();
 
     if (ImGui::Button("Show/Hide Colors >")) {
-        gShowColorsUi = !gShowColorsUi;
+        showColorsUi = !showColorsUi;
     }
 
     ImGui::Separator();
 
 #ifndef USE_OPENGL2_0
     ImGui::Text("Post-processing shader:");
-    const auto& elemName = ScreenShadersInfo[gCurrentScreenShader].Name;
-    ImGui::SliderInt("##", &gCurrentScreenShader, 0, ScreenShadersInfo.size() - 1, elemName.c_str());
+    const auto& elemName = ScreenShadersInfo[currentScreenShader].Name;
+    ImGui::SliderInt("##", &currentScreenShader, 0, ScreenShadersInfo.size() - 1, elemName.c_str());
 
     ImGui::Separator();
 #endif
@@ -291,11 +299,11 @@ void OceanContext::DisplayUi() {
 
     ImGui::Separator();
 
-    ImGui::Text("FPS Counter: %.1f", gFps);
+    ImGui::Text("FPS Counter: %.1f", fps);
 
     ImGui::End();
 
-    if (gShowColorsUi) {
+    if (showColorsUi) {
         static const ImVec2 ColorsUiSize = ImVec2(300, 130);
 
         ImGui::SetNextWindowPos(ImVec2(UiSize.x + UiMargin * 2,
@@ -305,11 +313,11 @@ void OceanContext::DisplayUi() {
         ImGui::Begin("Colors parameters", nullptr,
             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 
-        ImGui::ColorEdit3("Fog", (float*)&gFogColor);
-        ImGui::ColorEdit3("Emissive", (float*)&gEmissiveColor);
-        ImGui::ColorEdit3("Ambient", (float*)&gAmbientColor);
-        ImGui::ColorEdit3("Diffuse", (float*)&gDiffuseColor);
-        ImGui::ColorEdit3("Specular", (float*)&gSpecularColor);
+        ImGui::ColorEdit3("Fog", (float*)&fogColor);
+        ImGui::ColorEdit3("Emissive", (float*)&emissiveColor);
+        ImGui::ColorEdit3("Ambient", (float*)&ambientColor);
+        ImGui::ColorEdit3("Diffuse", (float*)&diffuseColor);
+        ImGui::ColorEdit3("Specular", (float*)&specularColor);
 
         ImGui::End();
     }
@@ -320,7 +328,7 @@ void OceanContext::Reshape(int width, int height) {
     gWindowWidth = width;
     gWindowHeight = height;
 #ifndef USE_OPENGL2_0
-    gFramebuffer.Resize(width, height);
+    postProcFramebuffer.Resize(width, height);
 #endif
 }
 
@@ -332,10 +340,10 @@ void OceanContext::Keyboard(int key, int /*scancode*/, int action, int /*mods*/)
             break;
 
         case GLFW_KEY_F1:
-            gFullscreen = !gFullscreen;
-            if (gFullscreen) {
-                glfwGetWindowPos(window, &gSavedWindowPos.XPos, &gSavedWindowPos.YPos);
-                glfwGetWindowSize(window, &gSavedWindowPos.Width, &gSavedWindowPos.Height);
+            isFullscreen = !isFullscreen;
+            if (isFullscreen) {
+                glfwGetWindowPos(window, &savedWindowPos.X, &savedWindowPos.Y);
+                glfwGetWindowSize(window, &savedWindowPos.Width, &savedWindowPos.Height);
 
                 GLFWmonitor* monitor = glfwGetPrimaryMonitor();
                 const GLFWvidmode* mode = glfwGetVideoMode(monitor);
@@ -344,13 +352,13 @@ void OceanContext::Keyboard(int key, int /*scancode*/, int action, int /*mods*/)
             }
             else {
                 glfwSetWindowMonitor(window, nullptr,
-                    gSavedWindowPos.XPos, gSavedWindowPos.YPos,
-                    gSavedWindowPos.Width, gSavedWindowPos.Height, GLFW_DONT_CARE);
+                    savedWindowPos.X, savedWindowPos.Y,
+                    savedWindowPos.Width, savedWindowPos.Height, GLFW_DONT_CARE);
             }
             break;
 
         case GLFW_KEY_F2:
-            gShowUi = !gShowUi;
+            showUi = !showUi;
             break;
 
         case GLFW_KEY_F11:
@@ -358,18 +366,18 @@ void OceanContext::Keyboard(int key, int /*scancode*/, int action, int /*mods*/)
             break;
 
         case GLFW_KEY_1:
-            gGeometryType = GeometryRenderType::Wireframe;
+            geometryType = GeometryRenderType::Wireframe;
             break;
 
         case GLFW_KEY_2:
-            gGeometryType = GeometryRenderType::Solid;
+            geometryType = GeometryRenderType::Solid;
             break;
 
 #ifndef USE_OPENGL2_0
         case GLFW_KEY_S:
-            gCurrentScreenShader++;
-            if (gCurrentScreenShader>= gScreenShaders.size()) {
-                gCurrentScreenShader = 0;
+            currentScreenShader++;
+            if (currentScreenShader>= screenShaders.size()) {
+                currentScreenShader = 0;
             }
             break;
 #endif
@@ -378,7 +386,7 @@ void OceanContext::Keyboard(int key, int /*scancode*/, int action, int /*mods*/)
 }
 
 void OceanContext::MousePosition(double x, double y) {
-    gPosition.MouseMove(x, y);
+    viewPosition.MouseMove(x, y);
 }
 
 void OceanContext::MouseButtons(int button, int action, int /*mods*/) {
@@ -387,12 +395,12 @@ void OceanContext::MouseButtons(int button, int action, int /*mods*/) {
         case GLFW_PRESS: {
                 double x = 0.0, y = 0.0;
                 glfwGetCursorPos(window, &x, &y);
-                gPosition.MouseDown(x, y);
+                viewPosition.MouseDown(x, y);
             }
             break;
 
         case GLFW_RELEASE:
-            gPosition.MouseUp();
+            viewPosition.MouseUp();
             break;
 
         default:
@@ -453,33 +461,33 @@ void OceanContext::Update() {
     lastTime = currentTime;
 
     if (currentTime - lastFpsTime > 1.0) {
-        gFps = ImGui::GetIO().Framerate;
+        fps = ImGui::GetIO().Framerate;
         lastFpsTime = currentTime;
     }
 
-    gElapsedTime += dt * 0.5;
+    elapsedTime += dt * 0.5;
 
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        gPosition.MoveForward(dt);
+        viewPosition.MoveForward(dt);
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        gPosition.MoveBack(dt);
+        viewPosition.MoveBack(dt);
     }
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        gPosition.MoveLeft(dt);
+        viewPosition.MoveLeft(dt);
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        gPosition.MoveRight(dt);
+        viewPosition.MoveRight(dt);
     }
     if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
-        gPosition.MoveUp(dt);
+        viewPosition.MoveUp(dt);
     }
     if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
-        gPosition.MoveDown(dt);
+        viewPosition.MoveDown(dt);
     }
 
-    gLightPosition = glm::vec3(gPosition.position.x + 1000.0,
-        100.0, gPosition.position.z - 1000.0);
+    lightPosition = glm::vec3(viewPosition.position.x + 1000.0,
+        100.0, viewPosition.position.z - 1000.0);
 }
 
 /*****************************************************************************

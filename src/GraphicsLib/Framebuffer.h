@@ -7,8 +7,8 @@ struct Framebuffer {
     int Resize(int w, int h);
     void Release();
 
-    GLuint GetFramebuffer() const { return frame_buffer.get(); }
-    GLuint GetTexture() const { return tex_color_buffer.get(); }
+    GLuint GetFramebuffer() const { return static_cast<GLuint>(frame_buffer); }
+    GLuint GetTexture() const { return static_cast<GLuint>(tex_color_buffer); }
 
     int GetWidth() const { return width; }
     int GetHeight() const { return height; }

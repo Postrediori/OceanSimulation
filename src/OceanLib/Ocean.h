@@ -80,7 +80,7 @@ private:
     float A = 0.0f;
 
     // wind parameter
-    Vector2 w;
+    Vector2 wind;
 
     // length parameter
     float length = 1.0f;
@@ -99,6 +99,7 @@ private:
 
     // fast Fourier transform
     FFT fft;
+    bool fftEval = false;
 
     // vertices for VBO
     std::vector<ocean_vertex> vertices;

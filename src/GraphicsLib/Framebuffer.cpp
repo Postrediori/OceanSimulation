@@ -14,7 +14,7 @@ int Framebuffer::Init(int w, int h) {
         return 0;
     }
 
-    glBindTexture(GL_TEXTURE_2D, tex_color_buffer.get()); LOGOPENGLERROR();
+    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(tex_color_buffer)); LOGOPENGLERROR();
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); LOGOPENGLERROR();
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); LOGOPENGLERROR();
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
@@ -27,7 +27,7 @@ int Framebuffer::Init(int w, int h) {
         return 0;
     }
 
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo_depth_stencil.get()); LOGOPENGLERROR();
+    glBindRenderbuffer(GL_RENDERBUFFER, static_cast<GLuint>(rbo_depth_stencil)); LOGOPENGLERROR();
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height); LOGOPENGLERROR();
 
     // Create framebuffer
@@ -37,13 +37,13 @@ int Framebuffer::Init(int w, int h) {
         return 0;
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer.get()); LOGOPENGLERROR();
+    glBindFramebuffer(GL_FRAMEBUFFER, static_cast<GLuint>(frame_buffer)); LOGOPENGLERROR();
 
     // Bind texture and render buffer to the frame buffer
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                           tex_color_buffer.get(), 0); LOGOPENGLERROR();
+                           static_cast<GLuint>(tex_color_buffer), 0); LOGOPENGLERROR();
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
-                              GL_RENDERBUFFER, rbo_depth_stencil.get()); LOGOPENGLERROR();
+                              GL_RENDERBUFFER, static_cast<GLuint>(rbo_depth_stencil)); LOGOPENGLERROR();
 
     GLenum fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER); LOGOPENGLERROR();
     if (fboStatus!=GL_FRAMEBUFFER_COMPLETE) {

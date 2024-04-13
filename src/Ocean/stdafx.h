@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <functional>

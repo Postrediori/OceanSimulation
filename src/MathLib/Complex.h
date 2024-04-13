@@ -5,7 +5,7 @@
 class Complex {
 public:
     float a, b;
-    static unsigned int additions, multiplications;
+    static uint64_t additions, multiplications;
 
     Complex();
     Complex(float a, float b);

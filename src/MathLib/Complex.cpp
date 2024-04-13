@@ -2,8 +2,8 @@
 #include "stdafx.h"
 #include "Complex.h"
 
-unsigned int Complex::additions = 0;
-unsigned int Complex::multiplications = 0;
+uint64_t Complex::additions = 0;
+uint64_t Complex::multiplications = 0;
 
 Complex::Complex() : a(0.0), b(0.0) { }
 Complex::Complex(float a, float b) : a(a), b(b) { }
