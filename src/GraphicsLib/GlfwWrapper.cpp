@@ -11,6 +11,13 @@ GlfwWrapper::~GlfwWrapper() {
 int GlfwWrapper::Init(const std::string& title, int width, int height) {
     glfwSetErrorCallback(GlfwWrapper::ErrorCallback);
 
+    if (glfwPlatformSupported(GLFW_PLATFORM_X11) &&
+            glfwPlatformSupported(GLFW_PLATFORM_WAYLAND)) {
+        // Prefer X11 instead of Wayland if both are available
+        glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+        LOGI << "Use X11 under Wayland";
+    }
+
     if (!glfwInit()) {
         LOGE << "Cannot load GLFW";
         return -1;
