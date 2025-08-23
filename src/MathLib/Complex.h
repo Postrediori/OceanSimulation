@@ -4,10 +4,11 @@
 
 class Complex {
 public:
-    float a, b;
+    float a{ 0.0 }, b{ 0.0 };
     static uint64_t additions, multiplications;
 
-    Complex();
+    Complex() = default;
+    Complex(const Complex& other);
     Complex(float a, float b);
 
     Complex conj();

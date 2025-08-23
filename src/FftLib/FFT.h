@@ -3,6 +3,8 @@
 
 class FFT {
 public:
+    FFT() = default;
+
     void init(uint32_t N);
     void fft(const std::vector<Complex>& input,
              std::vector<Complex>& output,

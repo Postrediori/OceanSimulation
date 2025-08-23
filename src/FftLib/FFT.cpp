@@ -28,7 +28,7 @@ uint32_t reverse(uint32_t i, uint32_t log_2_N) {
 std::vector<uint32_t> reversedArray(uint32_t N) {
     uint32_t log_2_N = log_2(N);
     std::vector<uint32_t> reversed(N);
-    
+
     for (uint32_t i = 0; i < N; i++) {
         reversed[i] = reverse(i, log_2_N);
     }
@@ -80,12 +80,12 @@ void FFT::fft(const std::vector<Complex>& input,
 
     for (uint32_t i = 1; i <= log_2_N; i++) {
         which ^= 1;
-        for (int j = 0; j < loops; j++) {
-            for (int k = 0; k < size_over_2; k++) {
+        for (uint32_t j = 0; j < loops; j++) {
+            for (uint32_t k = 0; k < size_over_2; k++) {
                 c[which][size*j + k] = c[which ^ 1][size*j + k] +
                     c[which ^ 1][size*j + size_over_2 + k] * W[w_][k];
             }
-            for (int k = size_over_2; k < size; k++) {
+            for (uint32_t k = size_over_2; k < size; k++) {
                 c[which][size*j + k] = c[which ^ 1][size*j - size_over_2 + k] -
                     c[which ^ 1][size*j + k] * W[w_][k - size_over_2];
             }

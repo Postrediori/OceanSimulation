@@ -5,7 +5,7 @@
 uint64_t Complex::additions = 0;
 uint64_t Complex::multiplications = 0;
 
-Complex::Complex() : a(0.0), b(0.0) { }
+Complex::Complex(const Complex& other) : a(other.a), b(other.b) { }
 Complex::Complex(float a, float b) : a(a), b(b) { }
 
 Complex Complex::conj() {

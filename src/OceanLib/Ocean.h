@@ -6,13 +6,15 @@ class Vector2;
 class Vector3;
 class FTT;
 
+#pragma pack(push, 0)
 struct ocean_vertex {
-    GLfloat  x,  y,  z; // vertex
-    GLfloat nx, ny, nz; // normal
-    GLfloat  a,  b,  c; // htilde0
-    GLfloat _a, _b, _c; // htilde0mk conjugate
-    GLfloat ox, oy, oz; // original position
+    GLfloat  x{ 0.0 },  y{ 0.0 },  z{ 0.0 }; // vertex
+    GLfloat nx{ 0.0 }, ny{ 0.0 }, nz{ 0.0 }; // normal
+    GLfloat  a{ 0.0 },  b{ 0.0 },  c{ 0.0 }; // htilde0
+    GLfloat _a{ 0.0 }, _b{ 0.0 }, _c{ 0.0 }; // htilde0mk conjugate
+    GLfloat ox{ 0.0 }, oy{ 0.0 }, oz{ 0.0 }; // original position
 };
+#pragma pack(pop)
 
 // structure used with discrete Fourier transform
 struct complex_vector_norm {
@@ -20,8 +22,8 @@ struct complex_vector_norm {
     Vector2 D; // displacement
     Vector3 n; // normal
 
-    complex_vector_norm() { }
-    complex_vector_norm(Complex ch, Vector2 cD, Vector3 cn)
+    complex_vector_norm() = default;
+    complex_vector_norm(const Complex& ch, const Vector2& cD, const Vector3& cn)
         : h(ch), D(cD), n(cn) { }
 };
 
@@ -37,16 +39,21 @@ class Ocean {
 public:
     Ocean() = default;
 
-    int init(const std::filesystem::path& dataDir,
+    bool init(const std::filesystem::path& dataDir,
         const int N, const float A, const Vector2& w, const float length, const int ocean_repeat);
 
-    void render(float t, const glm::vec3& light_pos,
-                const glm::mat4& proj, const glm::mat4& view, const glm::mat4& model,
-                bool use_fft);
+    void render(const glm::vec3& light_pos,
+                const glm::mat4& proj, const glm::mat4& view, const glm::mat4& model);
+
+    void evaluate(float t, bool use_fft);
 
     void geometryType(GeometryRenderType t);
 
-    void colors(float fog[], float emissive[], float ambient[], float diffuse[], float specular[]);
+    void colorFog(const ColorInfo& fog);
+    void colorEmissive(const ColorInfo& emissive);
+    void colorAmbient(const ColorInfo& ambient);
+    void colorDiffuse(const ColorInfo& diffuse);
+    void colorSpecular(const ColorInfo& specular);
 
     void windAmp(float newA);
     void windDirZ(float newWindZ);
@@ -63,7 +70,7 @@ private:
 
     Complex hTilde_0(int n_prime, int m_prime);
     Complex hTilde(float t, int n_prime, int m_prime);
-    complex_vector_norm h_D_and_n(Vector2 x, float t);
+    complex_vector_norm h_D_and_n(const Vector2& x, float t);
     void evaluateWaves(float t);
     void evaluateWavesFFT(float t);
 
@@ -106,8 +113,8 @@ private:
 
     // indices for VBO
     // number of indices to render
-    unsigned int indices_ln_count = 0;
-    unsigned int indices_tr_count = 0;
+    GLsizei indices_ln_count = 0;
+    GLsizei indices_tr_count = 0;
 
 #ifndef USE_OPENGL2_0
     // VAOs
@@ -133,9 +140,9 @@ private:
     GLint uFogColor = -1, uEmissiveColor = -1, uAmbientColor = -1,
         uDiffuseColor = -1, uSpecularColor = -1;
 
-    float fogColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    float emissiveColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    float ambientColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    float diffuseColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    float specularColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    ColorInfo fogColor{ 0.0f, 0.0f, 0.0f, 1.0f };
+    ColorInfo emissiveColor{ 0.0f, 0.0f, 0.0f, 1.0f };
+    ColorInfo ambientColor{ 0.0f, 0.0f, 0.0f, 1.0f };
+    ColorInfo diffuseColor{ 0.0f, 0.0f, 0.0f, 1.0f };
+    ColorInfo specularColor{ 0.0f, 0.0f, 0.0f, 1.0f };
 };

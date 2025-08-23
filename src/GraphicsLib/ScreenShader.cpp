@@ -15,12 +15,12 @@ const std::vector<GLfloat> QuadVertices = {
     -1., 1., 0., 1.
 };
 
-int ScreenShader::Init(const ScreenShaderInfo& info) {
+bool ScreenShader::Init(const ScreenShaderInfo& info) {
     // Init shader
     program.reset(Shader::CreateProgramFromFiles(info.Vertex.string(), info.Fragment.string()));
     if (!program) {
         LOGE << "Failed to create program for screen shader";
-        return 0;
+        return false;
     }
 
     uScreenTex = glGetUniformLocation(static_cast<GLuint>(program), "tex"); LOGOPENGLERROR();
@@ -33,7 +33,7 @@ int ScreenShader::Init(const ScreenShaderInfo& info) {
     glGenVertexArrays(1, vao.put()); LOGOPENGLERROR();
     if (!vao) {
         LOGE << "Failed to create VAO for screen shader";
-        return 0;
+        return false;
     }
 
     glBindVertexArray(static_cast<GLuint>(vao)); LOGOPENGLERROR();
@@ -43,7 +43,7 @@ int ScreenShader::Init(const ScreenShaderInfo& info) {
     glGenBuffers(1, quadVbo.put()); LOGOPENGLERROR();
     if (!quadVbo) {
         LOGE << "Failed to create VBO for screen shader";
-        return 0;
+        return false;
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(quadVbo)); LOGOPENGLERROR();
@@ -60,7 +60,7 @@ int ScreenShader::Init(const ScreenShaderInfo& info) {
     glBindVertexArray(0); LOGOPENGLERROR();
 #endif
 
-    return 1;
+    return true;
 }
 
 void ScreenShader::Render(GLuint texture, int w, int h) {
@@ -71,6 +71,8 @@ void ScreenShader::Render(GLuint texture, int w, int h) {
     InitBufferAttributes();
     glUniform2i(uTexSize, w, h); LOGOPENGLERROR();
 #else
+    (void)w;
+    (void)h;
     glBindVertexArray(static_cast<GLuint>(vao)); LOGOPENGLERROR();
 #endif
 

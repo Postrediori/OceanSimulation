@@ -23,7 +23,7 @@ struct ScreenShader {
         , aScreenCoord(other.aScreenCoord), aScreenTexCoord(other.aScreenTexCoord) { }
 #endif
 
-    int Init(const ScreenShaderInfo& info);
+    bool Init(const ScreenShaderInfo& info);
 
     void Render(GLuint texture, int w, int h);
 

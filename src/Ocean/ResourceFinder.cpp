@@ -15,24 +15,21 @@ Utils::ResourceFinder::DirectoryList Utils::ResourceFinder::GetDataDirectoryList
     };
 }
 
-bool Utils::ResourceFinder::LookForDataDir(const Utils::ResourceFinder::DirectoryList& paths_for_lookup,
-        std::filesystem::path& found_path) {
+std::optional<std::filesystem::path> Utils::ResourceFinder::LookForDataDir(
+        const Utils::ResourceFinder::DirectoryList& paths_for_lookup) {
 
     for (const auto& p : paths_for_lookup) {
         std::filesystem::path data_path = p / DataDirName;
         if (std::filesystem::exists(data_path) &&
             std::filesystem::is_directory(data_path)) {
-            found_path = data_path;
-            return true;
+            return data_path;
         }
     }
 
-    found_path = std::filesystem::path(); // empty path
-    return false;
+    return {}; // empty path
 }
 
-bool Utils::ResourceFinder::GetDataDirectory(const std::string& argv_path,
-        std::filesystem::path& found_path) {
+std::optional<std::filesystem::path> Utils::ResourceFinder::GetDataDirectory(const std::string& argv_path) {
     auto path_list = Utils::ResourceFinder::GetDataDirectoryList(argv_path);
-    return Utils::ResourceFinder::LookForDataDir(path_list, found_path);
+    return Utils::ResourceFinder::LookForDataDir(path_list);
 }

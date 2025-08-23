@@ -4,10 +4,11 @@
 
 class Vector2 {
 public:
-    float x, y;
+    float x{ 0.0 }, y{ 0.0 };
 
-    Vector2();
+    Vector2() = default;
     Vector2(float x, float y);
+    Vector2(const Vector2& other);
 
     float length();
     Vector2 unit();
@@ -21,9 +22,10 @@ public:
 
 class Vector3 {
 public:
-    float x, y, z;
+    float x{ 0.0 }, y{ 0.0 }, z{ 0.0 };
 
-    Vector3();
+    Vector3() = default;
+    Vector3(const Vector3& other);
     Vector3(float x, float y, float z);
 
     float length();

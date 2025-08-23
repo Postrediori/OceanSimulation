@@ -1,10 +1,8 @@
 #include "stdafx.h"
 #include "GraphicsLogger.h"
 
-void GraphicsUtils::LogOpenGlError(const char* file, int line) {
-    GLenum err = glGetError();
-    auto const errStr = [err]() {
-        switch (err) {
+std::string GetOpenGLErrorDescription(GLenum errorCode) {
+    switch (errorCode) {
         case GL_INVALID_ENUM: return "INVALID_ENUM";
         case GL_INVALID_VALUE: return "INVALID_VALUE";
         case GL_INVALID_OPERATION: return "INVALID_OPERATION";
@@ -13,10 +11,15 @@ void GraphicsUtils::LogOpenGlError(const char* file, int line) {
         case GL_STACK_UNDERFLOW: return "STACK_UNDERFLOW";
         case GL_STACK_OVERFLOW: return "STACK_OVERFLOW";
         default: return "Unknown error";
-        }
-    }();
+    }
+}
+
+void GraphicsUtils::LogOpenGlError(const char* file, int line) {
+    GLenum err = glGetError();
 
     if (err != GL_NO_ERROR) {
-        LOGE << " OpenGL Error in file " << file << " line " << line << " : " << errStr;
+        auto const errStr = GetOpenGLErrorDescription(err);
+
+        LOGE << "OpenGL Error in file " << file << " line " << line << " : " << errStr;
     }
 }

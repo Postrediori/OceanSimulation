@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdarg>
 #include <filesystem>
 #include <fstream>

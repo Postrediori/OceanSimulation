@@ -8,7 +8,7 @@ GlfwWrapper::~GlfwWrapper() {
     Release();
 }
 
-int GlfwWrapper::Init(const std::string& title, int width, int height) {
+bool GlfwWrapper::Init(const std::string& title, int width, int height) {
     glfwSetErrorCallback(GlfwWrapper::ErrorCallback);
 
     if (glfwPlatformSupported(GLFW_PLATFORM_X11) &&
@@ -20,7 +20,7 @@ int GlfwWrapper::Init(const std::string& title, int width, int height) {
 
     if (!glfwInit()) {
         LOGE << "Cannot load GLFW";
-        return -1;
+        return false;
     }
 
 #ifdef USE_OPENGL2_0
@@ -40,13 +40,13 @@ int GlfwWrapper::Init(const std::string& title, int width, int height) {
     window_ = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
     if (window_ == nullptr) {
         LOGE << "Cannot create OpenGL context";
-        return -1;
+        return false;
     };
 
     glfwMakeContextCurrent(window_);
     gladLoadGL();
 
-    return 0;
+    return true;
 }
 
 void GlfwWrapper::Release() {

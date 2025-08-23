@@ -2,116 +2,163 @@
 #include "stdafx.h"
 #include "Config.h"
 
+std::string ToLower(const std::string& str) {
+    std::string s;
+    s.resize(str.size());
+
+    std::transform(str.begin(), str.end(),
+        s.begin(), ::tolower);
+
+    return s;
+}
+
 void Config::Clear() {
     data.clear();
 }
- 
+
 bool Config::Load(const std::string& file) {
     std::ifstream inFile(file.c_str());
- 
+
     if (!inFile.good()) {
         std::cout << "Cannot read Config file " << file << std::endl;
         return false;
     }
- 
+
     while (inFile.good() && !inFile.eof()) {
         std::string line;
         std::getline(inFile, line);
- 
+
         // filter out comments
+        constexpr char CommentSymbol = '#';
         if (!line.empty()) {
-            int pos = line.find('#');
- 
+            auto pos = line.find(CommentSymbol);
+
             if (pos != std::string::npos) {
                 line = line.substr(0, pos);
             }
         }
- 
+
         // split line into key and value
+        constexpr char EqSymbol = '=';
         if (!line.empty()) {
-            int pos = line.find('=');
- 
+            auto pos = line.find(EqSymbol);
+
             if (pos != std::string::npos) {
                 std::string key     = Trim(line.substr(0, pos));
                 std::string value   = Trim(line.substr(pos + 1));
- 
+
                 if (!key.empty() && !value.empty()) {
                     data[key] = value;
                 }
             }
         }
     }
- 
+
     return true;
 }
- 
+
 bool Config::Contains(const std::string& key) const {
     return data.find(key) != data.end();
 }
- 
-bool Config::Get(const std::string& key, std::string& value) const {
+
+std::optional<std::string> Config::GetStringInternal(const std::string& key) const {
     std::map<std::string, std::string>::const_iterator iter = data.find(key);
- 
+
     if (iter != data.end()) {
-        value = iter->second;
-        return true;
-    } else {
-        return false;
+        return iter->second;
     }
+
+    return {};
 }
- 
-bool Config::Get(const std::string& key, int& value) const {
-    std::string str;
- 
-    if (Get(key, str)) {
-        value = atoi(str.c_str());
-        return true;
-    } else {
-        return false;
+
+std::optional<std::string> Config::GetString(const std::string& key) const {
+    try {
+        if (auto str = GetStringInternal(key)) {
+            return *str;
+        }
     }
-}
- 
-bool Config::Get(const std::string& key, long& value) const {
-    std::string str;
- 
-    if (Get(key, str)) {
-        value = atol(str.c_str());
-        return true;
-    } else {
-        return false;
+    catch (const std::exception& ex) {
+        LOGE << "Cannot get string value: " << ex.what();
     }
+
+    return {};
 }
- 
-bool Config::Get(const std::string& key, float& value) const {
-    std::string str;
- 
-    if (Get(key, str)) {
-        value = atof(str.c_str());
-        return true;
-    } else {
-        return false;
+
+std::optional<int> Config::GetInt(const std::string& key) const {
+    try {
+        if (auto str = GetStringInternal(key)) {
+            return std::atoi(str->c_str());
+        }
     }
-}
- 
-bool Config::Get(const std::string& key, bool& value) const {
-    std::string str;
- 
-    if (Get(key, str)) {
-        value = (str == "true");
-        return true;
-    } else {
-        return false;
+    catch (const std::exception& ex) {
+        LOGE << "Cannot parse int: " << ex.what();
     }
+
+    return {};
 }
- 
+
+std::optional<long> Config::GetLong(const std::string& key) const {
+    try {
+        if (auto str = GetStringInternal(key)) {
+            return std::atol(str->c_str());
+        }
+    }
+    catch (const std::exception& ex) {
+        LOGE << "Cannot parse long: " << ex.what();
+    }
+
+    return {};
+}
+
+std::optional<float> Config::GetFloat(const std::string& key) const {
+    try {
+        if (auto str = GetStringInternal(key)) {
+            return std::atof(str->c_str());
+        }
+    }
+    catch (const std::exception& ex) {
+        LOGE << "Cannot parse float: " << ex.what();
+    }
+
+    return {};
+}
+
+std::optional<bool> Config::GetBool(const std::string& key) const {
+    try {
+        if (auto str = GetStringInternal(key)) {
+            return StringToBool(*str);
+        }
+    }
+    catch (const std::exception& ex) {
+        LOGE << "Cannot parse bool: " << ex.what();
+    }
+
+    return {};
+}
+
 std::string Config::Trim(const std::string& str) {
-    int first = str.find_first_not_of(" \t");
- 
+    static const std::string WhitespaceSymbols{ " \t" };
+
+    auto first = str.find_first_not_of(WhitespaceSymbols);
+
     if (first != std::string::npos) {
-        int last = str.find_last_not_of(" \t");
- 
+        auto last = str.find_last_not_of(WhitespaceSymbols);
+
         return str.substr(first, last - first + 1);
-    } else {
-        return "";
     }
+
+    return {};
+}
+
+std::optional<bool> Config::StringToBool(const std::string& value) {
+    std::string s{ ToLower(value) };
+
+    if (s == "true" || s == "yes" || s == "on") {
+        return true;
+    }
+    else if (s == "false" || s == "no" || s == "off") {
+        return false;
+    }
+
+    return {};
 }

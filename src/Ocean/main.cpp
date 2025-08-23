@@ -6,10 +6,11 @@
 #include "FFT.h"
 #include "GraphicsLogger.h"
 #include "GraphicsResource.h"
+#include "GraphicsUtils.h"
 #include "ResourceFinder.h"
+#include "Benchmark.h"
 #include "Ocean.h"
 #include "WorldPosition.h"
-#include "LogFormatter.h"
 #include "ScreenCapture.h"
 #include "GlfwWrapper.h"
 #include "ImGuiWrapper.h"
@@ -24,6 +25,9 @@ constexpr int Height = 600;
 const std::string Title = "Ocean Simulation";
 
 const std::filesystem::path ConfigFile = "ocean.cfg";
+
+constexpr double ElapsedTimeRate = 0.5;
+constexpr double EvaluationTimeout = 1.0 / 32.0;
 
 #ifndef USE_OPENGL2_0
 const std::vector<ScreenShaderInfo> ScreenShadersInfo = {
@@ -42,8 +46,8 @@ const std::vector<ScreenShaderInfo> ScreenShadersInfo = {
  ****************************************************************************/
 
 struct WindowDimensions {
-    int X, Y;
-    int Width, Height;
+    int X{ 0 }, Y{ 0 };
+    int Width{ 0 }, Height{ 0 };
 };
 
 struct OceanContext {
@@ -72,7 +76,7 @@ struct OceanContext {
     GLFWwindow* window = nullptr;
 
     bool isFullscreen = false;
-    WindowDimensions savedWindowPos = { 0, 0, 0, 0 };
+    WindowDimensions savedWindowPos;
 
     bool showUi = true;
     bool showColorsUi = false;
@@ -85,7 +89,7 @@ struct OceanContext {
 
     Ocean ocean;
     double elapsedTime = 0.0;
-    float waveAmp = 2.0e-5f;
+    float waveAmp = 2.0;
     float windDirX = 0.0f;
     float windDirZ = 32.0f;
 
@@ -96,18 +100,27 @@ struct OceanContext {
 
     GeometryRenderType geometryType = GeometryRenderType::Solid;
 
-    ImVec4 fogColor = ImVec4(0.25, 0.75, 0.65, 1.0);
-    ImVec4 emissiveColor = ImVec4(1.0, 1.0, 1.0, 1.0);
-    ImVec4 ambientColor = ImVec4(0.0, 0.65, 0.75, 1.0);
-    ImVec4 diffuseColor = ImVec4(0.5, 0.65, 0.75, 1.0);
-    ImVec4 specularColor = ImVec4(1.0, 0.25, 0.0, 1.0);
+    ColorInfo fogColor{ 0.25, 0.75, 0.65, 1.0 };
+    ColorInfo emissiveColor{ 1.0, 1.0, 1.0, 1.0 };
+    ColorInfo ambientColor{ 0.0, 0.65, 0.75, 1.0 };
+    ColorInfo diffuseColor{ 0.5, 0.65, 0.75, 1.0 };
+    ColorInfo specularColor{ 1.0, 0.25, 0.0, 1.0 };
 
 #ifndef USE_OPENGL2_0
     Framebuffer postProcFramebuffer;
 
-    int currentScreenShader = 0;
+    size_t currentScreenShader = 0;
     std::vector<ScreenShader> screenShaders;
 #endif
+
+    double lastTime{ 0.0 };
+    double lastFpsTime{ 0.0 };
+    double lastEvaluationTime{ 0.0 };
+
+    Utils::OperationBenchmark evaluationBenchmark, renderingBenchmark;
+
+    bool isEvaluating{ true };
+    bool needsEvaluation{ true };
 };
 
 /*****************************************************************************
@@ -118,11 +131,12 @@ bool OceanContext::Init(GLFWwindow* w, const std::string& modulePath) {
 
     window = w;
 
-    std::filesystem::path dataDir;
-    if (!Utils::ResourceFinder::GetDataDirectory(modulePath, dataDir)) {
+    auto dataDirOptional = Utils::ResourceFinder::GetDataDirectory(modulePath);
+    if (!dataDirOptional) {
         LOGE << "Cannot find directory with data files";
         return false;
     }
+    auto dataDir = *dataDirOptional;
 
     LOGI << "OpenGL Renderer  : " << glGetString(GL_RENDERER);
     LOGI << "OpenGL Vendor    : " << glGetString(GL_VENDOR);
@@ -141,20 +155,24 @@ bool OceanContext::Init(GLFWwindow* w, const std::string& modulePath) {
     config.Load(configFilePath.string());
     LOGD << "Loaded Configuration File : " << configFilePath.string();
 
-    config.Get("waveAmplitude", waveAmp);
-    config.Get("windDirX", windDirX);
-    config.Get("windDirZ", windDirZ);
+    constexpr float DefaultWaveAmp = 2.0;
+    constexpr float DefaultWindDirX = 0.0;
+    constexpr float DefaultWindDirZ = 32.0;
+    waveAmp = config.GetFloat("waveAmplitude").value_or(DefaultWaveAmp);
+    windDirX = config.GetFloat("windDirX").value_or(DefaultWindDirX);
+    windDirZ = config.GetFloat("windDirZ").value_or(DefaultWindDirZ);
 
-    int oceanRepeat, oceanSize;
-    float oceanLen;
-    if (!config.Get("oceanSize", oceanSize)) oceanSize = 64;
-    if (!config.Get("oceanLen", oceanLen)) oceanLen = 64.f;
-    if (!config.Get("oceanRepeat", oceanRepeat)) oceanRepeat = 10;
+    constexpr int DefaultOceanSize = 64;
+    constexpr float DefaultOceanLen = 64.0;
+    constexpr int DefaultOceanRepeat = 10;
+    auto oceanSize = config.GetInt("oceanSize").value_or(DefaultOceanSize);
+    auto oceanLen = config.GetFloat("oceanLen").value_or(DefaultOceanLen);
+    auto oceanRepeat = config.GetInt("oceanRepeat").value_or(DefaultOceanRepeat);
 
     // Ocean setup
     geometryType = GeometryRenderType::Solid;
-    if (ocean.init(dataDir, oceanSize, waveAmp, Vector2(windDirX, windDirZ),
-            oceanLen, oceanRepeat) <= 0) {
+    if (!ocean.init(dataDir, oceanSize, waveAmp, Vector2(windDirX, windDirZ),
+            oceanLen, oceanRepeat)) {
         return false;
     }
     ocean.geometryType(geometryType);
@@ -204,6 +222,8 @@ bool OceanContext::Init(GLFWwindow* w, const std::string& modulePath) {
  * GLUT Callback functions
  ****************************************************************************/
 void OceanContext::Display() {
+    renderingBenchmark.StartOperation();
+
 #ifndef USE_OPENGL2_0
     // Start using framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, postProcFramebuffer.GetFramebuffer()); LOGOPENGLERROR();
@@ -214,12 +234,15 @@ void OceanContext::Display() {
 
     view = glm::lookAt(viewPosition.position, viewPosition.position + viewPosition.lookat, viewPosition.up);
 
-    glClearColor(fogColor.x, fogColor.y, fogColor.z, fogColor.w); LOGOPENGLERROR();
+    glClearColor(fogColor[0], fogColor[1], fogColor[2], fogColor[3]); LOGOPENGLERROR();
 
     ocean.geometryType(geometryType);
-    ocean.colors((float*)&fogColor, (float*)&emissiveColor,
-        (float*)&ambientColor, (float*)&diffuseColor, (float*)&specularColor);
-    ocean.render(elapsedTime, lightPosition, projection, view, model, true);
+    ocean.colorFog(fogColor);
+    ocean.colorEmissive(emissiveColor);
+    ocean.colorAmbient(ambientColor);
+    ocean.colorDiffuse(diffuseColor);
+    ocean.colorSpecular(specularColor);
+    ocean.render(lightPosition, projection, view, model);
 
 #ifndef USE_OPENGL2_0
     // Finish using framebuffer
@@ -237,14 +260,16 @@ void OceanContext::Display() {
         // Render ImGui window
         DisplayUi();
     }
+
+    renderingBenchmark.EndOperation();
 }
 
 void OceanContext::DisplayUi() {
     constexpr float UiMargin = 10.0f;
 #ifdef USE_OPENGL2_0
-    static const ImVec2 UiSize = ImVec2(300, 320);
+    static const ImVec2 UiSize = ImVec2(300, 330);
 #else
-    static const ImVec2 UiSize = ImVec2(300, 375);
+    static const ImVec2 UiSize = ImVec2(300, 385);
 #endif
 
     ImGui::SetNextWindowPos(ImVec2(UiMargin, gWindowHeight - UiSize.y - UiMargin), ImGuiCond_Always);
@@ -254,19 +279,19 @@ void OceanContext::DisplayUi() {
         ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 
     ImGui::Text("Rendering mode:");
-    ImGui::RadioButton("Wireframe", (int *)&geometryType, static_cast<int>(GeometryRenderType::Wireframe)); ImGui::SameLine();
-    ImGui::RadioButton("Solid", (int *)&geometryType, static_cast<int>(GeometryRenderType::Solid));
+    ImGui::RadioButton("Wireframe", reinterpret_cast<int *>(&geometryType), static_cast<int>(GeometryRenderType::Wireframe)); ImGui::SameLine();
+    ImGui::RadioButton("Solid", reinterpret_cast<int *>(&geometryType), static_cast<int>(GeometryRenderType::Solid));
 
     ImGui::Separator();
 
     ImGui::Text("Ocean parameters:");
-    static float waveAmp = waveAmp * 1e5;
     if (ImGui::SliderFloat("Choppiness", &waveAmp, 0.0f, 5.0f, "%.1f")) {
-        waveAmp = waveAmp * 1e-5;
         ocean.windAmp(waveAmp);
+        needsEvaluation = true;
     }
     if (ImGui::SliderFloat("Wind", &windDirZ, 0.0f, 50.0f, "%.1f m/s")) {
         ocean.windDirZ(windDirZ);
+        needsEvaluation = true;
     }
 
     ImGui::Separator();
@@ -280,7 +305,10 @@ void OceanContext::DisplayUi() {
 #ifndef USE_OPENGL2_0
     ImGui::Text("Post-processing shader:");
     const auto& elemName = ScreenShadersInfo[currentScreenShader].Name;
-    ImGui::SliderInt("##", &currentScreenShader, 0, ScreenShadersInfo.size() - 1, elemName.c_str());
+    int k = static_cast<int>(currentScreenShader);
+    if (ImGui::SliderInt("##", &k, 0, ScreenShadersInfo.size() - 1, elemName.c_str())) {
+        currentScreenShader = static_cast<int>(k);
+    }
 
     ImGui::Separator();
 #endif
@@ -290,6 +318,7 @@ void OceanContext::DisplayUi() {
     ImGui::BulletText("F2 to show/hide UI.");
     ImGui::BulletText("F11 to save screenshot to file.");
     ImGui::BulletText("1/2 to change rendering mode.");
+    ImGui::BulletText("K to start/stop simulation.");
 #ifndef USE_OPENGL2_0
     ImGui::BulletText("S to switch post-processing filter.");
 #endif
@@ -313,11 +342,21 @@ void OceanContext::DisplayUi() {
         ImGui::Begin("Colors parameters", nullptr,
             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 
-        ImGui::ColorEdit3("Fog", (float*)&fogColor);
-        ImGui::ColorEdit3("Emissive", (float*)&emissiveColor);
-        ImGui::ColorEdit3("Ambient", (float*)&ambientColor);
-        ImGui::ColorEdit3("Diffuse", (float*)&diffuseColor);
-        ImGui::ColorEdit3("Specular", (float*)&specularColor);
+        if (ImGui::ColorEdit3("Fog", fogColor.data())) {
+            ocean.colorFog(fogColor);
+        }
+        if (ImGui::ColorEdit3("Emissive", emissiveColor.data())) {
+            ocean.colorEmissive(emissiveColor);
+        }
+        if (ImGui::ColorEdit3("Ambient", ambientColor.data())) {
+            ocean.colorAmbient(ambientColor);
+        }
+        if (ImGui::ColorEdit3("Diffuse", diffuseColor.data())) {
+            ocean.colorDiffuse(diffuseColor);
+        }
+        if (ImGui::ColorEdit3("Specular", specularColor.data())) {
+            ocean.colorSpecular(specularColor);
+        }
 
         ImGui::End();
     }
@@ -373,12 +412,13 @@ void OceanContext::Keyboard(int key, int /*scancode*/, int action, int /*mods*/)
             geometryType = GeometryRenderType::Solid;
             break;
 
+        case GLFW_KEY_K:
+            isEvaluating = !isEvaluating;
+            break;
+
 #ifndef USE_OPENGL2_0
         case GLFW_KEY_S:
-            currentScreenShader++;
-            if (currentScreenShader>= screenShaders.size()) {
-                currentScreenShader = 0;
-            }
+            currentScreenShader = (currentScreenShader + 1) % screenShaders.size();
             break;
 #endif
         }
@@ -454,18 +494,38 @@ void OceanContext::RegisterCallbacks() {
 }
 
 void OceanContext::Update() {
-    static double lastTime = 0.0;
-    static double lastFpsTime = 0.0;
     double currentTime = glfwGetTime();
     double dt = currentTime - lastTime;
     lastTime = currentTime;
 
-    if (currentTime - lastFpsTime > 1.0) {
-        fps = ImGui::GetIO().Framerate;
-        lastFpsTime = currentTime;
+    if (isEvaluating) {
+        elapsedTime += dt * ElapsedTimeRate;
+
+        if (currentTime - lastEvaluationTime > EvaluationTimeout) {
+            needsEvaluation = true;
+        }
     }
 
-    elapsedTime += dt * 0.5;
+    if (needsEvaluation) {
+        evaluationBenchmark.StartOperation();
+        ocean.evaluate(elapsedTime, true);
+        evaluationBenchmark.EndOperation();
+        lastEvaluationTime = currentTime;
+        needsEvaluation = false;
+    }
+
+    if (currentTime - lastFpsTime > 1.0) {
+        fps = ImGui::GetIO().Framerate;
+
+        LOGI << "Average FPS: " << static_cast<int>(fps) <<
+            ", Evaluation (us): " << evaluationBenchmark.GetAverage() <<
+            ", Rendering (us): " << renderingBenchmark.GetAverage();
+
+        evaluationBenchmark.Reset();
+        renderingBenchmark.Reset();
+
+        lastFpsTime = currentTime;
+    }
 
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
         viewPosition.MoveForward(dt);
@@ -493,9 +553,9 @@ void OceanContext::Update() {
 /*****************************************************************************
  * Main program
  ****************************************************************************/
-int main(int argc, const char* argv[]) {
+int main(int /*argc*/, const char* argv[]) {
     try {
-        plog::ConsoleAppender<plog::LogFormatter> consoleAppender;
+        plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
 #ifdef NDEBUG
         plog::init(plog::info, &consoleAppender);
 #else
@@ -503,7 +563,7 @@ int main(int argc, const char* argv[]) {
 #endif
 
         GraphicsUtils::GlfwWrapper glfwWrapper;
-        if (glfwWrapper.Init(Title, Width, Height) != 0) {
+        if (!glfwWrapper.Init(Title, Width, Height)) {
             LOGE << "Failed to load GLFW";
             return EXIT_FAILURE;
         }

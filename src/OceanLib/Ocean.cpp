@@ -6,6 +6,7 @@
 #include "FFT.h"
 #include "GraphicsLogger.h"
 #include "GraphicsResource.h"
+#include "GraphicsUtils.h"
 #include "Ocean.h"
 
 constexpr float Epsilon = 1e-6f;
@@ -19,8 +20,10 @@ const std::filesystem::path FragmentShader = "ocean.frag";
 
 constexpr float Lambda = -1.0;
 
+constexpr float WindAmpScale = 1e-5;
+
 float uniformRandomVariable() {
-    return (float)rand() / RAND_MAX;
+    return static_cast<float>(rand()) / RAND_MAX;
 }
 
 Complex gaussianRandomVariable() {
@@ -34,11 +37,11 @@ Complex gaussianRandomVariable() {
     return Complex(x1 * w, x2 * w);;
 }
 
-int Ocean::init(const std::filesystem::path& dataDir,
+bool Ocean::init(const std::filesystem::path& dataDir,
         const int N_, const float A_, const Vector2& w_, const float length_, int ocean_repeat_) {
     N = N_;
     Nplus1 = N + 1;
-    A = A_;
+    A = A_ * WindAmpScale;
     wind = w_;
     length = length_;
     ocean_repeat = ocean_repeat_;
@@ -53,7 +56,7 @@ int Ocean::init(const std::filesystem::path& dataDir,
     // Use pre-calculated random values common for all model parameters
     // so that change of a parameter will be seamless.
     r.resize(Nplus1 * Nplus1 * 2);
-    for (int i = 0; i < r.size(); i++) {
+    for (size_t i = 0; i < r.size(); i++) {
         r[i] = gaussianRandomVariable();
     }
 
@@ -102,26 +105,21 @@ int Ocean::init(const std::filesystem::path& dataDir,
     }
 
     // create VBOs
+    glGenBuffers(1, indices_ln_vbo.put()); LOGOPENGLERROR();
+    glGenBuffers(1, indices_tr_vbo.put()); LOGOPENGLERROR();
     glGenBuffers(1, vertices_vbo.put()); LOGOPENGLERROR();
-    if (!vertices_vbo) {
-        return 0;
+    if (!vertices_vbo || !indices_ln_vbo || !indices_tr_vbo) {
+        return false;
     }
+
     glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(vertices_vbo)); LOGOPENGLERROR();
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices[0]) * vertices.size(),
         vertices.data(), GL_DYNAMIC_DRAW); LOGOPENGLERROR();
 
-    glGenBuffers(1, indices_ln_vbo.put()); LOGOPENGLERROR();
-    if (!indices_ln_vbo) {
-        return 0;
-    }
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(indices_ln_vbo)); LOGOPENGLERROR();
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices_ln[0]) * indices_ln_count,
         indices_ln.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
 
-    glGenBuffers(1, indices_tr_vbo.put()); LOGOPENGLERROR();
-    if (!indices_tr_vbo) {
-        return 0;
-    }
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(indices_tr_vbo)); LOGOPENGLERROR();
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices_tr[0]) * indices_tr_count,
         indices_tr.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
@@ -132,7 +130,7 @@ int Ocean::init(const std::filesystem::path& dataDir,
     glProgram.reset(Shader::CreateProgramFromFiles(vertexShader.string(), fragmentShader.string()));
     if (!glProgram) {
         LOGE << "Failed to init ocean shader program";
-        return 0;
+        return false;
     }
 
     uLightPos = glGetUniformLocation(static_cast<GLuint>(glProgram), "light_pos"); LOGOPENGLERROR();
@@ -153,7 +151,7 @@ int Ocean::init(const std::filesystem::path& dataDir,
 #ifndef USE_OPENGL2_0
     glGenVertexArrays(1, vao.put()); LOGOPENGLERROR();
     if (!vao) {
-        return 0;
+        return false;
     }
     glBindVertexArray(static_cast<GLuint>(vao)); LOGOPENGLERROR();
 #endif
@@ -175,7 +173,7 @@ int Ocean::init(const std::filesystem::path& dataDir,
 
     initVertices();
 
-    return 1;
+    return true;
 }
 
 void Ocean::initVertices() {
@@ -212,11 +210,12 @@ void Ocean::initVertices() {
 
 void Ocean::initBufferAttributes() {
     glEnableVertexAttribArray(aVertex); LOGOPENGLERROR();
-    glVertexAttribPointer(aVertex, 3, GL_FLOAT, GL_FALSE, sizeof(ocean_vertex), 0); LOGOPENGLERROR();
+    glVertexAttribPointer(aVertex, 3, GL_FLOAT, GL_FALSE, sizeof(ocean_vertex),
+        reinterpret_cast<void*>(0)); LOGOPENGLERROR();
 
     glEnableVertexAttribArray(aNormal); LOGOPENGLERROR();
     glVertexAttribPointer(aNormal, 3, GL_FLOAT, GL_FALSE, sizeof(ocean_vertex),
-        (void*)(sizeof(GLfloat) * 3)); LOGOPENGLERROR();
+        reinterpret_cast<void*>(sizeof(GLfloat) * 3)); LOGOPENGLERROR();
 }
 
 float Ocean::dispersion(int n_prime, int m_prime) {
@@ -244,8 +243,8 @@ float Ocean::phillips(int n_prime, int m_prime) {
     float L        = w_length * w_length / g;
     float L2       = L * L;
 
-    float damping  = 0.001;
-    float ld2      = L2 * damping * damping;
+    constexpr float Damping  = 0.001;
+    float ld2      = L2 * Damping * Damping;
 
     return A * exp(-1.0 / (k_length2 * L2)) / k_length4 * k_dot_w2 * exp(-k_length2 * ld2);
 }
@@ -274,10 +273,10 @@ Complex Ocean::hTilde(float t, int n_prime, int m_prime) {
     return htilde0 * c0 + htilde0mkconj * c1;
 }
 
-complex_vector_norm Ocean::h_D_and_n(Vector2 x, float t) {
-    Complex h(0.0, 0.0);
-    Vector2 D(0.0, 0.0);
-    Vector3 n(0.0, 0.0, 0.0);
+complex_vector_norm Ocean::h_D_and_n(const Vector2& x, float t) {
+    Complex h;
+    Vector2 D;
+    Vector3 n;
 
     for (int m_prime=0; m_prime<N; m_prime++) {
         float kz = 2.0 * M_PI * (m_prime - N / 2.0) / length;
@@ -398,7 +397,7 @@ void Ocean::evaluateWavesFFT(float t) {
         fft.fft(h_tilde_dz,     h_tilde_dz,     N, n_prime);
     }
 
-    const float signs[] = {1.0, -1.0};
+    static const int signs[] = {1, -1};
 
     for (int m_prime=0; m_prime<N; m_prime++) {
         for (int n_prime=0; n_prime<N; n_prime++) {
@@ -467,18 +466,9 @@ void Ocean::evaluateWavesFFT(float t) {
     }
 }
 
-void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
-                   const glm::mat4& view, const glm::mat4& model, bool use_fft) {
-    if (!use_fft && !fftEval) {
-        fftEval = true;
-        evaluateWaves(t);
-    }
-    else if (use_fft) {
-        evaluateWavesFFT(t);
-    }
-
+void Ocean::render(const glm::vec3& light_pos, const glm::mat4& proj,
+                   const glm::mat4& view, const glm::mat4& model) {
     glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(vertices_vbo)); LOGOPENGLERROR();
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(ocean_vertex)*Nplus1*Nplus1, vertices.data()); LOGOPENGLERROR();
 
     glUseProgram(static_cast<GLuint>(glProgram)); LOGOPENGLERROR();
 
@@ -486,11 +476,11 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
     glUniformMatrix4fv(uProjection,  1, GL_FALSE, glm::value_ptr(proj)); LOGOPENGLERROR();
     glUniformMatrix4fv(uView,        1, GL_FALSE, glm::value_ptr(view)); LOGOPENGLERROR();
 
-    glUniform4fv(uFogColor, 1, fogColor); LOGOPENGLERROR();
-    glUniform4fv(uEmissiveColor, 1, emissiveColor); LOGOPENGLERROR();
-    glUniform4fv(uAmbientColor, 1, ambientColor); LOGOPENGLERROR();
-    glUniform4fv(uDiffuseColor, 1, diffuseColor); LOGOPENGLERROR();
-    glUniform4fv(uSpecularColor, 1, specularColor); LOGOPENGLERROR();
+    glUniform4fv(uFogColor, 1, fogColor.data()); LOGOPENGLERROR();
+    glUniform4fv(uEmissiveColor, 1, emissiveColor.data()); LOGOPENGLERROR();
+    glUniform4fv(uAmbientColor, 1, ambientColor.data()); LOGOPENGLERROR();
+    glUniform4fv(uDiffuseColor, 1, diffuseColor.data()); LOGOPENGLERROR();
+    glUniform4fv(uSpecularColor, 1, specularColor.data()); LOGOPENGLERROR();
 
 #ifndef USE_OPENGL2_0
     glBindVertexArray(static_cast<GLuint>(vao)); LOGOPENGLERROR();
@@ -516,7 +506,7 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_vbo); LOGOPENGLERROR();
 
-    static const float ocean_scale = 1.f;
+    constexpr float ocean_scale = 1.f;
     for (int i=0; i<ocean_repeat; i++) {
         for (int j=0; j<ocean_repeat; j++) {
             glm::mat4 m = model;
@@ -549,22 +539,49 @@ void Ocean::render(float t, const glm::vec3& light_pos, const glm::mat4& proj,
     glUseProgram(0); LOGOPENGLERROR();
 }
 
+void Ocean::evaluate(float t, bool use_fft) {
+    if (!use_fft && !fftEval) {
+        fftEval = true;
+        evaluateWaves(t);
+    }
+    else if (use_fft) {
+        evaluateWavesFFT(t);
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(vertices_vbo)); LOGOPENGLERROR();
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices[0]) * vertices.size(), vertices.data()); LOGOPENGLERROR();
+
+#ifdef USE_OPENGL2_0
+    glBindBuffer(GL_ARRAY_BUFFER, 0); LOGOPENGLERROR();
+#endif
+}
+
 void Ocean::geometryType(GeometryRenderType t) {
     geometry_type = t;
 }
 
-void Ocean::colors(float fog[], float emissive[], float ambient[], float diffuse[], float specular[]) {
-    for (size_t i = 0; i < 4; i++) {
-        fogColor[i] = fog[i];
-        emissiveColor[i] = emissive[i];
-        ambientColor[i] = ambient[i];
-        diffuseColor[i] = diffuse[i];
-        specularColor[i] = specular[i];
-    }
+void Ocean::colorFog(const ColorInfo& fog) {
+    fogColor = fog;
+}
+
+void Ocean::colorEmissive(const ColorInfo& emissive) {
+    emissiveColor = emissive;
+}
+
+void Ocean::colorAmbient(const ColorInfo& ambient) {
+    ambientColor = ambient;
+}
+
+void Ocean::colorDiffuse(const ColorInfo& diffuse) {
+    diffuseColor = diffuse;
+}
+
+void Ocean::colorSpecular(const ColorInfo& specular) {
+    specularColor = specular;
 }
 
 void Ocean::windAmp(float newA) {
-    A = newA;
+    A = newA * WindAmpScale;
     initVertices();
 }
 

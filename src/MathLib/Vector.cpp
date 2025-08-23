@@ -4,7 +4,7 @@
 
 // Vector2
 
-Vector2::Vector2() : x(0.0f), y(0.0f) { }
+Vector2::Vector2(const Vector2& other) : x(other.x), y(other.y) { }
 Vector2::Vector2(float x, float y) : x(x), y(y) { }
 
 float Vector2::length() {
@@ -13,8 +13,12 @@ float Vector2::length() {
 
 Vector2 Vector2::unit() {
     float l = this->length();
-    if (l!=0.0f) return Vector2(this->x/l, this->y/l);
-    else return Vector2();
+    if (l!=0.0f) {
+        return Vector2(this->x/l, this->y/l);
+    }
+    else {
+        return Vector2();
+    }
 }
 
 float Vector2::operator*(const Vector2& v) {
@@ -41,7 +45,7 @@ Vector2& Vector2::operator=(const Vector2& v) {
 
 // Vector3
 
-Vector3::Vector3() : x(0.0f), y(0.0f), z(0.0f) { }
+Vector3::Vector3(const Vector3& other) : x(other.x), y(other.y), z(other.z) { }
 Vector3::Vector3(float x, float y, float z) : x(x), y(y), z(z) { }
 
 float Vector3::length() {
@@ -50,8 +54,12 @@ float Vector3::length() {
 
 Vector3 Vector3::unit() {
     float l = this->length();
-    if (l!=0.0f) return Vector3(this->x/l, this->y/l, this->z/l);
-    else return Vector3();
+    if (l!=0.0f) {
+        return Vector3(this->x/l, this->y/l, this->z/l);
+    }
+    else {
+        return Vector3();
+    }
 }
 
 float Vector3::operator*(const Vector3& v) {

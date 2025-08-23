@@ -3,8 +3,8 @@
 struct Framebuffer {
     Framebuffer() = default;
 
-    int Init(int w, int h);
-    int Resize(int w, int h);
+    bool Init(int w, int h);
+    bool Resize(int w, int h);
     void Release();
 
     GLuint GetFramebuffer() const { return static_cast<GLuint>(frame_buffer); }

@@ -3,7 +3,21 @@
 #include "GraphicsResource.h"
 #include "Framebuffer.h"
 
-int Framebuffer::Init(int w, int h) {
+std::string GetFramebufferErrorDescription(GLenum errorCode) {
+    switch (errorCode) {
+        case GL_FRAMEBUFFER_UNDEFINED: return "FRAMEBUFFER_UNDEFINED";
+        case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: return "FRAMEBUFFER_INCOMPLETE_ATTACHMENT";
+        case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: return "FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT";
+        case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER: return "FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER";
+        case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER: return "FRAMEBUFFER_INCOMPLETE_READ_BUFFER";
+        case GL_FRAMEBUFFER_UNSUPPORTED: return "FRAMEBUFFER_UNSUPPORTED";
+        case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE: return "FRAMEBUFFER_INCOMPLETE_MULTISAMPLE";
+        case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS: return "FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS";
+        default: return "Unknown error";
+    }
+}
+
+bool Framebuffer::Init(int w, int h) {
     width = w;
     height = h;
 
@@ -11,7 +25,7 @@ int Framebuffer::Init(int w, int h) {
     glGenTextures(1, tex_color_buffer.put()); LOGOPENGLERROR();
     if (!tex_color_buffer) {
         LOGE << "Failed to create texture for framebuffer";
-        return 0;
+        return false;
     }
 
     glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(tex_color_buffer)); LOGOPENGLERROR();
@@ -24,7 +38,7 @@ int Framebuffer::Init(int w, int h) {
     glGenRenderbuffers(1, rbo_depth_stencil.put()); LOGOPENGLERROR();
     if (!rbo_depth_stencil) {
         LOGE << "Failed to create render buffer object";
-        return 0;
+        return false;
     }
 
     glBindRenderbuffer(GL_RENDERBUFFER, static_cast<GLuint>(rbo_depth_stencil)); LOGOPENGLERROR();
@@ -34,7 +48,7 @@ int Framebuffer::Init(int w, int h) {
     glGenFramebuffers(1, frame_buffer.put()); LOGOPENGLERROR();
     if (!frame_buffer) {
         LOGE << "Failed to create framebuffer object";
-        return 0;
+        return false;
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, static_cast<GLuint>(frame_buffer)); LOGOPENGLERROR();
@@ -47,31 +61,18 @@ int Framebuffer::Init(int w, int h) {
 
     GLenum fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER); LOGOPENGLERROR();
     if (fboStatus!=GL_FRAMEBUFFER_COMPLETE) {
-        auto const errStr = [fboStatus]() {
-            switch (fboStatus) {
-            case GL_FRAMEBUFFER_UNDEFINED: return "FRAMEBUFFER_UNDEFINED";
-            case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: return "FRAMEBUFFER_INCOMPLETE_ATTACHMENT";
-            case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: return "FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT";
-            case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER: return "FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER";
-            case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER: return "FRAMEBUFFER_INCOMPLETE_READ_BUFFER";
-            case GL_FRAMEBUFFER_UNSUPPORTED: return "FRAMEBUFFER_UNSUPPORTED";
-            case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE: return "FRAMEBUFFER_INCOMPLETE_MULTISAMPLE";
-            case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS: return "FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS";
-            default: return "Unknown error";
-            }
-        }();
-
+        auto const errStr = GetFramebufferErrorDescription(fboStatus);
         LOGE << "Error: Framebuffer Error " << errStr;
-        return 0;
+        return false;
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
     glBindRenderbuffer(GL_RENDERBUFFER, 0); LOGOPENGLERROR();
 
-    return 1;
+    return true;
 }
 
-int Framebuffer::Resize(int w, int h) {
+bool Framebuffer::Resize(int w, int h) {
     Release();
     return Init(w, h);
 }
