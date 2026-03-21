@@ -59,22 +59,14 @@ sudo dnf install -y \
     libXinerama-devel \
     libXcursor-devel \
     libXi-devel \
+    libxkbcommon-devel \
     freetype-devel
 ```
 
-* CentOS 7 and higher
+Additional dependency for building under Wayland:
 
 ```
-sudo yum install -y \
-    gcc gcc-c++ make \
-    cmake \
-    mesa-libGL-devel \
-    mesa-libGLU-devel \
-    libXrandr-devel \
-    libXinerama-devel \
-    libXcursor-devel \
-    libXi-devel \
-    freetype-devel
+sudo dnf install -y wayland-devel
 ```
 
 ### Cloning Repository
