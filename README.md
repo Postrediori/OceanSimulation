@@ -31,26 +31,28 @@ This includes:
 
 ### Dependencies
 
-The following instructions apply to:
-
-* Ubuntu 20.04, 18.04, 16.04
-* Debian 9 and higher
+**On Ubuntu or Debian:**
 
 ```
-sudo apt-get install -y \
+apt install \
     build-essential \
     cmake \
     xorg-dev \
     libgl1-mesa-dev \
-    libfreetype6-dev
+    libfreetype6-dev \
+    libxkbcommon-dev
 ```
 
-The following instructions apply to:
-
-* Fedora 22 and higher
+Additional dependency for building under Wayland:
 
 ```
-sudo dnf install -y \
+apt install libwayland-dev
+```
+
+**On RedHat-based, Fedora systems:**
+
+```
+dnf install \
     gcc gcc-c++ make \
     cmake \
     mesa-libGL-devel \
@@ -66,7 +68,7 @@ sudo dnf install -y \
 Additional dependency for building under Wayland:
 
 ```
-sudo dnf install -y wayland-devel
+dnf install wayland-devel
 ```
 
 ### Cloning Repository
