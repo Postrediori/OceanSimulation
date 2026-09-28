@@ -40,5 +40,5 @@ struct ScreenShader {
     // Shader needs resolution as uniform because GLSL 1.10 doesn't have textureSize
     GLint uTexSize = -1;
 #endif
-    GLint aScreenCoord = -1, aScreenTexCoord = -1;
+    GLint aScreenCoord = 0, aScreenTexCoord = 1;
 };

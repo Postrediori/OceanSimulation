@@ -8,11 +8,11 @@ class FTT;
 
 #pragma pack(push, 0)
 struct ocean_vertex {
-    GLfloat  x{ 0.0 },  y{ 0.0 },  z{ 0.0 }; // vertex
-    GLfloat nx{ 0.0 }, ny{ 0.0 }, nz{ 0.0 }; // normal
-    GLfloat  a{ 0.0 },  b{ 0.0 },  c{ 0.0 }; // htilde0
-    GLfloat _a{ 0.0 }, _b{ 0.0 }, _c{ 0.0 }; // htilde0mk conjugate
-    GLfloat ox{ 0.0 }, oy{ 0.0 }, oz{ 0.0 }; // original position
+    GLfloat  x = 0.0,  y = 0.0,  z = 0.0; // vertex
+    GLfloat nx = 0.0, ny = 0.0, nz = 0.0; // normal
+    GLfloat  a = 0.0,  b = 0.0,  c = 0.0; // htilde0
+    GLfloat _a = 0.0, _b = 0.0, _c = 0.0; // htilde0mk conjugate
+    GLfloat ox = 0.0, oy = 0.0, oz = 0.0; // original position
 };
 #pragma pack(pop)
 
@@ -42,18 +42,18 @@ public:
     bool init(const std::filesystem::path& dataDir,
         const int N, const float A, const Vector2& w, const float length, const int ocean_repeat);
 
-    void render(const glm::vec3& light_pos,
+    void render(const glm::vec4& light_pos,
                 const glm::mat4& proj, const glm::mat4& view, const glm::mat4& model);
 
     void evaluate(float t, bool use_fft);
 
     void geometryType(GeometryRenderType t);
 
-    void colorFog(const ColorInfo& fog);
-    void colorEmissive(const ColorInfo& emissive);
-    void colorAmbient(const ColorInfo& ambient);
-    void colorDiffuse(const ColorInfo& diffuse);
-    void colorSpecular(const ColorInfo& specular);
+    void colorFog(const glm::vec4& fog);
+    void colorEmissive(const glm::vec4& emissive);
+    void colorAmbient(const glm::vec4& ambient);
+    void colorDiffuse(const glm::vec4& diffuse);
+    void colorSpecular(const glm::vec4& specular);
 
     void windAmp(float newA);
     void windDirZ(float newWindZ);
@@ -130,19 +130,28 @@ private:
     GraphicsUtils::unique_program glProgram;
 
     // attributes and uniforms
-    GLint aVertex = -1, aNormal = -1;
-    GLint uLightPos = -1, uProjection = -1, uView = -1, uModel = -1;
+    GLint aVertex = 0, aNormal = 1;
 #ifdef USE_OPENGL2_0
+    GLint uLightPos = -1, uProjection = -1, uView = -1, uModel = -1;
+
     // Additional uniform for passing inverse(transpose(view * model));
     GLint uMVTranspInv = -1;
+#else
+    GLint uVertexParams = -1;
+    GraphicsUtils::unique_buffer vertex_ubo;
 #endif
 
+#ifdef USE_OPENGL2_0
     GLint uFogColor = -1, uEmissiveColor = -1, uAmbientColor = -1,
         uDiffuseColor = -1, uSpecularColor = -1;
+#else
+    GLint uFragmentParams = -1;
+    GraphicsUtils::unique_buffer fragment_ubo;
+#endif
 
-    ColorInfo fogColor{ 0.0f, 0.0f, 0.0f, 1.0f };
-    ColorInfo emissiveColor{ 0.0f, 0.0f, 0.0f, 1.0f };
-    ColorInfo ambientColor{ 0.0f, 0.0f, 0.0f, 1.0f };
-    ColorInfo diffuseColor{ 0.0f, 0.0f, 0.0f, 1.0f };
-    ColorInfo specularColor{ 0.0f, 0.0f, 0.0f, 1.0f };
+    glm::vec4 fogColor{ 0.0f, 0.0f, 0.0f, 1.0f };
+    glm::vec4 emissiveColor{ 0.0f, 0.0f, 0.0f, 1.0f };
+    glm::vec4 ambientColor{ 0.0f, 0.0f, 0.0f, 1.0f };
+    glm::vec4 diffuseColor{ 0.0f, 0.0f, 0.0f, 1.0f };
+    glm::vec4 specularColor{ 0.0f, 0.0f, 0.0f, 1.0f };
 };

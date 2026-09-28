@@ -4,7 +4,7 @@
 
 class Vector2 {
 public:
-    float x{ 0.0 }, y{ 0.0 };
+    float x = 0.0, y = 0.0;
 
     Vector2() = default;
     Vector2(float x, float y);
@@ -22,7 +22,7 @@ public:
 
 class Vector3 {
 public:
-    float x{ 0.0 }, y{ 0.0 }, z{ 0.0 };
+    float x = 0.0, y = 0.0, z = 0.0;
 
     Vector3() = default;
     Vector3(const Vector3& other);

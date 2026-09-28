@@ -46,8 +46,8 @@ const std::vector<ScreenShaderInfo> ScreenShadersInfo = {
  ****************************************************************************/
 
 struct WindowDimensions {
-    int X{ 0 }, Y{ 0 };
-    int Width{ 0 }, Height{ 0 };
+    int X = 0, Y = 0;
+    int Width = 0, Height = 0;
 };
 
 struct OceanContext {
@@ -93,18 +93,18 @@ struct OceanContext {
     float windDirX = 0.0f;
     float windDirZ = 32.0f;
 
-    glm::vec3 lightPosition = glm::vec3();
+    glm::vec4 lightPosition = glm::vec4();
     glm::mat4 projection = glm::mat4();
     glm::mat4 view = glm::mat4();
     glm::mat4 model = glm::mat4();
 
     GeometryRenderType geometryType = GeometryRenderType::Solid;
 
-    ColorInfo fogColor{ 0.25, 0.75, 0.65, 1.0 };
-    ColorInfo emissiveColor{ 1.0, 1.0, 1.0, 1.0 };
-    ColorInfo ambientColor{ 0.0, 0.65, 0.75, 1.0 };
-    ColorInfo diffuseColor{ 0.5, 0.65, 0.75, 1.0 };
-    ColorInfo specularColor{ 1.0, 0.25, 0.0, 1.0 };
+    glm::vec4 fogColor{ 0.25, 0.75, 0.65, 1.0 };
+    glm::vec4 emissiveColor{ 1.0, 1.0, 1.0, 1.0 };
+    glm::vec4 ambientColor{ 0.0, 0.65, 0.75, 1.0 };
+    glm::vec4 diffuseColor{ 0.5, 0.65, 0.75, 1.0 };
+    glm::vec4 specularColor{ 1.0, 0.25, 0.0, 1.0 };
 
 #ifndef USE_OPENGL2_0
     Framebuffer postProcFramebuffer;
@@ -113,14 +113,14 @@ struct OceanContext {
     std::vector<ScreenShader> screenShaders;
 #endif
 
-    double lastTime{ 0.0 };
-    double lastFpsTime{ 0.0 };
-    double lastEvaluationTime{ 0.0 };
+    double lastTime = 0.0;
+    double lastFpsTime = 0.0;
+    double lastEvaluationTime = 0.0;
 
     Utils::OperationBenchmark evaluationBenchmark, renderingBenchmark;
 
-    bool isEvaluating{ true };
-    bool needsEvaluation{ true };
+    bool isEvaluating = true;
+    bool needsEvaluation = true;
 };
 
 /*****************************************************************************
@@ -206,7 +206,7 @@ bool OceanContext::Init(GLFWwindow* w, const std::string& modulePath) {
         glm::vec3(0.0f, 100.0f, 0.0f), // Position
         glm::vec3(2.4f, -0.3f, 0.0f)); // Look angle
 
-    lightPosition = glm::vec3(viewPosition.position.x + 1000.0, 100.0, viewPosition.position.z - 1000.0);
+    lightPosition = glm::vec4(viewPosition.position.x + 1000.0, 100.0, viewPosition.position.z - 1000.0, 1.0);
 
     // Set up OpenGL flags
     glClearDepth(1.0); LOGOPENGLERROR();
@@ -225,8 +225,10 @@ void OceanContext::Display() {
     renderingBenchmark.StartOperation();
 
 #ifndef USE_OPENGL2_0
-    // Start using framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, postProcFramebuffer.GetFramebuffer()); LOGOPENGLERROR();
+    if (currentScreenShader > 0) {
+        // Start using framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, postProcFramebuffer.GetFramebuffer()); LOGOPENGLERROR();
+    }
 #endif
 
     // Render scene
@@ -245,15 +247,17 @@ void OceanContext::Display() {
     ocean.render(lightPosition, projection, view, model);
 
 #ifndef USE_OPENGL2_0
-    // Finish using framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
+    if (currentScreenShader > 0) {
+        // Finish using framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
 
-    // Render post-processed image
-    // With Mesa3d Depth bit should also be cleaned even if the 'scene' there is a 2D plane
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); LOGOPENGLERROR();
+        // Render post-processed image
+        // With Mesa3d Depth bit should also be cleaned even if the 'scene' there is a 2D plane
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); LOGOPENGLERROR();
 
-    screenShaders[currentScreenShader].Render(postProcFramebuffer.GetTexture(),
-        postProcFramebuffer.GetWidth(), postProcFramebuffer.GetHeight());
+        screenShaders[currentScreenShader].Render(postProcFramebuffer.GetTexture(),
+            postProcFramebuffer.GetWidth(), postProcFramebuffer.GetHeight());
+    }
 #endif
 
     if (showUi) {
@@ -269,7 +273,7 @@ void OceanContext::DisplayUi() {
 #ifdef USE_OPENGL2_0
     static const ImVec2 UiSize = ImVec2(300, 330);
 #else
-    static const ImVec2 UiSize = ImVec2(300, 385);
+    static const ImVec2 UiSize = ImVec2(300, 390);
 #endif
 
     ImGui::SetNextWindowPos(ImVec2(UiMargin, gWindowHeight - UiSize.y - UiMargin), ImGuiCond_Always);
@@ -342,19 +346,19 @@ void OceanContext::DisplayUi() {
         ImGui::Begin("Colors parameters", nullptr,
             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 
-        if (ImGui::ColorEdit3("Fog", fogColor.data())) {
+        if (ImGui::ColorEdit3("Fog", glm::value_ptr(fogColor))) {
             ocean.colorFog(fogColor);
         }
-        if (ImGui::ColorEdit3("Emissive", emissiveColor.data())) {
+        if (ImGui::ColorEdit3("Emissive", glm::value_ptr(emissiveColor))) {
             ocean.colorEmissive(emissiveColor);
         }
-        if (ImGui::ColorEdit3("Ambient", ambientColor.data())) {
+        if (ImGui::ColorEdit3("Ambient", glm::value_ptr(ambientColor))) {
             ocean.colorAmbient(ambientColor);
         }
-        if (ImGui::ColorEdit3("Diffuse", diffuseColor.data())) {
+        if (ImGui::ColorEdit3("Diffuse", glm::value_ptr(diffuseColor))) {
             ocean.colorDiffuse(diffuseColor);
         }
-        if (ImGui::ColorEdit3("Specular", specularColor.data())) {
+        if (ImGui::ColorEdit3("Specular", glm::value_ptr(specularColor))) {
             ocean.colorSpecular(specularColor);
         }
 
@@ -546,8 +550,8 @@ void OceanContext::Update() {
         viewPosition.MoveDown(dt);
     }
 
-    lightPosition = glm::vec3(viewPosition.position.x + 1000.0,
-        100.0, viewPosition.position.z - 1000.0);
+    lightPosition = glm::vec4(viewPosition.position.x + 1000.0,
+        100.0, viewPosition.position.z - 1000.0, 1.0);
 }
 
 /*****************************************************************************

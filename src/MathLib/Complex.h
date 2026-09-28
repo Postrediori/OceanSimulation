@@ -4,7 +4,7 @@
 
 class Complex {
 public:
-    float a{ 0.0 }, b{ 0.0 };
+    float a = 0.0, b = 0.0;
     static uint64_t additions, multiplications;
 
     Complex() = default;

@@ -7,11 +7,13 @@ in float fog_factor;
 
 out vec4 frag_col;
 
-uniform vec4 fog_color;
-uniform vec4 emissive_color;
-uniform vec4 ambient_color;
-uniform vec4 diffuse_color;
-uniform vec4 specular_color;
+layout(std140) uniform FragmentParams {
+    vec4 fog_color;
+    vec4 emissive_color;
+    vec4 ambient_color;
+    vec4 diffuse_color;
+    vec4 specular_color;
+};
 
 const float emissive_contribution = 0.00;
 const float ambient_contribution  = 0.30;

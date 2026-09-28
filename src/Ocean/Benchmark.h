@@ -13,8 +13,8 @@ struct OperationBenchmark {
     uint64_t GetAverage() const;
 
     std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
-    uint64_t counter{ 0 };
-    uint64_t totalDuration{ 0 };
+    uint64_t counter = 0;
+    uint64_t totalDuration = 0;
 };
 
 } // namespace Utils

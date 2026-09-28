@@ -81,7 +81,7 @@ namespace GraphicsUtils {
         // Actual deallocation of resource
         virtual void close() { }
 
-        GLuint resourceId_{ 0 };
+        GLuint resourceId_ = 0;
     };
 
     struct unique_texture : public unique_any {

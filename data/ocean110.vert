@@ -12,7 +12,7 @@ uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
 uniform mat4 mv_transp_inv;
-uniform vec3 light_pos;
+uniform vec4 light_pos;
 
 const float fog_distance = 1000.;
 
@@ -24,7 +24,7 @@ void main(void) {
     vec4 v = view * model * vec4(vertex, 1.0);
     vec3 normal1 = normalize(normal);
 
-    light_vector = normalize((view * vec4(light_pos, 1.)).xyz - v.xyz);
+    light_vector = normalize((view * light_pos).xyz - v.xyz);
     normal_vector = (mv_transp_inv * vec4(normal1, 0.)).xyz;
     halfway_vector = light_vector + normalize(-v.xyz);
 }

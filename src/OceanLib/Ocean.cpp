@@ -133,19 +133,53 @@ bool Ocean::init(const std::filesystem::path& dataDir,
         return false;
     }
 
+    // Vertex shader uniforms
+#ifdef USE_OPENGL2_0
     uLightPos = glGetUniformLocation(static_cast<GLuint>(glProgram), "light_pos"); LOGOPENGLERROR();
     uProjection = glGetUniformLocation(static_cast<GLuint>(glProgram), "projection"); LOGOPENGLERROR();
     uView = glGetUniformLocation(static_cast<GLuint>(glProgram), "view"); LOGOPENGLERROR();
     uModel = glGetUniformLocation(static_cast<GLuint>(glProgram), "model"); LOGOPENGLERROR();
-#ifdef USE_OPENGL2_0
     uMVTranspInv = glGetUniformLocation(static_cast<GLuint>(glProgram), "mv_transp_inv"); LOGOPENGLERROR();
+#else
+    uVertexParams = glGetUniformBlockIndex(glProgram.get(), "VertexParams"); LOGOPENGLERROR();
+    glUniformBlockBinding(glProgram.get(), uVertexParams, 0); LOGOPENGLERROR();
+
+    glGenBuffers(1, vertex_ubo.put()); LOGOPENGLERROR();
+    if (!vertex_ubo) {
+        LOGE << "Failed to init uniform buffer for vertex shader";
+        return false;
+    }
+
+    glBindBuffer(GL_UNIFORM_BUFFER, vertex_ubo.get()); LOGOPENGLERROR();
+    glBufferData(GL_UNIFORM_BUFFER, 3 * sizeof(glm::mat4) + sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW); LOGOPENGLERROR();
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, vertex_ubo.get()); LOGOPENGLERROR();
 #endif
 
+    // Fragment shader uniforms
+#ifdef USE_OPENGL2_0
     uFogColor = glGetUniformLocation(static_cast<GLuint>(glProgram), "fog_color"); LOGOPENGLERROR();
     uEmissiveColor = glGetUniformLocation(static_cast<GLuint>(glProgram), "emissive_color"); LOGOPENGLERROR();
     uAmbientColor = glGetUniformLocation(static_cast<GLuint>(glProgram), "ambient_color"); LOGOPENGLERROR();
     uDiffuseColor = glGetUniformLocation(static_cast<GLuint>(glProgram), "diffuse_color"); LOGOPENGLERROR();
     uSpecularColor = glGetUniformLocation(static_cast<GLuint>(glProgram), "specular_color"); LOGOPENGLERROR();
+#else
+    uFragmentParams = glGetUniformBlockIndex(glProgram.get(), "FragmentParams"); LOGOPENGLERROR();
+    glUniformBlockBinding(glProgram.get(), uFragmentParams, 1); LOGOPENGLERROR();
+
+    glGenBuffers(1, fragment_ubo.put()); LOGOPENGLERROR();
+    if (!fragment_ubo) {
+        LOGE << "Failed to init uniform buffer for fragment shader";
+        return false;
+    }
+
+    glBindBuffer(GL_UNIFORM_BUFFER, fragment_ubo.get()); LOGOPENGLERROR();
+    glBufferData(GL_UNIFORM_BUFFER, 5 * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW); LOGOPENGLERROR();
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    glBindBufferBase(GL_UNIFORM_BUFFER, 1, fragment_ubo.get()); LOGOPENGLERROR();
+#endif
 
     // Init vertex arrays
 #ifndef USE_OPENGL2_0
@@ -156,8 +190,10 @@ bool Ocean::init(const std::filesystem::path& dataDir,
     glBindVertexArray(static_cast<GLuint>(vao)); LOGOPENGLERROR();
 #endif
 
+#ifdef USE_OPENGL2_0
     aVertex = glGetAttribLocation(static_cast<GLuint>(glProgram), "vertex"); LOGOPENGLERROR();
     aNormal = glGetAttribLocation(static_cast<GLuint>(glProgram), "normal"); LOGOPENGLERROR();
+#endif
 
     initBufferAttributes();
 
@@ -466,21 +502,29 @@ void Ocean::evaluateWavesFFT(float t) {
     }
 }
 
-void Ocean::render(const glm::vec3& light_pos, const glm::mat4& proj,
+void Ocean::render(const glm::vec4& light_pos, const glm::mat4& proj,
                    const glm::mat4& view, const glm::mat4& model) {
     glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(vertices_vbo)); LOGOPENGLERROR();
 
     glUseProgram(static_cast<GLuint>(glProgram)); LOGOPENGLERROR();
 
-    glUniform3f(uLightPos, light_pos.x, light_pos.y, light_pos.z); LOGOPENGLERROR();
+#ifdef USE_OPENGL2_0
+    glUniform4fv(uLightPos, 1, glm::value_ptr(light_pos)); LOGOPENGLERROR();
     glUniformMatrix4fv(uProjection,  1, GL_FALSE, glm::value_ptr(proj)); LOGOPENGLERROR();
     glUniformMatrix4fv(uView,        1, GL_FALSE, glm::value_ptr(view)); LOGOPENGLERROR();
 
-    glUniform4fv(uFogColor, 1, fogColor.data()); LOGOPENGLERROR();
-    glUniform4fv(uEmissiveColor, 1, emissiveColor.data()); LOGOPENGLERROR();
-    glUniform4fv(uAmbientColor, 1, ambientColor.data()); LOGOPENGLERROR();
-    glUniform4fv(uDiffuseColor, 1, diffuseColor.data()); LOGOPENGLERROR();
-    glUniform4fv(uSpecularColor, 1, specularColor.data()); LOGOPENGLERROR();
+    glUniform4fv(uFogColor, 1, glm::value_ptr(fogColor)); LOGOPENGLERROR();
+    glUniform4fv(uEmissiveColor, 1, glm::value_ptr(emissiveColor)); LOGOPENGLERROR();
+    glUniform4fv(uAmbientColor, 1, glm::value_ptr(ambientColor)); LOGOPENGLERROR();
+    glUniform4fv(uDiffuseColor, 1, glm::value_ptr(diffuseColor)); LOGOPENGLERROR();
+    glUniform4fv(uSpecularColor, 1, glm::value_ptr(specularColor)); LOGOPENGLERROR();
+#else
+    glBindBuffer(GL_UNIFORM_BUFFER, vertex_ubo.get()); LOGOPENGLERROR();
+    glBufferSubData(GL_UNIFORM_BUFFER, 0 * sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(proj)); LOGOPENGLERROR();
+    glBufferSubData(GL_UNIFORM_BUFFER, 1 * sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view)); LOGOPENGLERROR();
+    // Model is set in a loop below
+    glBufferSubData(GL_UNIFORM_BUFFER, 3 * sizeof(glm::mat4), sizeof(glm::vec4), glm::value_ptr(light_pos)); LOGOPENGLERROR();
+#endif
 
 #ifndef USE_OPENGL2_0
     glBindVertexArray(static_cast<GLuint>(vao)); LOGOPENGLERROR();
@@ -514,12 +558,14 @@ void Ocean::render(const glm::vec3& light_pos, const glm::mat4& proj,
             m = glm::translate(m, glm::vec3(length * (-ocean_repeat/2 + i + 0.5), 0.0,
                                             length * ( ocean_repeat/2 - j - 0.5)));
 
+#ifdef USE_OPENGL2_0
             glUniformMatrix4fv(uModel,       1, GL_FALSE, glm::value_ptr(m)); LOGOPENGLERROR();
 
-#ifdef USE_OPENGL2_0
             // Pass inverse(transpose(view * model)) as uniform as GLSL 1.10 doesn't have these functions
             glm::mat4 mv_transp_inv = glm::inverse(glm::transpose(view * m));
-            glUniformMatrix4fv(uMVTranspInv, 1, GL_FALSE, glm::value_ptr(mv_transp_inv));
+            glUniformMatrix4fv(uMVTranspInv, 1, GL_FALSE, glm::value_ptr(mv_transp_inv)); LOGOPENGLERROR();
+#else
+            glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(m)); LOGOPENGLERROR();
 #endif
 
             glDrawElements(geometry, indices_count, GL_UNSIGNED_INT, 0); LOGOPENGLERROR();
@@ -560,24 +606,49 @@ void Ocean::geometryType(GeometryRenderType t) {
     geometry_type = t;
 }
 
-void Ocean::colorFog(const ColorInfo& fog) {
+void Ocean::colorFog(const glm::vec4& fog) {
     fogColor = fog;
+
+#ifndef USE_OPENGL2_0
+    glBindBuffer(GL_UNIFORM_BUFFER, fragment_ubo.get()); LOGOPENGLERROR();
+    glBufferSubData(GL_UNIFORM_BUFFER, 0 * sizeof(glm::vec4), sizeof(glm::vec4), glm::value_ptr(fogColor)); LOGOPENGLERROR();
+#endif
 }
 
-void Ocean::colorEmissive(const ColorInfo& emissive) {
+void Ocean::colorEmissive(const glm::vec4& emissive) {
     emissiveColor = emissive;
+
+#ifndef USE_OPENGL2_0
+    glBindBuffer(GL_UNIFORM_BUFFER, fragment_ubo.get()); LOGOPENGLERROR();
+    glBufferSubData(GL_UNIFORM_BUFFER, 1 * sizeof(glm::vec4), sizeof(glm::vec4), glm::value_ptr(emissiveColor)); LOGOPENGLERROR();
+#endif
 }
 
-void Ocean::colorAmbient(const ColorInfo& ambient) {
+void Ocean::colorAmbient(const glm::vec4& ambient) {
     ambientColor = ambient;
+
+#ifndef USE_OPENGL2_0
+    glBindBuffer(GL_UNIFORM_BUFFER, fragment_ubo.get()); LOGOPENGLERROR();
+    glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::vec4), sizeof(glm::vec4), glm::value_ptr(ambientColor)); LOGOPENGLERROR();
+#endif
 }
 
-void Ocean::colorDiffuse(const ColorInfo& diffuse) {
+void Ocean::colorDiffuse(const glm::vec4& diffuse) {
     diffuseColor = diffuse;
+
+#ifndef USE_OPENGL2_0
+    glBindBuffer(GL_UNIFORM_BUFFER, fragment_ubo.get()); LOGOPENGLERROR();
+    glBufferSubData(GL_UNIFORM_BUFFER, 3 * sizeof(glm::vec4), sizeof(glm::vec4), glm::value_ptr(diffuseColor)); LOGOPENGLERROR();
+#endif
 }
 
-void Ocean::colorSpecular(const ColorInfo& specular) {
+void Ocean::colorSpecular(const glm::vec4& specular) {
     specularColor = specular;
+
+#ifndef USE_OPENGL2_0
+    glBindBuffer(GL_UNIFORM_BUFFER, fragment_ubo.get()); LOGOPENGLERROR();
+    glBufferSubData(GL_UNIFORM_BUFFER, 4 * sizeof(glm::vec4), sizeof(glm::vec4), glm::value_ptr(specularColor)); LOGOPENGLERROR();
+#endif
 }
 
 void Ocean::windAmp(float newA) {
